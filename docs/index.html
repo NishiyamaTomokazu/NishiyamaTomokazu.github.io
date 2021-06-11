@@ -1,8 +1,19 @@
 <!DOCTYPE html>
-<html>
-    <body>
-        <h1>Hello World!</h1>
-        <h2>ハロー・ワールド</h2>
-        <p>これはテストです</p>
-    </body>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <title>音声再生テスト</title>
+</head>
+<body>
+<h1>First Step</h1>
+<button onclick="Play()">Play</button><br>
+<script>
+    function Play() {
+        audioctx = new AudioContext();  //AudioContextを作成
+        osc = new OscillatorNode(audioctx);     //オシレータを作成
+        osc.connect(audioctx.destination);      //オシレータを出力に接続
+        osc.start();
+    }
+</script>
+</body>
 </html>
