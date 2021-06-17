@@ -35,25 +35,17 @@
         osc.frequency.value = freq;
         gain.gain.value = level;
     } */
-    let s = 2;
-//alert(s.toString(2));
-let b = s.toString(2);
 
-console.log(b);
+    //入力された数字を２進数にした時、ビットが立っている個数を数える
+    let b = 15;
+    var count = 0;
 
-//let c = b & 1;
-//console.log("b=",b);
-//console.log("c=",c);
-
-var count = 0;
-var bit = 0;
-for(let i=0; i<8; i++){
-    bit = b & 1;    //最下位ビット取得
-    if(bit == 1){
-        count++;
+    for(let i=0; i<8; i++){
+        if(b & (1<<7)){
+            count++;
+        }
+        b = b << 1;
     }
-    b = b >> 1;
-}
 
 console.log("count=",count);
 </script>
