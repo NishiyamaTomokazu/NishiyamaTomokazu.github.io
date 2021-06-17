@@ -13,7 +13,7 @@
 <tr><th>Level</th><td><input type="range" min="0" max="1" step="0.01" value="0.5" id="level" value="1" oninput="Setup()"/></td><td id="leveldisp">0.5</td></tr>
 </table>
 <script>
-    var playing = false;
+/*     var playing = false;
     function Play() {
         if(playing)
             return;
@@ -34,7 +34,28 @@
         osc.type = type;
         osc.frequency.value = freq;
         gain.gain.value = level;
+    } */
+    let s = 2;
+//alert(s.toString(2));
+let b = s.toString(2);
+
+console.log(b);
+
+//let c = b & 1;
+//console.log("b=",b);
+//console.log("c=",c);
+
+var count = 0;
+var bit = 0;
+for(let i=0; i<8; i++){
+    bit = b & 1;    //最下位ビット取得
+    if(bit == 1){
+        count++;
     }
+    b = b >> 1;
+}
+
+console.log("count=",count);
 </script>
 </body>
 </html>
