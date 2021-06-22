@@ -7,47 +7,13 @@
 <body>
 <h1>Oscillatror</h1>
 <button onclick="Play()">Play</button><br>
+<button onclick="btnClick()">ボタン</button>
+<pre>プレ</pre>
 <table>
     <tr><th>Type</th><td><select id="type" onchange="Setup()"><option value="sine">Sine</option><option value="square">Square</option><option value="sawtooth">SawTooth</option><option value="triangle">Triangle</option></select></td></tr>
 <tr><th>Freq(Hz)</th><td><input type="range" min="50" max="3000" id="freq" value="440" oninput="Setup()"/></td><td id="freqdisp">1000</td></tr>
 <tr><th>Level</th><td><input type="range" min="0" max="1" step="0.01" value="0.5" id="level" value="1" oninput="Setup()"/></td><td id="leveldisp">0.5</td></tr>
 </table>
-<script>
-/*     var playing = false;
-    function Play() {
-        if(playing)
-            return;
-        audioctx = new AudioContext();  //AudioContextを作成
-        osc = new OscillatorNode(audioctx);     //オシレータを作成
-        gain = new GainNode(audioctx);
-        osc.connect(gain).connect(audioctx.destination);
-        osc.start();
-        playing = true;
-    }
-    function Setup() {
-        var type = document.getElementById("type").value;
-        var freq = parseFloat(document.getElementById("freq").value);
-        var level = parseFloat(document.getElementById("level").value);
-        document.getElementById("freqdisp").innerHTML = freq;
-        document.getElementById("leveldisp").innerHTML = level;
-
-        osc.type = type;
-        osc.frequency.value = freq;
-        gain.gain.value = level;
-    } */
-
-    //入力された数字を２進数にした時、ビットが立っている個数を数える
-    let b = 15;
-    var count = 0;
-
-    for(let i=0; i<8; i++){
-        if(b & (1<<7)){
-            count++;
-        }
-        b = b << 1;
-    }
-
-console.log("count=",count);
-</script>
+<script src="audio.js"></script>
 </body>
 </html>
