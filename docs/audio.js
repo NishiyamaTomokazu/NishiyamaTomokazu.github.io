@@ -13,10 +13,10 @@ function btnClick() {
     var i;
     //配列に音声データを書き込む
     for(i=0; i < data.length; i++){
-        if((i % 100) < 50){
-            data[i] = 0.5;
+        if((i % 100) < 80){
+            data[i] = 1.0;
         } else {
-            data[i] = -0.5;  //1.0,0.9で、ワンショットパルスみたいな波形 250us
+            data[i] = 0.9;  //1.0,0.9で、ワンショットパルスみたいな波形 250us
         }
     }
     //AudioSourceを作成
