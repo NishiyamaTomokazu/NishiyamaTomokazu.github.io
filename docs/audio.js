@@ -4,21 +4,49 @@ function btnClick() {
     //AudioContextを作成
     var audioCtx = new (window.AudioContext || window.webkitAudioContext)();
     //サンプリングレートを48KHzに設定
-    audioCtx.sampleRate = 48000;
+    audioCtx.sampleRate = 44100;
     //モノラル、48KHz、48000サンプルのバッファを作成
-    var buf = audioCtx.createBuffer(1, 48000, 48000);
+    var buf = audioCtx.createBuffer(2, 44100, 44100);
     //データが格納されている配列を取得
     var data = buf.getChannelData(0);
     
     var i;
-    //配列に音声データを書き込む
-    for(i=0; i < data.length; i++){
-        if((i % 100) < 70){
-            data[i] = 1.0;
+    
+    //左チャンネルと右チャンネルを16バイトごとに入れ替える
+    for(i=0; i<data.length; i++){
+        if((Math.floor(i / 16)) % 2 == 0){
+            //偶数なら左チャンネル
+            if((i % 16) < 8){
+                data[i] = 1.0;
+            } else {
+                data[i] = 0.8;
+            }
         } else {
-            data[i] = 0.9;  //1.0,0.9で、ワンショットパルスみたいな波形 250us
+            if((i % 16) < 8){
+                data[i] = 0.0;
+            } else {
+                data[i] = 0.0;
+            }
         }
     }
+
+    //配列に音声データを書き込む
+    //数値を入れるやつ
+    // var dataHalf = data.length / 2;
+    // for(i=0; i < dataHalf; i++){
+    //     if((i % 100) < 70){
+    //         data[i] = 1.0;
+    //     } else {
+    //         data[i] = 0.9;  //1.0,0.9で、ワンショットパルスみたいな波形 250us
+    //     }
+    // }
+    // for(i=dataHalf; i < data.length; i++){
+    //     if((i % 100) < 50){
+    //         data[i] = 1.0;
+    //     } else {
+    //         data[i] = -1.0;  //1.0,0.9で、ワンショットパルスみたいな波形 250us
+    //     }
+    // }
     //AudioSourceを作成
     var src = audioCtx.createBufferSource();
     //AudioSourceに作成した音声データを設定

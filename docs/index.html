@@ -3,11 +3,12 @@
 <head>
     <meta charset="UTF-8">
     <title>音声再生テスト</title>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/tone/14.7.77/Tone.js"></script>
+    <!--<script src="https://cdnjs.cloudflare.com/ajax/libs/tone/14.7.77/Tone.js"></script>-->
 </head>
 <body>
 <h1>Oscillatror</h1>
-<button onclick="Play()">Play</button><br>
+<button id="play">Play</button><br>
+<button id="stop">Stop</button><br><br>
 <button onclick="btnClick()">ボタン</button>
 <button onclick="helloTone()">Tone.jsのテスト</button>
 <pre>プレ</pre>
@@ -16,7 +17,8 @@
 <tr><th>Freq(Hz)</th><td><input type="range" min="50" max="3000" id="freq" value="440" oninput="Setup()"/></td><td id="freqdisp">1000</td></tr>
 <tr><th>Level</th><td><input type="range" min="0" max="1" step="0.01" value="0.5" id="level" value="1" oninput="Setup()"/></td><td id="leveldisp">0.5</td></tr>
 </table>
-<script src="audio.js"></script>
-<script src="helloTone.js"></script>
+<!-- <script src="audio.js"></script>
+<script src="helloTone.js"></script> -->
+<script src="audioBuffer.js"></script>
 </body>
 </html>
