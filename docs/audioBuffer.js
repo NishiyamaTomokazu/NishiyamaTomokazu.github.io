@@ -1,51 +1,48 @@
 //オーディオバッファーのテスト
-
-var channels = 2;
-//AudioContextを作成
 var audioCtx = new (window.AudioContext || window.webkitAudioContext)();
 
-//サンプリングレートを48kHzに設定
-audioCtx.sampleRate = 48000;
-//バッファの時間設定
-var frameCount = audioCtx.sampleRate * 1
-//ステレオ、48kHz、48000サンプル（1秒）のバッファを作成
-var myArrayBuffer = audioCtx.createBuffer(channels, frameCount, audioCtx.sampleRate);
-//データが格納されている配列を取得
-//var data = buf.getChannelData(0);
+// ステレオ
+var channels = 2;
+// AudioContextのサンプルレートで2秒間の空のステレオバッファを生成する
+var frameCount = audioCtx.sampleRate * 2.0;
 
-function btnClick() {
-  //データの作成
-  for(var channel = 0; channel < channels; channel++){
-    var nowBuffering = myArrayBuffer.getChannelData(channel);
-    if(channel == 0){
-      for(var i = 0; i < frameCount; i++){
-        nowBuffering[i] = 1;
-      }
+var myArrayBuffer = audioCtx.createBuffer(2, frameCount, audioCtx.sampleRate);
+
+let counter = 0;
+let oneBit = 0;
+let inData = 10;  //テスト用のデータ
+
+function btnClick(){
+  // バッファにホワイトノイズを書き込む;
+  // 単なる-1.0から1.0の間の乱数の値である
+  for (var channel = 0; channel < channels; channel++) {
+    // 実際のデータの配列を得る
+   var nowBuffering = myArrayBuffer.getChannelData(channel);
+   for (var i = 0; i < frameCount; i++) {
+     if(onBit < 8){
+        counter++;
+        let tmp = inData;
+        inData = inData & 0b10000000;
+        if(counter < 10){
+          if(inData == 0){
+            nowBuffering[i] = 0;
+          } else {
+            nowBuffering[i] = 1;
+          }
+        }
+      onBit++;
     }
-    else {
-      for(var i = 0; i < frameCount; i++){
-        nowBuffering[i]= 0;
-      }
-    }
-    // for(var i = 0; i < frameCount; i++){
-    //   if(((Math.floor(i / 500)) % 2) == 0){
-    //     nowBuffering[i] = 1.0;
-    //   } else {
-    //     nowBuffering[i] = -1.0;
-    //   }
-    // }
+    onBit = 0;
+   }
   }
-  //オーディオデータの再生
-  //AudioBufferを再生する時に使うAudioNode
+  console.log(nowBuffering);
+  // AudioBufferSourceNodeを得る
+  // これはAudioBufferを再生するときに使うAudioNodeである
   var source = audioCtx.createBufferSource();
-
-  //AudioBufferSourceNodeにバッファを設定する
+  // AudioBufferSourceNodeにバッファを設定する
   source.buffer = myArrayBuffer;
-
-  //AudioBufferSourceNodeを出力先に接続すると音声が聞こえるようになる
+  // AudioBufferSourceNodeを出力先に接続すると音声が聞こえるようになる
   source.connect(audioCtx.destination);
-
-  //音源の再生を始める
+  // 音源の再生を始める
   source.start();
-
 }

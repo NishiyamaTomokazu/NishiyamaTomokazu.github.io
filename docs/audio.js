@@ -13,7 +13,7 @@ function btnClick() {
     var i;
     
     //左チャンネルと右チャンネルを16バイトごとに入れ替える
-    for(i=0; i<data.length; i++){
+/*     for(i=0; i<data.length; i++){
         if((Math.floor(i / 16)) % 2 == 0){
             //偶数なら左チャンネル
             if((i % 16) < 8){
@@ -28,18 +28,18 @@ function btnClick() {
                 data[i] = 0.0;
             }
         }
-    }
+    } */
 
     //配列に音声データを書き込む
     //数値を入れるやつ
-    // var dataHalf = data.length / 2;
-    // for(i=0; i < dataHalf; i++){
-    //     if((i % 100) < 70){
-    //         data[i] = 1.0;
-    //     } else {
-    //         data[i] = 0.9;  //1.0,0.9で、ワンショットパルスみたいな波形 250us
-    //     }
-    // }
+    var dataHalf = data.length / 2;
+    for(i=0; i < dataHalf; i++){
+        if((i % 100) < 70){
+            data[i] = 1.0;
+        } else {
+            data[i] = 0.9;  //1.0,0.9で、ワンショットパルスみたいな波形 250us
+        }
+    }
     // for(i=dataHalf; i < data.length; i++){
     //     if((i % 100) < 50){
     //         data[i] = 1.0;
