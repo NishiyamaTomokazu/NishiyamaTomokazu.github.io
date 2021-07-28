@@ -23,6 +23,8 @@ function sendDataBySound(dataArray) {
     console.log(dataArray);
     let binaryDataArray = dataArray.map(getBinary);
     console.log(binaryDataArray);
+    let soundDataArray = setSoundData(binaryDataArray);
+    console.log(soundDataArray);
 }
 
 /*
@@ -44,4 +46,23 @@ function getBinary(data){
         tmp = data;
     }
     return retrunData;      //[0,0,0,0,1,0,1,0]みたいな配列を返す
+}
+
+/*
+    1byte分の配列データ[0,0,0,0,1,0,1,0]が送られてくるので、
+    1つずつ読み込んで、0/1に合わせて、音声を出力する
+*/
+function setSoundData(data) {
+    console.log(data);
+    let newArray = new Array();
+    data.forEach(element => {
+        element.map(x => {
+            if(x == 0){
+                newArray.push([0,0,0,0,0,0]);
+            } else {
+                newArray.push([1,1,1,1,1,1]);
+            }
+        })
+    });
+    return newArray;
 }
