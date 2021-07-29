@@ -9,7 +9,7 @@
 <h1>Oscillatror</h1>
 <button id="play">Play</button><br>
 <button id="stop">Stop</button><br><br>
-<button onclick="testArrayFunc()">音声データ送信</button>
+<button onclick="btnClick()">音声データ送信</button>
 <button onclick="testArrayFunction()">関数の配列渡しのテスト</button>
 <pre>プレ</pre>
 <table>
@@ -17,8 +17,8 @@
 <tr><th>Freq(Hz)</th><td><input type="range" min="50" max="3000" id="freq" value="440" oninput="Setup()"/></td><td id="freqdisp">1000</td></tr>
 <tr><th>Level</th><td><input type="range" min="0" max="1" step="0.01" value="0.5" id="level" value="1" oninput="Setup()"/></td><td id="leveldisp">0.5</td></tr>
 </table>
-<!-- <script src="audio.js"></script>
-<script src="helloTone.js"></script> -->
+<script src="audio.js"></script>
+<!-- <script src="helloTone.js"></script> -->
 <!--<script src="audioBuffer.js"></script>-->
 <script src="sendSound.js"></script>
 </body>
