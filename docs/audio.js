@@ -34,7 +34,7 @@ function btnClick() {
     //数値を入れるやつ
     var dataHalf = data.length / 2;
     for(i=0; i < dataHalf; i++){
-        if((i % 100) < 70){
+        if((i % 100) <10){
             data[i] = 1.0;
         } else {
             data[i] = -1.0;  //1.0,0.9で、ワンショットパルスみたいな波形 250us
