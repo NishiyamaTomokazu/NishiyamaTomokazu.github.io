@@ -37,7 +37,7 @@ function btnClick() {
         if((i % 100) < 70){
             data[i] = 1.0;
         } else {
-            data[i] = 0.9;  //1.0,0.9で、ワンショットパルスみたいな波形 250us
+            data[i] = -1.0;  //1.0,0.9で、ワンショットパルスみたいな波形 250us
         }
     }
     // for(i=dataHalf; i < data.length; i++){
