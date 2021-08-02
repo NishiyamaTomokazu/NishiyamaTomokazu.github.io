@@ -8,8 +8,8 @@ sendDataArray[2] = 60;      //テスト用
 let convertedData = Array(50);    //送信用音楽データ
 convertedData.fill(0);
 
-window.AudioContext = window.AudioContext || window.webkitAudioContext;
-var audioCtx = new AudioContext();   //AudioContextの作成
+var AudioContext = window.AudioContext || window.webkitAudioContext;
+var audioCtx = new AudioContext();
 audioCtx.sampleRate = 44100;
 var buf = audioCtx.createBuffer(1,200,44100);
 
