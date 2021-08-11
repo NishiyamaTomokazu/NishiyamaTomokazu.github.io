@@ -7,7 +7,7 @@ var audioCtx = new AudioContext();
 
 var channels = 1;
 //var frameCount = audioCtx.sampleRate * 2.0;
-var sampleRate = 22100;
+var sampleRate = 44100;
 var frameCount = 100;
 
 var myArrayBuffer = audioCtx.createBuffer(1, frameCount, sampleRate);
@@ -42,10 +42,10 @@ function btnClick() {
                 nowBuffering[i] = 0.0;
             }
             else if(i>=80 && i<90){
-                nowBuffering[i] = 0.0;
+                nowBuffering[i] = 1.0;
             }
             else if(i>=90 && i<100){
-                nowBuffering[i] = 1.0;
+                nowBuffering[i] = 0.0;
             }
             //nowBuffering[i] = Math.random() * 2 - 1;
 /*
