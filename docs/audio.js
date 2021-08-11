@@ -34,10 +34,10 @@ function btnClick() {
     //数値を入れるやつ
     var dataHalf = data.length / 2;
     for(i=0; i < dataHalf; i++){
-        if((i % 100) <10){
+        if((i % 100) < 90){
             data[i] = 1.0;
         } else {
-            data[i] = -1.0;  //1.0,0.9で、ワンショットパルスみたいな波形 250us
+            data[i] = 0.0;  //1.0,0.9で、ワンショットパルスみたいな波形 250us
         }
     }
     // for(i=dataHalf; i < data.length; i++){
