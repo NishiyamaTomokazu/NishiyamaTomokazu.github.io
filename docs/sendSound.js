@@ -1,35 +1,46 @@
-//送信用のデータの入った配列　テスト用
-let sendDataArray = Array(64);
-sendDataArray.fill(0);    //初期化
-sendDataArray[0] = 170;
-//sendDataArray[1] = 170;
+//送信用のデータの入った配列
+//送信用データの最大数の128
+let sendDataArray = Array(128);
+sendDataArray.fill(0);    //０で初期化
+
+sendDataArray[0] = 0;   //テスト用のデータ
+sendDataArray[1] = 85;
 //sendDataArray[2] = 255;      //テスト用
 
-let convertedData = Array(50);    //送信用音楽データ
-convertedData.fill(0);
 
+//webAudioの初期化
 var AudioContext = window.AudioContext || window.webkitAudioContext;
 var audioCtx = new AudioContext();
-//モノラル
 var channels = 2;
-audioCtx.sampleRate = 48000;
+//audioCtx.sampleRate = 22050;
+audioCtx.sampleRate = 44100;
 var frameCount = audioCtx.sampleRate * 2.0; 
 var myArrayBuffer = audioCtx.createBuffer(2,frameCount,audioCtx.sampleRate);
 
-//テスト用の関数　
+//テスト用の関数
+//送信する配列を準備して、sendDataBySound関数に入れる
 function testArrayFunction(){
     sendDataBySound(sendDataArray);
 }
 
-//送信用データの配列を受け取り、音データに変換して、送信する
-function sendDataBySound(dataArray) {
-    //console.log(dataArray);
-    let binaryDataArray = dataArray.map(getBinary);
-    //console.log(binaryDataArray);
-    //let soundDataArray = getBinaryArray(binaryDataArray);
-    getBinaryArray(binaryDataArray);
-    //console.log("soundDataArray : " + soundDataArray);
-    //let sendResult = outputSoundData(soundDataArray);   //音声を出力する
+/*
+    送信用データの受け取り、音データに変換して、送信する
+
+    引数のarrayDataに、送信用のデータを配列で渡す
+    例: arrayData = [230,2,126,0,....]
+    arrayDataに入れる配列の要素数はいくらでも良い
+
+    内部で呼び出した関数が、音声出力処理まで行っている
+
+*/
+function sendDataBySound(arrayData) {
+    //送信データをビットの配列に変換
+    //map関数を使って、binarryDataArrayにデータを保存する
+    //console.log(arrayData);
+    let binaryDataArray = arrayData.map(getBinary);
+    
+    //ビットの配列をサウンドデータに変換して出力
+    outputSoundData(binaryDataArray);
 }
 
 /*
@@ -37,64 +48,71 @@ function sendDataBySound(dataArray) {
     getBinary(10) -> return [0,0,0,0,1,0,1,0]
     10を入れたら、10を2進数に変換した0b00001010の配列を返す
 */
-function getBinary(data){
-    var tmp = data;
-    var tmpArray = Array(8);
-    //var startBit = [1,1,1,1];   //スタートビット用
-    var returnData;
+function getBinary(arrayData){
+    var tmp = arrayData;
+    let returnData = Array(8);
+    //var returnData;
 
     for(let i=0; i<8; i++){
         tmp = tmp & 0b10000000;     //最上位ビットが1かどうかを確認
         if(tmp == 0){
-            tmpArray[i] = 0;      //0だった
+            returnData[i] = 0;      //0だった
         } else {
-            tmpArray[i] = 1;      //1だった
+            returnData[i] = 1;      //1だった
         }
-        data = data << 1;           //次のビットを確認
-        tmp = data;
+        arrayData = arrayData << 1;           //次のビットを確認
+        tmp = arrayData;
     }
-    //returnData = startBit.concat(tmpArray);
-    returnData = tmpArray;
-    //console.log("returndata : " + returnData);
-    return returnData;      //[1,1,1,1,0,0,0,0,1,0,1,0]みたいな配列を返す スタートビットを入れる
+    return returnData;      //バイトデータをビットの配列に変換したデータを返す
 }
 
 /*
-    64バイト分の配列データを結合して、１つの配列に変換する
-    dataに64バイト分の0/1に変換した値が入っている
-    それを先頭から読み込んで、newArrayに入れていく
-    64バイト x ８ビット　= 512この要素を持った配列ができる
+    引数のビットのデータを0/1に応じて、サウンドデータに変換する
+    スタートビットを出力後、１バイト分のデータを出力する
+    if文が冗長なのは調整用のため
+
+    最後にできた配列をwebAudioの出力バッファに入れて、出力する
 */
-function getBinaryArray(data) {
-    console.log(data);
+function outputSoundData(binaryDataArray) {
+    console.log(binaryDataArray);
     //let newArray = new Array();
-    var newArray = myArrayBuffer.getChannelData(0);
-    let counter = 0;
-    let i = 0;
+    var newArray = myArrayBuffer.getChannelData(0);     //変換データを保存する配列
+    let counter = 0;    //8ビット数えるためのカウンタ
+    let i = 0;  //出力用の配列の現在値
     //console.log(newArray);
-    data.forEach(element => {
+    binaryDataArray.forEach(element => {
         element.map(x => {
-            //newArray.push([1,1,1,1]);    //スタートビット
+            //スタートビット
             if((counter % 8) == 0) {
                 newArray[i++] = 1;
                 newArray[i++] = 1;
                 newArray[i++] = 1;
                 newArray[i++] = 1;
+                newArray[i++] = 1;
+                newArray[i++] = 1;
+                newArray[i++] = 1;
+                newArray[i++] = 1;
+                newArray[i++] = 1;
+                newArray[i++] = 1;
+                newArray[i++] = 1;
+                newArray[i++] = 1;
+                newArray[i++] = 1;
+                newArray[i++] = 1;
+                newArray[i++] = 1;
+                newArray[i++] = 1;
+                newArray[i++] = 1;
+                newArray[i++] = 1;
+                newArray[i++] = 0;
+                newArray[i++] = 0;
+                newArray[i++] = 0;
+                newArray[i++] = 0;
             }
             if(x == 0){
-                //newArray.push([0,0,0,0,0,0]);
-                //newArray.push([0,0,1,1]);
                 newArray[i++] = 0;
                 newArray[i++] = 0;
-                newArray[i++] = 1;
-                newArray[i++] = 1;
+                newArray[i++] = 0;
+                newArray[i++] = 0;
             } else {
-                //newArray.push([1,1,1,1,1,1]);
-                //newArray.push([0,0,1,1,1,1,1,1]);
-                newArray[i++] = 0;
-                newArray[i++] = 0;
-                newArray[i++] = 1;
-                newArray[i++] = 1;
                 newArray[i++] = 1;
                 newArray[i++] = 1;
                 newArray[i++] = 1;
@@ -104,23 +122,8 @@ function getBinaryArray(data) {
         })
     });
     console.log(newArray);
-    //return newArray;
-    var source = audioCtx.createBufferSource();
-    source.buffer = myArrayBuffer;
-    source.connect(audioCtx.destination);
-    source.start();
-}
-
-/*
-    配列を音データに変換して出力する
-    dataでもらった配列を音声に変換する
-*/
-function outputSoundData(data){
-    //console.log(data);
-    var source = audioCtx.createBufferSource();
-    myArrayBuff = data;
-    source.buffer = myArrayBuffer;
-    console.log(source);
-    source.connect(audioCtx.destination);
-    source.start();
+    var source = audioCtx.createBufferSource();     //出力用のバッファを作成
+    source.buffer = myArrayBuffer;      //出力用のバッファに変換したデータを入れる
+    source.connect(audioCtx.destination);       //出力先に接続する
+    source.start();     //再生開始
 }
