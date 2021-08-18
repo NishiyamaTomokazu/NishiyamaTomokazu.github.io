@@ -24,7 +24,7 @@ function btnClick() {
                 nowBuffering[i] = 0.0;
             }
             else if(i>=20 && i<30){
-                nowBuffering[i] = 1.0;
+                nowBuffering[i] = 0.0;
             }
             else if(i>=30 && i<40){
                 nowBuffering[i] = 0.0;
@@ -36,7 +36,7 @@ function btnClick() {
                 nowBuffering[i] = 0.0;
             }
             else if(i>=60 && i<70){
-                nowBuffering[i] = 1.0;
+                nowBuffering[i] = 0.0;
             }
             else if(i>=70 && i<80){
                 nowBuffering[i] = 0.0;
@@ -67,7 +67,7 @@ function btnClick() {
 }
 
 function coin(destination, playbackTime) {
-    var t0 = playbackTime;
+ /*   var t0 = playbackTime;
     var t1 = t0 + tdur(180, 16);
     var t2 = t0 + tdur(180, 4) * 3;
     var si = mtof(83);
@@ -87,6 +87,7 @@ function coin(destination, playbackTime) {
     gain.gain.setValueAtTime(0.5, t1);
     gain.gain.linearRampToValueAtTime(0, t2);
     gain.connect(destination);
+    */
 }
 
 function mtof(midi){
