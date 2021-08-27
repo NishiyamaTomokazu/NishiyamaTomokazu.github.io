@@ -3,8 +3,8 @@
 let sendDataArray = Array(64);
 sendDataArray.fill(0);    //０で初期化
 
-sendDataArray[0] = 170;   //テスト用のデータ
-sendDataArray[1] = 170;
+sendDataArray[0] = 240;   //テスト用のデータ
+sendDataArray[1] = 2;
 sendDataArray[63] = 170;
 //sendDataArray[2] = 255;      //テスト用
 
@@ -85,6 +85,14 @@ function outputSoundData(binaryDataArray) {
         element.map(x => {
             //スタートビット
             if((counter % 8) == 0) {
+                newArray[i++] = 0;
+                newArray[i++] = 0;
+                newArray[i++] = 0;
+                newArray[i++] = 0;
+                newArray[i++] = 0;
+                newArray[i++] = 0;
+                newArray[i++] = 0;
+                newArray[i++] = 0;
                 newArray[i++] = 1;
                 newArray[i++] = 1;
                 newArray[i++] = 1;
@@ -101,23 +109,17 @@ function outputSoundData(binaryDataArray) {
                 newArray[i++] = 1;
                 newArray[i++] = 1;
                 newArray[i++] = 1;
-                //newArray[i++] = 1;
-                //newArray[i++] = 1;
-                //newArray[i++] = 0;
-                //newArray[i++] = 0;
-                //newArray[i++] = 0;
-                //newArray[i++] = 0;
             }
             if(x == 0){
-                newArray[i++] = 0;
-                newArray[i++] = 0;
-                newArray[i++] = 0;
-                newArray[i++] = 0;
+                newArray[i++] = 1;
+                newArray[i++] = 1;
+                newArray[i++] = 1;
+                newArray[i++] = 1;
             } else {
-                newArray[i++] = 1;
-                newArray[i++] = 1;
-                newArray[i++] = 1;
-                newArray[i++] = 1;
+                newArray[i++] = 0;
+                newArray[i++] = 0;
+                newArray[i++] = 0;
+                newArray[i++] = 0;
             }
             counter++;
         })
