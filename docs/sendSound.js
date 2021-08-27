@@ -24,6 +24,21 @@ function testArrayFunction(){
     sendDataBySound(sendDataArray);
 }
 
+//テスト用
+function soundBlue(){
+    //青点灯
+    sendDataArray[0] = 240;
+    sendDataArray[1] = 2;
+    sendDataBySound(sendDataArray);
+}
+
+function soundGreen(){
+    //緑点灯
+    sendDataArray[0] = 240;
+    sendDataArray[1] = 1;
+    sendDataBySound(sendDataArray);
+}
+
 /*
     送信用データの受け取り、音データに変換して、送信する
 
