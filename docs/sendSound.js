@@ -21,6 +21,8 @@ var myArrayBuffer = audioCtx.createBuffer(2,frameCount,audioCtx.sampleRate);
 //テスト用の関数
 //送信する配列を準備して、sendDataBySound関数に入れる
 function testArrayFunction(){
+    sendDataArray[0] = 170;
+    sendDataArray[1] = 85;
     sendDataBySound(sendDataArray);
 }
 
