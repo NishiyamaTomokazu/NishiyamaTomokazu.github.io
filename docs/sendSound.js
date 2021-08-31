@@ -128,6 +128,10 @@ function outputSoundData(binaryDataArray) {
                 newArray[i++] = 1;
             }
             if(x == 0){
+                newArray[i++] = 0;
+                newArray[i++] = 0;
+                newArray[i++] = 0;
+                newArray[i++] = 0;
                 newArray[i++] = 1;
                 newArray[i++] = 1;
                 newArray[i++] = 1;
@@ -137,6 +141,18 @@ function outputSoundData(binaryDataArray) {
                 newArray[i++] = 0;
                 newArray[i++] = 0;
                 newArray[i++] = 0;
+                newArray[i++] = 1;
+                newArray[i++] = 1;
+                newArray[i++] = 1;
+                newArray[i++] = 1;
+                newArray[i++] = 1;
+                newArray[i++] = 1;
+                newArray[i++] = 1;
+                newArray[i++] = 1;
+                newArray[i++] = 1;
+                newArray[i++] = 1;
+                newArray[i++] = 1;
+                newArray[i++] = 1;
             }
             counter++;
         })
