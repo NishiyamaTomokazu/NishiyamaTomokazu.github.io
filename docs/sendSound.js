@@ -31,6 +31,7 @@ function soundBlue(){
     //青点灯
     sendDataArray[0] = 240;
     sendDataArray[1] = 2;
+    sendDataArray[2] = 136;
     sendDataBySound(sendDataArray);
 }
 
@@ -38,6 +39,7 @@ function soundGreen(){
     //緑点灯
     sendDataArray[0] = 240;
     sendDataArray[1] = 1;
+    sendDataArray[2] = 56;
     sendDataBySound(sendDataArray);
 }
 
