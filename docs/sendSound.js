@@ -163,6 +163,10 @@ function outputSoundData(binaryDataArray) {
             counter++;
         })
     });
+    /*newArray[i++] = 0;
+    newArray[i++] = 0;
+    newArray[i++] = 0;
+    newArray[i++] = 0;*/
     console.log(newArray);
     var source = audioCtx.createBufferSource();     //出力用のバッファを作成
     source.buffer = myArrayBuffer;      //出力用のバッファに変換したデータを入れる
