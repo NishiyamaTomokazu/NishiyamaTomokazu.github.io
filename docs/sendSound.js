@@ -37,9 +37,13 @@ function soundBlue(){
 
 function soundGreen(){
     //緑点灯
-    sendDataArray[0] = 240;
-    sendDataArray[1] = 1;
-    sendDataArray[2] = 56;
+    //sendDataArray[0] = 240;
+    //sendDataArray[1] = 1;
+    //sendDataArray[2] = 56;
+    for(var i=0; i<256; i++){
+        sendDataArray[i] = Math.floor(Math.random() * 256);
+    }
+    console.log(sendDataArray);
     sendDataBySound(sendDataArray);
 }
 
