@@ -110,6 +110,10 @@ function outputSoundData(binaryDataArray) {
                 newArray[i++] = 0;
                 newArray[i++] = 0;
                 newArray[i++] = 0;
+                newArray[i++] = 0;
+                newArray[i++] = 0;
+                newArray[i++] = 0;
+                newArray[i++] = 0;
                 newArray[i++] = 1;
                 newArray[i++] = 1;
                 newArray[i++] = 1;
