@@ -15,7 +15,8 @@ var audioCtx = new AudioContext();
 var channels = 2;
 //audioCtx.sampleRate = 22050;
 audioCtx.sampleRate = 44100;
-var frameCount = audioCtx.sampleRate * 2.0; 
+var frameCount = audioCtx.sampleRate * 20.0
+
 var myArrayBuffer = audioCtx.createBuffer(2,frameCount,audioCtx.sampleRate);
 
 //テスト用の関数
@@ -29,9 +30,14 @@ function testArrayFunction(){
 //テスト用
 function soundBlue(){
     //青点灯
-    sendDataArray[0] = 240;
-    sendDataArray[1] = 2;
-    sendDataArray[2] = 136;
+    sendDataArray[0] = 0;
+    sendDataArray[1] = 1;
+    sendDataArray[2] = 2;
+    sendDataArray[3] = 3;
+    sendDataArray[4] = 4;
+    sendDataArray[5] = 5;
+    sendDataArray[6] = 6;
+    sendDataArray[7] = 7;
     sendDataBySound(sendDataArray);
 }
 
@@ -40,8 +46,8 @@ function soundGreen(){
     //sendDataArray[0] = 240;
     //sendDataArray[1] = 1;
     //sendDataArray[2] = 56;
-    for(var i=0; i<256; i++){
-        sendDataArray[i] = Math.floor(Math.random() * 256);
+    for(var i=0; i<70; i++){
+        sendDataArray[i] = i;
     }
     console.log(sendDataArray);
     sendDataBySound(sendDataArray);
@@ -103,11 +109,21 @@ function outputSoundData(binaryDataArray) {
     var newArray = myArrayBuffer.getChannelData(0);     //変換データを保存する配列
     let counter = 0;    //8ビット数えるためのカウンタ
     let i = 0;  //出力用の配列の現在値
+    var tmp = 0;
     //console.log(newArray);
     binaryDataArray.forEach(element => {
         element.map(x => {
             //スタートビット
             if((counter % 8) == 0) {
+                /* tmp = 50;
+                while(i++ < tmp){
+                    newArray[i] = -1;
+                }
+                tmp = i + 100;
+                while(i++ < tmp){
+                    newArray[i] = 1;
+                } */
+
                 newArray[i++] = 0;
                 newArray[i++] = 0;
                 newArray[i++] = 0;
@@ -136,8 +152,46 @@ function outputSoundData(binaryDataArray) {
                 newArray[i++] = 1;
                 newArray[i++] = 1;
                 newArray[i++] = 1;
+
+               /*  newArray[i++] = 1;
+                newArray[i++] = 1;
+                newArray[i++] = 1;
+                newArray[i++] = 1;
+                newArray[i++] = 1;
+                newArray[i++] = 1;
+                newArray[i++] = 1;
+                newArray[i++] = 1;
+                newArray[i++] = 1;
+                newArray[i++] = 1;
+                newArray[i++] = 1;
+                newArray[i++] = 1;
+                newArray[i++] = 0;
+                newArray[i++] = 0;
+                newArray[i++] = 0;
+                newArray[i++] = 0;
+                newArray[i++] = 0;
+                newArray[i++] = 0;
+                newArray[i++] = 0;
+                newArray[i++] = 0;
+                newArray[i++] = 0;
+                newArray[i++] = 0;
+                newArray[i++] = 0;
+                newArray[i++] = 0;
+                newArray[i++] = 0;
+                newArray[i++] = 0;
+                newArray[i++] = 0;
+                newArray[i++] = 0; */
             }
             if(x == 0){
+                /* tmp = i + 10;
+                while(i++ < tmp){
+                    newArray[i] = -1;
+                }
+                tmp = i + 10;
+                while(i++ < tmp){
+                    newArray[i] = 1;
+                } */
+                
                 newArray[i++] = 0;
                 newArray[i++] = 0;
                 newArray[i++] = 0;
@@ -146,7 +200,26 @@ function outputSoundData(binaryDataArray) {
                 newArray[i++] = 1;
                 newArray[i++] = 1;
                 newArray[i++] = 1;
+
+                /* newArray[i++] = 1;
+                newArray[i++] = 1;
+                newArray[i++] = 1;
+                newArray[i++] = 1;
+                newArray[i++] = 0;
+                newArray[i++] = 0;
+                newArray[i++] = 0;
+                newArray[i++] = 0;
+ */
             } else {
+                /* tmp = i + 10;
+                while(i++ < tmp){
+                    newArray[i] = -1;
+                }
+                tmp = i + 30;
+                while(i++ < tmp){
+                    newArray[i] = 1;
+                } */
+
                 newArray[i++] = 0;
                 newArray[i++] = 0;
                 newArray[i++] = 0;
@@ -163,17 +236,35 @@ function outputSoundData(binaryDataArray) {
                 newArray[i++] = 1;
                 newArray[i++] = 1;
                 newArray[i++] = 1;
+
+
+/* 
+                newArray[i++] = 1;
+                newArray[i++] = 1;
+                newArray[i++] = 1;
+                newArray[i++] = 1;
+                newArray[i++] = 0;
+                newArray[i++] = 0;
+                newArray[i++] = 0;
+                newArray[i++] = 0;
+                newArray[i++] = 0;
+                newArray[i++] = 0;
+                newArray[i++] = 0;
+                newArray[i++] = 0;
+                newArray[i++] = 0;
+                newArray[i++] = 0;
+                newArray[i++] = 0;
+                newArray[i++] = 0; */
+
             }
             counter++;
         })
     });
-    /*newArray[i++] = 0;
-    newArray[i++] = 0;
-    newArray[i++] = 0;
-    newArray[i++] = 0;*/
+    
     console.log(newArray);
     var source = audioCtx.createBufferSource();     //出力用のバッファを作成
     source.buffer = myArrayBuffer;      //出力用のバッファに変換したデータを入れる
     source.connect(audioCtx.destination);       //出力先に接続する
     source.start();     //再生開始
+    
 }
