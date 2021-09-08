@@ -1,3 +1,7 @@
+// wait用
+// await _wait(2000);　で呼び出す
+const _sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
+
 //送信用のデータの入った配列
 //送信用データの最大数の128
 let sendDataArray = Array(64);
@@ -46,11 +50,23 @@ function soundGreen(){
     //sendDataArray[0] = 240;
     //sendDataArray[1] = 1;
     //sendDataArray[2] = 56;
-    for(var i=0; i<70; i++){
+/*     for(var i=0; i<70; i++){
+        sendDataArray[i] = i;
+    } */
+    for(var i=0; i<32; i++){
         sendDataArray[i] = i;
     }
     console.log(sendDataArray);
     sendDataBySound(sendDataArray);
+    //await _sleep(2);
+    //let id = setTimeout(soundGreen, 10);
+    
+    for(var i=32; i<64; i++){
+        sendDataArray[i] = i;
+    }
+    console.log(sendDataArray);
+    sendDataBySound(sendDataArray);
+    //clearTimeout(id);
 }
 
 /*
@@ -154,3 +170,6 @@ function outputSoundData(binaryDataArray) {
     source.start();     //再生開始
     
 }
+
+
+
