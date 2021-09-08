@@ -6,7 +6,7 @@ sendDataArray.fill(0);    //０で初期化
 
 sendDataArray[0] = 170;   //テスト用のデータ
 sendDataArray[1] = 2;
-sendDataArray[63] = 170;
+//sendDataArray[63] = 170;
 //sendDataArray[2] = 255;      //テスト用
 
 
@@ -53,8 +53,8 @@ function soundGreen() {
 
     const ms = 500;
     setTimeout(() => {
-    for(var i=32; i<64; i++){
-            sendDataArray[i] = i;
+    for(var i=0; i<32; i++){
+            sendDataArray[i] = i+32;
         }
         console.log(sendDataArray);
         sendDataBySound(sendDataArray);
