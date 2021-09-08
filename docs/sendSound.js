@@ -53,17 +53,17 @@ function soundGreen(){
 /*     for(var i=0; i<70; i++){
         sendDataArray[i] = i;
     } */
-    for(var i=0; i<32; i++){
+    for(var i=0; i<64; i++){
         sendDataArray[i] = i;
     }
-    console.log(sendDataArray);
+/*     console.log(sendDataArray);
     sendDataBySound(sendDataArray);
     //await _sleep(2);
     //let id = setTimeout(soundGreen, 10);
     
     for(var i=32; i<64; i++){
         sendDataArray[i] = i;
-    }
+    } */
     console.log(sendDataArray);
     sendDataBySound(sendDataArray);
     //clearTimeout(id);
