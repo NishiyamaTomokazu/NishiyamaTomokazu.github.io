@@ -51,9 +51,9 @@ function soundGreen() {
     console.log(sendDataArray);
     sendDataBySound(sendDataArray);
 
-    const ms = 200;
+    const ms = 500;
     setTimeout(() => {
-        for(var i=32; i<64; i++){
+    for(var i=32; i<64; i++){
             sendDataArray[i] = 0;
         }
         console.log(sendDataArray);
