@@ -1,6 +1,3 @@
-// wait用
-// await _wait(2000);　で呼び出す
-const _sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
 
 //送信用のデータの入った配列
 //送信用データの最大数の128
@@ -45,29 +42,44 @@ function soundBlue(){
     sendDataBySound(sendDataArray);
 }
 
-function soundGreen(){
-    //緑点灯
-    //sendDataArray[0] = 240;
-    //sendDataArray[1] = 1;
-    //sendDataArray[2] = 56;
-/*     for(var i=0; i<70; i++){
-        sendDataArray[i] = i;
-    } */
-    for(var i=0; i<64; i++){
+//const wait = async (ms) => new Promise(resolve => setTimeout(resolve, ms));
+
+function soundGreen() {
+    for(var i=0; i<32; i++){
         sendDataArray[i] = i;
     }
-/*     console.log(sendDataArray);
+    console.log(sendDataArray);
+    sendDataBySound(sendDataArray);
+
+    const ms = 200;
+    setTimeout(() => {
+        for(var i=32; i<64; i++){
+            sendDataArray[i] = 0;
+        }
+        console.log(sendDataArray);
+        sendDataBySound(sendDataArray);
+    }, ms);
+}
+
+
+/*
+function soundGreen(){
+    for(var i=0; i<70; i++){
+        sendDataArray[i] = i;
+    }
+
+     console.log(sendDataArray);
     sendDataBySound(sendDataArray);
     //await _sleep(2);
     //let id = setTimeout(soundGreen, 10);
     
     for(var i=32; i<64; i++){
         sendDataArray[i] = i;
-    } */
-    console.log(sendDataArray);
-    sendDataBySound(sendDataArray);
+    } 
+    //console.log(sendDataArray);
+    //sendDataBySound(sendDataArray);
     //clearTimeout(id);
-}
+}*/
 
 /*
     送信用データの受け取り、音データに変換して、送信する
