@@ -115,147 +115,33 @@ function outputSoundData(binaryDataArray) {
         element.map(x => {
             //スタートビット
             if((counter % 8) == 0) {
-                /* tmp = 50;
+                tmp = 10;
                 while(i++ < tmp){
-                    newArray[i] = -1;
+                    newArray[i] = 0;
                 }
-                tmp = i + 100;
+                tmp = i + 20;
                 while(i++ < tmp){
                     newArray[i] = 1;
-                } */
-
-                newArray[i++] = 0;
-                newArray[i++] = 0;
-                newArray[i++] = 0;
-                newArray[i++] = 0;
-                newArray[i++] = 0;
-                newArray[i++] = 0;
-                newArray[i++] = 0;
-                newArray[i++] = 0;
-                newArray[i++] = 0;
-                newArray[i++] = 0;
-                newArray[i++] = 0;
-                newArray[i++] = 0;
-                newArray[i++] = 1;
-                newArray[i++] = 1;
-                newArray[i++] = 1;
-                newArray[i++] = 1;
-                newArray[i++] = 1;
-                newArray[i++] = 1;
-                newArray[i++] = 1;
-                newArray[i++] = 1;
-                newArray[i++] = 1;
-                newArray[i++] = 1;
-                newArray[i++] = 1;
-                newArray[i++] = 1;
-                newArray[i++] = 1;
-                newArray[i++] = 1;
-                newArray[i++] = 1;
-                newArray[i++] = 1;
-
-               /*  newArray[i++] = 1;
-                newArray[i++] = 1;
-                newArray[i++] = 1;
-                newArray[i++] = 1;
-                newArray[i++] = 1;
-                newArray[i++] = 1;
-                newArray[i++] = 1;
-                newArray[i++] = 1;
-                newArray[i++] = 1;
-                newArray[i++] = 1;
-                newArray[i++] = 1;
-                newArray[i++] = 1;
-                newArray[i++] = 0;
-                newArray[i++] = 0;
-                newArray[i++] = 0;
-                newArray[i++] = 0;
-                newArray[i++] = 0;
-                newArray[i++] = 0;
-                newArray[i++] = 0;
-                newArray[i++] = 0;
-                newArray[i++] = 0;
-                newArray[i++] = 0;
-                newArray[i++] = 0;
-                newArray[i++] = 0;
-                newArray[i++] = 0;
-                newArray[i++] = 0;
-                newArray[i++] = 0;
-                newArray[i++] = 0; */
+                }
             }
             if(x == 0){
-                /* tmp = i + 10;
+                tmp = i + 5;
                 while(i++ < tmp){
-                    newArray[i] = -1;
+                    newArray[i] = 0;
                 }
-                tmp = i + 10;
+                tmp = i + 5;
                 while(i++ < tmp){
                     newArray[i] = 1;
-                } */
-                
-                newArray[i++] = 0;
-                newArray[i++] = 0;
-                newArray[i++] = 0;
-                newArray[i++] = 0;
-                newArray[i++] = 1;
-                newArray[i++] = 1;
-                newArray[i++] = 1;
-                newArray[i++] = 1;
-
-                /* newArray[i++] = 1;
-                newArray[i++] = 1;
-                newArray[i++] = 1;
-                newArray[i++] = 1;
-                newArray[i++] = 0;
-                newArray[i++] = 0;
-                newArray[i++] = 0;
-                newArray[i++] = 0;
- */
+                 }
             } else {
-                /* tmp = i + 10;
+                tmp = i + 5;
                 while(i++ < tmp){
-                    newArray[i] = -1;
+                    newArray[i] = 0;
                 }
-                tmp = i + 30;
+                tmp = i + 15;
                 while(i++ < tmp){
                     newArray[i] = 1;
-                } */
-
-                newArray[i++] = 0;
-                newArray[i++] = 0;
-                newArray[i++] = 0;
-                newArray[i++] = 0;
-                newArray[i++] = 1;
-                newArray[i++] = 1;
-                newArray[i++] = 1;
-                newArray[i++] = 1;
-                newArray[i++] = 1;
-                newArray[i++] = 1;
-                newArray[i++] = 1;
-                newArray[i++] = 1;
-                newArray[i++] = 1;
-                newArray[i++] = 1;
-                newArray[i++] = 1;
-                newArray[i++] = 1;
-
-
-/* 
-                newArray[i++] = 1;
-                newArray[i++] = 1;
-                newArray[i++] = 1;
-                newArray[i++] = 1;
-                newArray[i++] = 0;
-                newArray[i++] = 0;
-                newArray[i++] = 0;
-                newArray[i++] = 0;
-                newArray[i++] = 0;
-                newArray[i++] = 0;
-                newArray[i++] = 0;
-                newArray[i++] = 0;
-                newArray[i++] = 0;
-                newArray[i++] = 0;
-                newArray[i++] = 0;
-                newArray[i++] = 0; */
-
+                }
             }
             counter++;
         })
