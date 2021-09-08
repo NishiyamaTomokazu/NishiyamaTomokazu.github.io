@@ -1,7 +1,7 @@
 
 //送信用のデータの入った配列
 //送信用データの最大数の128
-let sendDataArray = Array(64);
+let sendDataArray = Array(32);
 sendDataArray.fill(0);    //０で初期化
 
 sendDataArray[0] = 170;   //テスト用のデータ
