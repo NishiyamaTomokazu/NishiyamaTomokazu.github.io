@@ -171,6 +171,12 @@ function outputSoundData(binaryDataArray) {
                     newArray[i] = 1;
                 }
             }
+            
+            tmp = 5;
+            while(i++ < tmp){
+                newArray[i] = 0;
+            }
+
             counter++;
         })
     });
