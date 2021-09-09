@@ -146,11 +146,11 @@ function outputSoundData(binaryDataArray) {
         element.map(x => {
             //スタートビット
             if((counter % 8) == 0) {
-                tmp = 10;
+                tmp = 20;
                 while(i++ < tmp){
                     newArray[i] = 0;
                 }
-                tmp = i + 20;
+                tmp = i + 30;
                 while(i++ < tmp){
                     newArray[i] = 1;
                 }
@@ -174,11 +174,11 @@ function outputSoundData(binaryDataArray) {
                     newArray[i] = 1;
                 }
             }
-
+/* 
             tmp = i + 5;
             while(i++ < tmp){
                 newArray[i] = 0;
-            }
+            } */
 
             counter++;
         })
