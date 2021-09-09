@@ -30,21 +30,24 @@ function testArrayFunction(){
 
 //テスト用
 function soundBlue(){
-    //青点灯
-    sendDataArray[0] = 0;
-    sendDataArray[1] = 1;
-    sendDataArray[2] = 2;
-    sendDataArray[3] = 3;
-    sendDataArray[4] = 4;
-    sendDataArray[5] = 5;
-    sendDataArray[6] = 6;
-    sendDataArray[7] = 7;
+    
+    for(var i=0; i<32; i++){
+        sendDataArray[i] = i;
+    }
     sendDataBySound(sendDataArray);
+    console.log(sendDataArray);
 }
 
-//const wait = async (ms) => new Promise(resolve => setTimeout(resolve, ms));
-
 function soundGreen() {
+    for(var i=0; i<32; i++){
+        sendDataArray[i+32] = i+5;
+    }
+    sendDataBySound(sendDataArray);
+    console.log(sendDataArray);
+}
+
+/* function soundGreen() {
+    //32個のデータ送信後、500ms空けて、再度32個のデータを送信する
     for(var i=0; i<32; i++){
         sendDataArray[i] = i;
     }
@@ -59,7 +62,7 @@ function soundGreen() {
         console.log(sendDataArray);
         sendDataBySound(sendDataArray);
     }, ms);
-}
+} */
 
 
 /*
