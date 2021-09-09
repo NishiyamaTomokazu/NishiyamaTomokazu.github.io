@@ -47,6 +47,7 @@ function soundBlue(){
     sendDataArray[13] = 64;
     sendDataArray[14] = 12;
     sendDataArray[15] = 231;
+    sendDataBySound(sendDataArray);
 /*     for(var i=0; i<32; i++){
         sendDataArray[i] = i;
     }
@@ -58,6 +59,7 @@ function soundGreen() {
     //実行
     sendDataArray[0] = 253;
     sendDataArray[1] = 2;
+    sendDataBySound(sendDataArray);
     /* for(var i=0; i<32; i++){
         sendDataArray[i+32] = i+5;
     }
