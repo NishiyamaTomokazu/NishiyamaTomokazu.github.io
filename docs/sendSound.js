@@ -34,7 +34,7 @@ function soundBlue(){
     sendDataArray[0] = 253;
     sendDataArray[1] = 1;
     sendDataArray[2] = 1;
-    sendDataArray[3] = 230;
+  /*   sendDataArray[3] = 230;
     sendDataArray[4] = 2;
     sendDataArray[5] = 126;
     sendDataArray[6] = 0;
@@ -51,7 +51,10 @@ function soundBlue(){
     sendDataArray[17] = 225;
     sendDataArray[18] = 0;
     sendDataArray[19] = 17;
-    sendDataArray[20] = 231;
+    sendDataArray[20] = 231; */
+    for(var i=3;i<35;i++){
+        sendDataArray[i] = i-3;
+    }
     sendDataBySound(sendDataArray);
     console.log(sendDataArray);
 /*     for(var i=0; i<32; i++){
@@ -64,8 +67,11 @@ function soundBlue(){
 function sendWhite(){
     sendDataArray[0] = 253;
     sendDataArray[1] = 1;
-    sendDataArray[2] = 1;
-    sendDataArray[3] = 230;
+    sendDataArray[2] = 2;
+    for(var i=3;i<35;i++){
+        sendDataArray[i] = i+3;
+    }
+/*     sendDataArray[3] = 230;
     sendDataArray[4] = 2;
     sendDataArray[5] = 1;
     sendDataArray[6] = 255;
@@ -82,7 +88,7 @@ function sendWhite(){
     sendDataArray[17] = 224;
     sendDataArray[18] = 64;
     sendDataArray[19] = 17;
-    sendDataArray[20] = 231;
+    sendDataArray[20] = 231; */
     sendDataBySound(sendDataArray);
     console.log(sendDataArray);
 }
