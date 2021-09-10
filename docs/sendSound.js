@@ -207,6 +207,10 @@ function outputSoundData(binaryDataArray) {
             if((counter % 8) == 0) {
                 tmp = 20;
                 while(i++ < tmp){
+                    newArray[i] = 1;
+                }
+                tmp = i + 20;
+                while(i++ < tmp){
                     newArray[i] = 0;
                 }
                 tmp = i + 30;
