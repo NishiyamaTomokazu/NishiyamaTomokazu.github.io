@@ -31,9 +31,13 @@ function testArrayFunction(){
 //テスト用
 function soundBlue(){
     //転送
+    sendDataArray.fill(0);
     sendDataArray[0] = 253;
     sendDataArray[1] = 1;
     sendDataArray[2] = 1;
+    for(var i=3;i<36;i++){
+        sendDataArray[i] = i+3;
+    }
   /*   sendDataArray[3] = 230;
     sendDataArray[4] = 2;
     sendDataArray[5] = 126;
@@ -52,9 +56,7 @@ function soundBlue(){
     sendDataArray[18] = 0;
     sendDataArray[19] = 17;
     sendDataArray[20] = 231; */
-    for(var i=3;i<35;i++){
-        sendDataArray[i] = i-3;
-    }
+    
     sendDataBySound(sendDataArray);
     console.log(sendDataArray);
 /*     for(var i=0; i<32; i++){
@@ -65,10 +67,11 @@ function soundBlue(){
 }
 
 function sendWhite(){
+    sendDataArray.fill(0);
     sendDataArray[0] = 253;
     sendDataArray[1] = 1;
     sendDataArray[2] = 2;
-    for(var i=3;i<35;i++){
+    for(var i=3;i<36;i++){
         sendDataArray[i] = i+3;
     }
 /*     sendDataArray[3] = 230;
