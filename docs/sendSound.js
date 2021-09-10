@@ -36,17 +36,22 @@ function soundBlue(){
     sendDataArray[2] = 1;
     sendDataArray[3] = 230;
     sendDataArray[4] = 2;
-    sendDataArray[5] = 1;
-    sendDataArray[6] = 255;
-    sendDataArray[7] = 224;
-    sendDataArray[8] = 64;
+    sendDataArray[5] = 126;
+    sendDataArray[6] = 0;
+    sendDataArray[7] = 1;
+    sendDataArray[8] = 0;
     sendDataArray[9] = 7;
-    sendDataArray[10] = 127;
+    sendDataArray[10] = 1;
     sendDataArray[11] = 248;
-    sendDataArray[12] = 0;
-    sendDataArray[13] = 64;
+    sendDataArray[12] = 1;
+    sendDataArray[13] = 0;
     sendDataArray[14] = 12;
-    sendDataArray[15] = 231;
+    sendDataArray[15] = 0;
+    sendDataArray[16] = 7;
+    sendDataArray[17] = 225;
+    sendDataArray[18] = 0;
+    sendDataArray[19] = 17;
+    sendDataArray[20] = 231;
     sendDataBySound(sendDataArray);
     console.log(sendDataArray);
 /*     for(var i=0; i<32; i++){
@@ -54,6 +59,32 @@ function soundBlue(){
     }
     sendDataBySound(sendDataArray);
     console.log(sendDataArray); */
+}
+
+function sendWhite(){
+    sendDataArray[0] = 253;
+    sendDataArray[1] = 1;
+    sendDataArray[2] = 1;
+    sendDataArray[3] = 230;
+    sendDataArray[4] = 2;
+    sendDataArray[5] = 1;
+    sendDataArray[6] = 255;
+    sendDataArray[7] = 224;
+    sendDataArray[8] = 64;
+    sendDataArray[9] = 7;
+    sendDataArray[10] = 126;
+    sendDataArray[11] = 7;
+    sendDataArray[12] = 224;
+    sendDataArray[13] = 64;
+    sendDataArray[14] = 12;
+    sendDataArray[15] = 127;
+    sendDataArray[16] = 255;
+    sendDataArray[17] = 224;
+    sendDataArray[18] = 64;
+    sendDataArray[19] = 17;
+    sendDataArray[20] = 231;
+    sendDataBySound(sendDataArray);
+    console.log(sendDataArray);
 }
 
 function soundGreen() {
@@ -82,6 +113,7 @@ function soundGreen() {
     setTimeout(() => {
     for(var i=0; i<32; i++){
             sendDataArray[i] = i+32;
+    
         }
         console.log(sendDataArray);
         sendDataBySound(sendDataArray);
