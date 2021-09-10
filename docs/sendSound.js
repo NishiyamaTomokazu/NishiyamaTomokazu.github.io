@@ -31,29 +31,28 @@ function testArrayFunction(){
 //テスト用
 function soundBlue(){
     //転送
-/*     sendDataArray.fill(0);
+    sendDataArray.fill(0);
     sendDataArray[0] = 253;
     sendDataArray[1] = 1;
-    sendDataBySound(sendDataArray);
- */
-    sendDataArray[0] = 230;
-    sendDataArray[1] = 2;
-    sendDataArray[2] = 126;
-    sendDataArray[3] = 0;
-    sendDataArray[4] = 1;
-    sendDataArray[5] = 0;
-    sendDataArray[6] = 7;
+    sendDataArray[2] = 1;
+    sendDataArray[3] = 230;
+    sendDataArray[4] = 2;
+    sendDataArray[5] = 126;
+    sendDataArray[6] = 0;
     sendDataArray[7] = 1;
-    sendDataArray[8] = 248;
-    sendDataArray[9] = 1;
-    sendDataArray[10] = 0;
-    sendDataArray[11] = 12;
-    sendDataArray[12] = 0;
-    sendDataArray[13] = 7;
-    sendDataArray[14] = 225;
+    sendDataArray[8] = 0;
+    sendDataArray[9] = 7;
+    sendDataArray[10] = 1;
+    sendDataArray[11] = 248;
+    sendDataArray[12] = 1;
+    sendDataArray[13] = 0;
+    sendDataArray[14] = 12;
     sendDataArray[15] = 0;
-    sendDataArray[16] = 17;
-    sendDataArray[17] = 231; 
+    sendDataArray[16] = 7;
+    sendDataArray[17] = 225;
+    sendDataArray[18] = 0;
+    sendDataArray[19] = 17;
+    sendDataArray[20] = 231; 
     
     sendDataBySound(sendDataArray);
     console.log(sendDataArray);
@@ -68,35 +67,34 @@ function sendWhite(){
     sendDataArray.fill(0);
     sendDataArray[0] = 253;
     sendDataArray[1] = 1;
-    sendDataBySound(sendDataArray);
-/* 
-    sendDataArray[1] = 230;
-    sendDataArray[2] = 2;
-    sendDataArray[3] = 1;
-    sendDataArray[4] = 255;
-    sendDataArray[5] = 224;
-    sendDataArray[6] = 64;
-    sendDataArray[7] = 7;
-    sendDataArray[8] = 126;
+    sendDataArray[2] = 1;
+    sendDataArray[3] = 230;
+    sendDataArray[4] = 2;
+    sendDataArray[5] = 1;
+    sendDataArray[6] = 255;
+    sendDataArray[7] = 224;
+    sendDataArray[8] = 64;
     sendDataArray[9] = 7;
-    sendDataArray[10] = 224;
-    sendDataArray[11] = 64;
-    sendDataArray[12] = 12;
-    sendDataArray[13] = 127;
-    sendDataArray[14] = 255;
-    sendDataArray[15] = 224;
-    sendDataArray[16] = 64;
-    sendDataArray[17] = 17;
-    sendDataArray[18] = 231; 
+    sendDataArray[10] = 126;
+    sendDataArray[11] = 7;
+    sendDataArray[12] = 224;
+    sendDataArray[13] = 64;
+    sendDataArray[14] = 12;
+    sendDataArray[15] = 127;
+    sendDataArray[16] = 255;
+    sendDataArray[17] = 224;
+    sendDataArray[18] = 64;
+    sendDataArray[19] = 17;
+    sendDataArray[20] = 231; 
     sendDataBySound(sendDataArray);
-    console.log(sendDataArray);*/
+    console.log(sendDataArray);
 }
 
 function soundGreen() {
     sendDataArray.fill(0);
     //実行
     sendDataArray[0] = 253;
-    sendDataArray[1] = 9;
+    sendDataArray[1] = 2;
     sendDataBySound(sendDataArray);
     console.log(sendDataArray);
     /* for(var i=0; i<32; i++){
