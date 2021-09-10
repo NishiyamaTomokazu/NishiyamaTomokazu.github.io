@@ -1,7 +1,7 @@
 
 //送信用のデータの入った配列
 //送信用データの最大数の128
-let sendDataArray = Array(32);
+let sendDataArray = Array(35);
 sendDataArray.fill(0);    //０で初期化
 
 sendDataArray[0] = 170;   //テスト用のデータ
@@ -48,6 +48,7 @@ function soundBlue(){
     sendDataArray[14] = 12;
     sendDataArray[15] = 231;
     sendDataBySound(sendDataArray);
+    console.log(sendDataArray);
 /*     for(var i=0; i<32; i++){
         sendDataArray[i] = i;
     }
@@ -56,10 +57,12 @@ function soundBlue(){
 }
 
 function soundGreen() {
+    sendDataArray.fill(0);
     //実行
     sendDataArray[0] = 253;
     sendDataArray[1] = 2;
     sendDataBySound(sendDataArray);
+    console.log(sendDataArray);
     /* for(var i=0; i<32; i++){
         sendDataArray[i+32] = i+5;
     }
@@ -105,7 +108,7 @@ function soundGreen(){
     //clearTimeout(id);
 }*/
 
-/*
+/*******************************************
     送信用データの受け取り、音データに変換して、送信する
 
     引数のarrayDataに、送信用のデータを配列で渡す
@@ -114,7 +117,7 @@ function soundGreen(){
 
     内部で呼び出した関数が、音声出力処理まで行っている
 
-*/
+*******************************************/
 function sendDataBySound(arrayData) {
     //送信データをビットの配列に変換
     //map関数を使って、binarryDataArrayにデータを保存する
@@ -125,11 +128,11 @@ function sendDataBySound(arrayData) {
     outputSoundData(binaryDataArray);
 }
 
-/*
+/*******************************************
     1バイトのデータを8文字分の0/1に変換する
     getBinary(10) -> return [0,0,0,0,1,0,1,0]
     10を入れたら、10を2進数に変換した0b00001010の配列を返す
-*/
+*******************************************/
 function getBinary(arrayData){
     var tmp = arrayData;
     let returnData = Array(8);
@@ -148,13 +151,13 @@ function getBinary(arrayData){
     return returnData;      //バイトデータをビットの配列に変換したデータを返す
 }
 
-/*
+/*******************************************
     引数のビットのデータを0/1に応じて、サウンドデータに変換する
     スタートビットを出力後、１バイト分のデータを出力する
     if文が冗長なのは調整用のため
 
     最後にできた配列をwebAudioの出力バッファに入れて、出力する
-*/
+*******************************************/
 function outputSoundData(binaryDataArray) {
     console.log(binaryDataArray);
     //let newArray = new Array();
@@ -195,12 +198,6 @@ function outputSoundData(binaryDataArray) {
                     newArray[i] = 1;
                 }
             }
-/* 
-            tmp = i + 5;
-            while(i++ < tmp){
-                newArray[i] = 0;
-            } */
-
             counter++;
         })
     });
