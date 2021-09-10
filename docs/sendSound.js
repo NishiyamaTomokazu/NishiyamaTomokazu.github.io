@@ -89,8 +89,8 @@ function sendWhite(){
     sendDataArray[17] = 17;
     sendDataArray[18] = 231; 
     sendDataBySound(sendDataArray);
-    console.log(sendDataArray);
-} */
+    console.log(sendDataArray);*/
+}
 
 function soundGreen() {
     sendDataArray.fill(0);
