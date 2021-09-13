@@ -34,7 +34,7 @@ function soundBlue(){
     sendDataArray.fill(0);
     sendDataArray[0] = 253;
     sendDataArray[1] = 1;
-    sendDataArray[2] = 1;
+    sendDataArray[2] = 2;
     sendDataArray[3] = 230;
     sendDataArray[4] = 2;
     sendDataArray[5] = 126;
