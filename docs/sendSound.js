@@ -1,7 +1,7 @@
 
 //送信用のデータの入った配列
 //送信用データの最大数の128
-let sendDataArray = Array(35);
+let sendDataArray = Array(36);
 sendDataArray.fill(0);    //０で初期化
 
 sendDataArray[0] = 170;   //テスト用のデータ
@@ -34,7 +34,7 @@ function soundBlue(){
     sendDataArray.fill(0);
     sendDataArray[0] = 253;
     sendDataArray[1] = 1;
-    sendDataArray[2] = 2;
+    sendDataArray[2] = 1;
     sendDataArray[3] = 230;
     sendDataArray[4] = 2;
     sendDataArray[5] = 126;
