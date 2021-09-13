@@ -205,11 +205,11 @@ function outputSoundData(binaryDataArray) {
         element.map(x => {
             //スタートビット
             if((counter % 8) == 0) {
-                tmp = 20;
+/*                 tmp = 20;
                 while(i++ < tmp){
                     newArray[i] = 1;
-                }
-                tmp = i + 20;
+                } */
+                tmp = i;
                 while(i++ < tmp){
                     newArray[i] = 0;
                 }
