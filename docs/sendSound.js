@@ -209,8 +209,16 @@ function outputSoundData(binaryDataArray) {
                 while(i++ < tmp){
                     newArray[i] = 1;
                 } */
-                tmp = 100;
+                tmp = 10;
                 while(i++ < tmp){
+                    newArray[i] = 0;
+                }
+                tmp = i+ 10;
+                while(i++<tmp){
+                    newArray[i] = 1;
+                }
+                tmp = i + 10;
+                while(i++<tmp){
                     newArray[i] = 0;
                 }
                 tmp = i + 30;
@@ -236,10 +244,6 @@ function outputSoundData(binaryDataArray) {
                 while(i++ < tmp){
                     newArray[i] = 1;
                 }
-            }
-            tmp = i + 15;
-            while(i++ < tmp){
-                newArray[i] = 0;
             }
             counter++;
         })
