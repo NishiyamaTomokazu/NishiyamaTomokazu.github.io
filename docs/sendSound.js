@@ -90,6 +90,37 @@ function sendWhite(){
     console.log(sendDataArray);
 }
 
+function sendLoop(){
+    sendDataArray.fill(0);
+    sendDataArray[0] = 253;
+    sendDataArray[1] = 1;
+    sendDataArray[2] = 1;
+    sendDataArray[3] = 230;
+    sendDataArray[4] = 2;
+    sendDataArray[5] = 190;
+    sendDataArray[6] = 3;
+    sendDataArray[7] = 5;
+    sendDataArray[8] = 1;
+    sendDataArray[9] = 248;
+    sendDataArray[10] = 0;
+    sendDataArray[11] = 64;
+    sendDataArray[12] = 10;
+    sendDataArray[13] = 0;
+    sendDataArray[14] = 7;
+    sendDataArray[15] = 224;
+    sendDataArray[16] = 64;
+    sendDataArray[17] = 15;
+    sendDataArray[18] = 127;
+    sendDataArray[19] = 255;
+    sendDataArray[20] = 224;
+    sendDataArray[21] = 64;
+    sendDataArray[22] = 20;
+    sendDataArray[23] = 191;
+    sendDataArray[24] = 22;
+    sendDataArray[25] = 231;
+    sendDataBySound(sendDataArray);
+}
+
 function soundGreen() {
     sendDataArray.fill(0);
     //実行
