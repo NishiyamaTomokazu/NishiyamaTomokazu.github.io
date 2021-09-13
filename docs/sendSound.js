@@ -204,28 +204,28 @@ function outputSoundData(binaryDataArray) {
     binaryDataArray.forEach(element => {
         element.map(x => {
             //スタートビット
-            if((counter % 8) == 0) {
-/*                 tmp = 20;
+/*             if((counter % 8) == 0) {
+                 tmp = 20;
                 while(i++ < tmp){
                     newArray[i] = 1;
-                } */
+                } 
                 tmp = 30;
                 while(i++ < tmp){
                     newArray[i] = 0;
                 }
-/*                 tmp = i+ 10;
+                 tmp = i+ 10;
                 while(i++<tmp){
                     newArray[i] = 1;
                 }
                 tmp = i + 10;
                 while(i++<tmp){
                     newArray[i] = 0;
-                } */
+                } 
                 tmp = i + 30;
                 while(i++ < tmp){
                     newArray[i] = 1;
                 }
-            }
+            } */
             if(x == 0){
                 tmp = i + 5;
                 while(i++ < tmp){
