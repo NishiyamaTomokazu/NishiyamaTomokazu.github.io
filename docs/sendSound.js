@@ -209,7 +209,7 @@ function outputSoundData(binaryDataArray) {
                 while(i++ < tmp){
                     newArray[i] = 1;
                 } */
-                tmp = 20;
+                tmp = 30;
                 while(i++ < tmp){
                     newArray[i] = 0;
                 }
