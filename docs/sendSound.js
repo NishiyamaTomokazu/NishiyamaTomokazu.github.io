@@ -215,12 +215,13 @@ function outputSoundData(binaryDataArray) {
                 }
             }
             counter++;
-/*             if((counter % 8) == 0) {
+            //ストップビット必要
+            if((counter % 8) == 0) {
                 tmp = i+20;
                while(i++ < tmp){
                    newArray[i] = 0;
                }
-            } */
+            }
         })
     });
     //console.log(newArray);
