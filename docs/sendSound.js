@@ -173,8 +173,9 @@ function soundRun() {
     sendDataArray.fill(0);
     //実行
     sendDataArray[0] = 0;
-    sendDataArray[1] = 253;             //iPadモード
-    sendDataArray[2] = 2;               //実行
+    sendDataArray[1] = 0;
+    sendDataArray[2] = 253;             //iPadモード
+    sendDataArray[3] = 2;               //実行
                                         //以降の配列は、0が入っているので、そのままで良い
     sendDataBySound(sendDataArray);
     //console.log(sendDataArray);
