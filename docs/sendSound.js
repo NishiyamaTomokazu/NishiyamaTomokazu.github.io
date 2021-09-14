@@ -1,12 +1,4 @@
 
-//送信用のデータの入った配列
-let sendDataArray = Array(36);
-sendDataArray.fill(0);    //０で初期化
-
-//sendDataArray[0] = 170;   //テスト用のデータ
-//sendDataArray[1] = 2;
-//sendDataArray[63] = 170;
-//sendDataArray[2] = 255;      //テスト用
 
 
 /**************************************
@@ -70,6 +62,8 @@ var myArrayBuffer = audioCtx.createBuffer(2,frameCount,audioCtx.sampleRate);
  * sendDataArray[2] = 2;        :LED実行　　実行は、"253","2"だけ送れば良い
  * 
 **************************************/
+//送信用のデータの入った配列
+let sendDataArray = Array(37);
 
 /**************************************
  * データの転送方法
