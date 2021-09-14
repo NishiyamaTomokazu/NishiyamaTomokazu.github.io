@@ -88,30 +88,31 @@ var myArrayBuffer = audioCtx.createBuffer(2,frameCount,audioCtx.sampleRate);
 function soundRed(){
     sendDataArray.fill(0);      //0で初期化
     sendDataArray[0] = 0;       //ダミー
-    sendDataArray[1] = 253;     //iPadモード
-    sendDataArray[2] = 1;       //LEDデータ転送開始
-    sendDataArray[3] = 1;       //ブロック1へデータ書き込む
-    sendDataArray[4] = 230;     //以下、LEDの点灯データ
-    sendDataArray[5] = 2;
-    sendDataArray[6] = 126;
-    sendDataArray[7] = 0;
-    sendDataArray[8] = 1;
-    sendDataArray[9] = 0;
-    sendDataArray[10] = 7;
-    sendDataArray[11] = 1;
-    sendDataArray[12] = 248;
-    sendDataArray[13] = 1;
-    sendDataArray[14] = 0;
-    sendDataArray[15] = 12;
-    sendDataArray[16] = 0;
-    sendDataArray[17] = 7;
-    sendDataArray[18] = 225;
-    sendDataArray[19] = 0;
-    sendDataArray[20] = 17;
-    sendDataArray[21] = 231; 
+    sendDataArray[1] = 0;       //ダミー
+    sendDataArray[2] = 253;     //iPadモード
+    sendDataArray[3] = 1;       //LEDデータ転送開始
+    sendDataArray[4] = 1;       //ブロック1へデータ書き込む
+    sendDataArray[5] = 230;     //以下、LEDの点灯データ
+    sendDataArray[6] = 2;
+    sendDataArray[7] = 126;
+    sendDataArray[8] = 0;
+    sendDataArray[9] = 1;
+    sendDataArray[10] = 0;
+    sendDataArray[11] = 7;
+    sendDataArray[12] = 1;
+    sendDataArray[13] = 248;
+    sendDataArray[14] = 1;
+    sendDataArray[15] = 0;
+    sendDataArray[16] = 12;
+    sendDataArray[17] = 0;
+    sendDataArray[18] = 7;
+    sendDataArray[19] = 225;
+    sendDataArray[20] = 0;
+    sendDataArray[21] = 17;
+    sendDataArray[22] = 231; 
     
     sendDataBySound(sendDataArray);     //スピーカー出力
-    //console.log(sendDataArray);
+    //console.log(sendDataArray);    
 }
 
 function sendWhite(){
