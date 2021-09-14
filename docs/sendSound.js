@@ -1,7 +1,6 @@
 
 //送信用のデータの入った配列
-//送信用データの最大数の128
-let sendDataArray = Array(35);
+let sendDataArray = Array(36);
 sendDataArray.fill(0);    //０で初期化
 
 //sendDataArray[0] = 170;   //テスト用のデータ
@@ -31,40 +30,44 @@ var myArrayBuffer = audioCtx.createBuffer(2,frameCount,audioCtx.sampleRate);
  * 送信データが32バイト未満のときは、必要な分だけ入力し、
  * 以降は、"0"のままで良い。（例2参照）
  * 
- * 識別用のデータ(2 or 3バイト)　+　転送データ(32バイト)
+ * ダミーデータ(1バイト） + 識別用のデータ(2 or 3バイト)　+　転送データ(32バイト)
  * 識別用のデータ
- * sendDataArray[0] = 253;  :iPadモード
- * sendDataArray[1] = 1-4;
+ * sendDataArray[0] = 0     :ダミーデータ
+ * sendDataArray[1] = 253;  :iPadモード
+ * sendDataArray[2] = 1-4;
  *                      1:LEDデータ転送
  *                      2:LED実行
  *                      3:音データ転送
  *                      4:音実行
- * sendDataArray[2] = 1-4;
+ * sendDataArray[3] = 1-4;
  *                      1:　最初の32バイトのデータ（1ブロック）
  *                      2:　次の32バイトのデータ（2ブロック）
  *                      3:　次の32バイトのデータ（3ブロック）
  *                      4:　次の32バイトのデータ（4ブロック）
  * 例1:
  * sendDataArray.fill(0);       :0で初期化
- * sendDataArray[0] = 253;      :iPadモード
- * sendDataArray[1] = 1;        :LEDデータ転送開始
- * sendDataArray[2] = 1;        :最初の32バイト転送
- * sendDataArray[3] = 230;      :最初のデータ
+ * sendDataArray[0] = 0;        :ダミー
+ * sendDataArray[1] = 253;      :iPadモード
+ * sendDataArray[2] = 1;        :LEDデータ転送開始
+ * sendDataArray[3] = 1;        :最初の32バイト転送
+ * sendDataArray[4] = 230;      :最初のデータ
  *  ......
  * 
  * 例2:
  * sendDataArray.fill(0);       :0で初期化
- * sendDataArray[0] = 253;      :iPadモード
- * sendDataArray[1] = 3;        :音データ転送開始
- * sendDataArray[2] = 3;        :3ブロック目のデータを転送
- * sendDataArray[3] = 90;       :音符の”90”
- * sendDataArray[4] = 250;      :最終データ 以降は、入力しなくて良い
- * (sendDataArray[5] = 0;)      :最初に0で初期化しているので、以降は0になってる
+ * sendDataArray[0] = 0;        :ダミー
+ * sendDataArray[1] = 253;      :iPadモード
+ * sendDataArray[2] = 3;        :音データ転送開始
+ * sendDataArray[3] = 3;        :3ブロック目のデータを転送
+ * sendDataArray[4] = 90;       :音符の”90”
+ * sendDataArray[5] = 250;      :最終データ 以降は、入力しなくて良い
+ * (sendDataArray[6] = 0;)      :最初に0で初期化しているので、以降は0になってる
  * 
  * 例3:
  * sendDataArray.fill(0);       :0で初期化
- * sendDataArray[0] = 253;      :iPadモード
- * sendDataArray[1] = 2;        :LED実行　　実行は、"253","2"だけ送れば良い
+ * sendDataArray[0] = 0;        :ダミー
+ * sendDataArray[1] = 253;      :iPadモード
+ * sendDataArray[2] = 2;        :LED実行　　実行は、"253","2"だけ送れば良い
  * 
 **************************************/
 
@@ -84,27 +87,28 @@ var myArrayBuffer = audioCtx.createBuffer(2,frameCount,audioCtx.sampleRate);
 //テスト用
 function soundRed(){
     sendDataArray.fill(0);      //0で初期化
-    sendDataArray[0] = 253;     //iPadモード
-    sendDataArray[1] = 1;       //LEDデータ転送開始
-    sendDataArray[2] = 1;       //ブロック1へデータ書き込む
-    sendDataArray[3] = 230;     //以下、LEDの点灯データ
-    sendDataArray[4] = 2;
-    sendDataArray[5] = 126;
-    sendDataArray[6] = 0;
-    sendDataArray[7] = 1;
-    sendDataArray[8] = 0;
-    sendDataArray[9] = 7;
-    sendDataArray[10] = 1;
-    sendDataArray[11] = 248;
-    sendDataArray[12] = 1;
-    sendDataArray[13] = 0;
-    sendDataArray[14] = 12;
-    sendDataArray[15] = 0;
-    sendDataArray[16] = 7;
-    sendDataArray[17] = 225;
-    sendDataArray[18] = 0;
-    sendDataArray[19] = 17;
-    sendDataArray[20] = 231; 
+    sendDataArray[0] = 0;       //ダミー
+    sendDataArray[1] = 253;     //iPadモード
+    sendDataArray[2] = 1;       //LEDデータ転送開始
+    sendDataArray[3] = 1;       //ブロック1へデータ書き込む
+    sendDataArray[4] = 230;     //以下、LEDの点灯データ
+    sendDataArray[5] = 2;
+    sendDataArray[6] = 126;
+    sendDataArray[7] = 0;
+    sendDataArray[8] = 1;
+    sendDataArray[9] = 0;
+    sendDataArray[10] = 7;
+    sendDataArray[11] = 1;
+    sendDataArray[12] = 248;
+    sendDataArray[13] = 1;
+    sendDataArray[14] = 0;
+    sendDataArray[15] = 12;
+    sendDataArray[16] = 0;
+    sendDataArray[17] = 7;
+    sendDataArray[18] = 225;
+    sendDataArray[19] = 0;
+    sendDataArray[20] = 17;
+    sendDataArray[21] = 231; 
     
     sendDataBySound(sendDataArray);     //スピーカー出力
     //console.log(sendDataArray);
@@ -112,67 +116,70 @@ function soundRed(){
 
 function sendWhite(){
     sendDataArray.fill(0);
-    sendDataArray[0] = 253;
-    sendDataArray[1] = 1;
+    sendDataArray[0] = 0;
+    sendDataArray[1] = 253;
     sendDataArray[2] = 1;
-    sendDataArray[3] = 230;
-    sendDataArray[4] = 2;
-    sendDataArray[5] = 127;
-    sendDataArray[6] = 255;
-    sendDataArray[7] = 225;
-    sendDataArray[8] = 0;
-    sendDataArray[9] = 7;
-    sendDataArray[10] = 126;
-    sendDataArray[11] = 7;
-    sendDataArray[12] = 225;
-    sendDataArray[13] = 0;
-    sendDataArray[14] = 12;
-    sendDataArray[15] = 127;
-    sendDataArray[16] = 248;
-    sendDataArray[17] = 1;
-    sendDataArray[18] = 0;
-    sendDataArray[19] = 17;
-    sendDataArray[20] = 231; 
+    sendDataArray[3] = 1;
+    sendDataArray[4] = 230;
+    sendDataArray[5] = 2;
+    sendDataArray[6] = 127;
+    sendDataArray[7] = 255;
+    sendDataArray[8] = 225;
+    sendDataArray[9] = 0;
+    sendDataArray[10] = 7;
+    sendDataArray[11] = 126;
+    sendDataArray[12] = 7;
+    sendDataArray[13] = 225;
+    sendDataArray[14] = 0;
+    sendDataArray[15] = 12;
+    sendDataArray[16] = 127;
+    sendDataArray[17] = 248;
+    sendDataArray[18] = 1;
+    sendDataArray[19] = 0;
+    sendDataArray[20] = 17;
+    sendDataArray[21] = 231; 
     sendDataBySound(sendDataArray);
     console.log(sendDataArray);
 }
 
 function sendLoop(){
     sendDataArray.fill(0);
-    sendDataArray[0] = 253;
-    sendDataArray[1] = 1;
+    sendDataArray[0] = 0;
+    sendDataArray[1] = 253;
     sendDataArray[2] = 1;
-    sendDataArray[3] = 230;
-    sendDataArray[4] = 2;
-    sendDataArray[5] = 190;
-    sendDataArray[6] = 3;
-    sendDataArray[7] = 5;
-    sendDataArray[8] = 1;
-    sendDataArray[9] = 248;
-    sendDataArray[10] = 0;
-    sendDataArray[11] = 64;
-    sendDataArray[12] = 10;
-    sendDataArray[13] = 0;
-    sendDataArray[14] = 7;
-    sendDataArray[15] = 224;
-    sendDataArray[16] = 64;
-    sendDataArray[17] = 15;
-    sendDataArray[18] = 127;
-    sendDataArray[19] = 255;
-    sendDataArray[20] = 224;
-    sendDataArray[21] = 64;
-    sendDataArray[22] = 20;
-    sendDataArray[23] = 191;
-    sendDataArray[24] = 22;
-    sendDataArray[25] = 231;
+    sendDataArray[3] = 1;
+    sendDataArray[4] = 230;
+    sendDataArray[5] = 2;
+    sendDataArray[6] = 190;
+    sendDataArray[7] = 3;
+    sendDataArray[8] = 5;
+    sendDataArray[9] = 1;
+    sendDataArray[10] = 248;
+    sendDataArray[11] = 0;
+    sendDataArray[12] = 64;
+    sendDataArray[13] = 10;
+    sendDataArray[14] = 0;
+    sendDataArray[15] = 7;
+    sendDataArray[16] = 224;
+    sendDataArray[17] = 64;
+    sendDataArray[18] = 15;
+    sendDataArray[19] = 127;
+    sendDataArray[20] = 255;
+    sendDataArray[21] = 224;
+    sendDataArray[22] = 64;
+    sendDataArray[23] = 20;
+    sendDataArray[24] = 191;
+    sendDataArray[25] = 22;
+    sendDataArray[26] = 231;
     sendDataBySound(sendDataArray);
 }
 
 function soundRun() {
     sendDataArray.fill(0);
     //実行
-    sendDataArray[0] = 253;             //iPadモード
-    sendDataArray[1] = 2;               //実行
+    sendDataArray[0] = 0;
+    sendDataArray[1] = 253;             //iPadモード
+    sendDataArray[2] = 2;               //実行
                                         //以降の配列は、0が入っているので、そのままで良い
     sendDataBySound(sendDataArray);
     //console.log(sendDataArray);
