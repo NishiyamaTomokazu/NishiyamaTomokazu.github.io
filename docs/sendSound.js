@@ -1,41 +1,93 @@
 
 //送信用のデータの入った配列
 //送信用データの最大数の128
-let sendDataArray = Array(36);
+let sendDataArray = Array(35);
 sendDataArray.fill(0);    //０で初期化
 
-sendDataArray[0] = 170;   //テスト用のデータ
-sendDataArray[1] = 2;
+//sendDataArray[0] = 170;   //テスト用のデータ
+//sendDataArray[1] = 2;
 //sendDataArray[63] = 170;
 //sendDataArray[2] = 255;      //テスト用
 
 
-//webAudioの初期化
+/**************************************
+ * webAudioの初期化
+ * ここは、そのままで
+**************************************/
 var AudioContext = window.AudioContext || window.webkitAudioContext;
 var audioCtx = new AudioContext();
 var channels = 2;
-//audioCtx.sampleRate = 22050;
 audioCtx.sampleRate = 44100;
 var frameCount = audioCtx.sampleRate * 20.0
-
 var myArrayBuffer = audioCtx.createBuffer(2,frameCount,audioCtx.sampleRate);
 
-//テスト用の関数
-//送信する配列を準備して、sendDataBySound関数に入れる
-function testArrayFunction(){
-    sendDataArray[0] = 170;
-    sendDataArray[1] = 85;
-    sendDataBySound(sendDataArray);
-}
+/*************************************
+ * 
+ * 送信用のデータを入れる配列
+ * 
+ * 1度に送信できるデータは、最大32バイトまで。
+ * それ以上のデータの場合は、分割して送ること。
+ * 送信前に、0で初期化する。
+ * 送信データが32バイト未満のときは、必要な分だけ入力し、
+ * 以降は、"0"のままで良い。（例2参照）
+ * 
+ * 識別用のデータ(2 or 3バイト)　+　転送データ(32バイト)
+ * 識別用のデータ
+ * sendDataArray[0] = 253;  :iPadモード
+ * sendDataArray[1] = 1-4;
+ *                      1:LEDデータ転送
+ *                      2:LED実行
+ *                      3:音データ転送
+ *                      4:音実行
+ * sendDataArray[2] = 1-4;
+ *                      1:　最初の32バイトのデータ（1ブロック）
+ *                      2:　次の32バイトのデータ（2ブロック）
+ *                      3:　次の32バイトのデータ（3ブロック）
+ *                      4:　次の32バイトのデータ（4ブロック）
+ * 例1:
+ * sendDataArray.fill(0);       :0で初期化
+ * sendDataArray[0] = 253;      :iPadモード
+ * sendDataArray[1] = 1;        :LEDデータ転送開始
+ * sendDataArray[2] = 1;        :最初の32バイト転送
+ * sendDataArray[3] = 230;      :最初のデータ
+ *  ......
+ * 
+ * 例2:
+ * sendDataArray.fill(0);       :0で初期化
+ * sendDataArray[0] = 253;      :iPadモード
+ * sendDataArray[1] = 3;        :音データ転送開始
+ * sendDataArray[2] = 3;        :3ブロック目のデータを転送
+ * sendDataArray[3] = 90;       :音符の”90”
+ * sendDataArray[4] = 250;      :最終データ 以降は、入力しなくて良い
+ * (sendDataArray[5] = 0;)      :最初に0で初期化しているので、以降は0になってる
+ * 
+ * 例3:
+ * sendDataArray.fill(0);       :0で初期化
+ * sendDataArray[0] = 253;      :iPadモード
+ * sendDataArray[1] = 2;        :LED実行　　実行は、"253","2"だけ送れば良い
+ * 
+**************************************/
+
+/**************************************
+ * データの転送方法
+ * sendDataArray配列に、転送用のデータを入力後、
+ * 下記のように関数を呼び出す。
+ * sendDataBySound(sendDataArray);
+ * 
+ * 複数回呼び出す場合は、500ミリ秒ほど空けてほしい
+ * sendDataBySound(sendDataArray1);
+ * wait500ms();      //PICへ書き込む時間
+ * sendDataBySound(sendDataArray2);
+ * 
+ **************************************/
 
 //テスト用
-function soundBlue(){
-    //転送
-    sendDataArray.fill(0);
-    sendDataArray[0] = 253;
-    sendDataArray[1] = 1;
-    sendDataArray[2] = 1;
-    sendDataArray[3] = 230;
+function soundRed(){
+    sendDataArray.fill(0);      //0で初期化
+    sendDataArray[0] = 253;     //iPadモード
+    sendDataArray[1] = 1;       //LEDデータ転送開始
+    sendDataArray[2] = 1;       //ブロック1へデータ書き込む
+    sendDataArray[3] = 230;     //以下、LEDの点灯データ
     sendDataArray[4] = 2;
     sendDataArray[5] = 126;
     sendDataArray[6] = 0;
@@ -54,8 +106,8 @@ function soundBlue(){
     sendDataArray[19] = 17;
     sendDataArray[20] = 231; 
     
-    sendDataBySound(sendDataArray);
-    console.log(sendDataArray);
+    sendDataBySound(sendDataArray);     //スピーカー出力
+    //console.log(sendDataArray);
 }
 
 function sendWhite(){
@@ -116,13 +168,14 @@ function sendLoop(){
     sendDataBySound(sendDataArray);
 }
 
-function soundGreen() {
+function soundRun() {
     sendDataArray.fill(0);
     //実行
-    sendDataArray[0] = 253;
-    sendDataArray[1] = 2;
+    sendDataArray[0] = 253;             //iPadモード
+    sendDataArray[1] = 2;               //実行
+                                        //以降の配列は、0が入っているので、そのままで良い
     sendDataBySound(sendDataArray);
-    console.log(sendDataArray);
+    //console.log(sendDataArray);
 }
 
 /*******************************************
@@ -175,7 +228,7 @@ function getBinary(arrayData){
     最後にできた配列をwebAudioの出力バッファに入れて、出力する
 *******************************************/
 function outputSoundData(binaryDataArray) {
-    console.log(binaryDataArray);
+    //console.log(binaryDataArray);
     //let newArray = new Array();
     var newArray = myArrayBuffer.getChannelData(0);     //変換データを保存する配列
     let counter = 0;    //8ビット数えるためのカウンタ
@@ -194,7 +247,7 @@ function outputSoundData(binaryDataArray) {
                 while(i++ < tmp){
                     newArray[i] = 1;
                 }
-            } 
+            }
             if(x == 0){
                 tmp = i + 5;
                 while(i++ < tmp){
@@ -215,7 +268,7 @@ function outputSoundData(binaryDataArray) {
                 }
             }
             counter++;
-            //ストップビット必要
+            //ストップビット
             if((counter % 8) == 0) {
                 tmp = i+20;
                while(i++ < tmp){

@@ -3,29 +3,17 @@
 <head>
     <meta charset="UTF-8">
     <title>音声再生テスト</title>
-    <!--<script src="https://cdnjs.cloudflare.com/ajax/libs/tone/14.7.77/Tone.js"></script>-->
 </head>
 <body>
 <h1>iPadテスト</h1>
-<button id="play">Play</button><br>
-<button id="stop">Stop</button><br><br>
 <!--<button onclick="testArrayFunction()">ホワイトノイズ</button>-->
 <!--<button onclick="testArrayFunction()">青点灯</button>-->
-<button onclick="soundBlue()">赤緑青</button><br>
-<button onclick="sendWhite()">白黄紫</button><br>
-<button onclick="sendLoop()">繰り返し</button><br>
-<button onclick="soundGreen()">実行</button><br>
-<table>
-    <tr><th>Type</th><td><select id="type" onchange="Setup()"><option value="sine">Sine</option><option value="square">Square</option><option value="sawtooth">SawTooth</option><option value="triangle">Triangle</option></select></td></tr>
-<tr><th>Freq(Hz)</th><td><input type="range" min="50" max="3000" id="freq" value="440" oninput="Setup()"/></td><td id="freqdisp">1000</td></tr>
-<tr><th>Level</th><td><input type="range" min="0" max="1" step="0.01" value="0.5" id="level" value="1" oninput="Setup()"/></td><td id="leveldisp">0.5</td></tr>
-</table>
-<script src="audio.js"></script>
-<!-- <script src="helloTone.js"></script> -->
-<!--<script src="audioBuffer.js"></script>-->
-<script src="sendSound.js"></script>
-<!--<script src="whiteNoise.js"></script>-->
+<button onclick="soundRed()">赤緑青</button><br><br>
+<button onclick="sendWhite()">白黄紫</button><br><br>
+<button onclick="sendLoop()">繰り返し</button><br><br>
+<button onclick="soundRun()">実行</button><br><br>
 
+<script src="sendSound.js"></script>
 
 </script>
 </body>
