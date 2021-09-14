@@ -56,11 +56,6 @@ function soundBlue(){
     
     sendDataBySound(sendDataArray);
     console.log(sendDataArray);
-/*     for(var i=0; i<32; i++){
-        sendDataArray[i] = i;
-    }
-    sendDataBySound(sendDataArray);
-    console.log(sendDataArray); */
 }
 
 function sendWhite(){
@@ -128,51 +123,7 @@ function soundGreen() {
     sendDataArray[1] = 2;
     sendDataBySound(sendDataArray);
     console.log(sendDataArray);
-    /* for(var i=0; i<32; i++){
-        sendDataArray[i+32] = i+5;
-    }
-    sendDataBySound(sendDataArray);
-    console.log(sendDataArray); */
 }
-
-/* function soundGreen() {
-    //32個のデータ送信後、500ms空けて、再度32個のデータを送信する
-    for(var i=0; i<32; i++){
-        sendDataArray[i] = i;
-    }
-    console.log(sendDataArray);
-    sendDataBySound(sendDataArray);
-
-    const ms = 500;
-    setTimeout(() => {
-    for(var i=0; i<32; i++){
-            sendDataArray[i] = i+32;
-    
-        }
-        console.log(sendDataArray);
-        sendDataBySound(sendDataArray);
-    }, ms);
-} */
-
-
-/*
-function soundGreen(){
-    for(var i=0; i<70; i++){
-        sendDataArray[i] = i;
-    }
-
-     console.log(sendDataArray);
-    sendDataBySound(sendDataArray);
-    //await _sleep(2);
-    //let id = setTimeout(soundGreen, 10);
-    
-    for(var i=32; i<64; i++){
-        sendDataArray[i] = i;
-    } 
-    //console.log(sendDataArray);
-    //sendDataBySound(sendDataArray);
-    //clearTimeout(id);
-}*/
 
 /*******************************************
     送信用データの受け取り、音データに変換して、送信する
@@ -187,7 +138,6 @@ function soundGreen(){
 function sendDataBySound(arrayData) {
     //送信データをビットの配列に変換
     //map関数を使って、binarryDataArrayにデータを保存する
-    //console.log(arrayData);
     let binaryDataArray = arrayData.map(getBinary);
     
     //ビットの配列をサウンドデータに変換して出力
@@ -265,25 +215,19 @@ function outputSoundData(binaryDataArray) {
                 }
             }
             counter++;
-            if((counter % 8) == 0) {
+/*             if((counter % 8) == 0) {
                 tmp = i+20;
                while(i++ < tmp){
                    newArray[i] = 0;
-               } 
-/*                tmp = i + 20;
-               while(i++ < tmp){
-                   newArray[i] = 1;
-               }  */           
-            }
+               }
+            } */
         })
     });
-    
-    console.log(newArray);
+    //console.log(newArray);
     var source = audioCtx.createBufferSource();     //出力用のバッファを作成
-    source.buffer = myArrayBuffer;      //出力用のバッファに変換したデータを入れる
-    source.connect(audioCtx.destination);       //出力先に接続する
-    source.start();     //再生開始
-    
+    source.buffer = myArrayBuffer;                  //出力用のバッファに変換したデータを入れる
+    source.connect(audioCtx.destination);           //出力先に接続する
+    source.start();                                 //再生開始
 }
 
 
