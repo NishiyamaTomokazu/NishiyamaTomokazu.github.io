@@ -60,7 +60,7 @@ var myArrayBuffer = audioCtx.createBuffer(2,frameCount,audioCtx.sampleRate);
  * 
 **************************************/
 //送信用のデータの入った配列
-let sendDataArray = Array(37);
+let sendDataArray = Array(35);
 
 /**************************************
  * データの転送方法
