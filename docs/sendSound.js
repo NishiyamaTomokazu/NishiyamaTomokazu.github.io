@@ -98,6 +98,8 @@ function sendTime() {
     sendDataArray[6] = 1;
     sendDataArray[7] = 13;
     sendDataArray[8] = 58;
+    sendDataBySound(sendDataArray);
+    console.log(sendDataArray);
 }
 
 function soundRed(){
