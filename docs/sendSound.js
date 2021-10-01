@@ -88,7 +88,7 @@ function connect(){
 
 //テスト用
 function sendTime() {
-    sendDataArray.fill(0);
+    sendDataArray.fill(255);
     sendDataArray[0] = 247;
     sendDataArray[1] = 21;
     sendDataArray[2] = 10;
