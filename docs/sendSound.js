@@ -92,14 +92,12 @@ function sendTime() {
     sendDataArray[0] = 247;
     sendDataArray[1] = 21;
     sendDataArray[2] = 10;
-    sendDataArray[3] = 21;
+    sendDataArray[3] = 1;
     sendDataArray[4] = 10;
-    sendDataArray[5] = 1;
-    sendDataArray[6] = 10;
-    sendDataArray[7] = 7;
-    sendDataArray[8] = 1;
-    sendDataArray[9] = 13;
-    sendDataArray[10] = 58;
+    sendDataArray[5] = 7;
+    sendDataArray[6] = 1;
+    sendDataArray[7] = 13;
+    sendDataArray[8] = 58;
     sendDataBySound(sendDataArray);
     console.log(sendDataArray);
 }
