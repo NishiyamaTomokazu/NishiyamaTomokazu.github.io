@@ -204,6 +204,7 @@ function sendHRConnect(){
     sendDataArray.fill(0);
     sendDataArray[0] = 253;
     sendDataArray[1] = 3;
+    sendDataBySound(sendDataArray);
 }
 function sendHRData(){
     sendDataArray.fill(0);
@@ -225,11 +226,13 @@ function sendHRData(){
     sendDataArray[15] = 10;
     sendDataArray[16] = 251;
     sendDataArray[17] = 252;
+    sendDataBySound(sendDataArray);
 }
 function sendHRRun(){
     sendDataArray.fill(0);
     sendDataArray[0] = 253;
     sendDataArray[1] = 2;
+    sendDataBySound(sendDataArray);
 }
 
 
