@@ -60,7 +60,8 @@ var myArrayBuffer = audioCtx.createBuffer(2,frameCount,audioCtx.sampleRate);
  * 
 **************************************/
 //送信用のデータの入った配列
-let sendDataArray = Array(35);
+//let sendDataArray = Array(35);
+let sendDataArray = Array(19);
 
 /**************************************
  * データの転送方法
@@ -93,8 +94,8 @@ function sendTime() {
     sendDataArray[1] = 21;
     sendDataArray[2] = 10;
     sendDataArray[3] = 1;
-    sendDataArray[4] = 10;
-    sendDataArray[5] = 7;
+    sendDataArray[4] = 14;
+    sendDataArray[5] = 24;
     sendDataArray[6] = 1;
     sendDataArray[7] = 13;
     sendDataArray[8] = 58;
@@ -197,6 +198,40 @@ function soundRun() {
     sendDataBySound(sendDataArray);
     //console.log(sendDataArray);
 }
+
+//HRのテスト用
+function sendHRConnect(){
+    sendDataArray.fill(0);
+    sendDataArray[0] = 253;
+    sendDataArray[1] = 3;
+}
+function sendHRData(){
+    sendDataArray.fill(0);
+    sendDataArray[0] = 253;
+    sendDataArray[1] = 1;
+    sendDataArray[2] = 0;
+    sendDataArray[3] = 230;
+    sendDataArray[4] = 3;
+    sendDataArray[5] = 231;
+    sendDataArray[6] = 130;
+    sendDataArray[7] = 4;
+    sendDataArray[8] = 6;
+    sendDataArray[9] = 131;
+    sendDataArray[10] = 4;
+    sendDataArray[11] = 9;
+    sendDataArray[12] = 132;
+    sendDataArray[13] = 4;
+    sendDataArray[14] = 2;
+    sendDataArray[15] = 10;
+    sendDataArray[16] = 251;
+    sendDataArray[17] = 252;
+}
+function sendHRRun(){
+    sendDataArray.fill(0);
+    sendDataArray[0] = 253;
+    sendDataArray[1] = 2;
+}
+
 
 /*******************************************
     送信用データの受け取り、音データに変換して、送信する

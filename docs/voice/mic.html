@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<html>
+ <head>
+ <meta charset="UTF-8" />
+ <title>音声解析</title>
+ </head>
+ <body>
+ <button onclick="startRecording()">解析開始</button>
+ <button onclick="endRecording()">解析終了</button>
+ <hr>
+ </body>
+</html>
+<script>
+// クロスブラウザ定義
+navigator.getUserMedia = navigator.getUserMedia || navigator.webkitGetUserMedia || navigator.mozGetUserMedia;
+
+// 変数定義
+var localMediaStream = null;
+var localScriptProcessor = null;
+var audioContext = new AudioContext();
+var bufferSize = 1024;
+var audioData = []; // 録音データ
+var recordingFlg = false;
+
+
+// 音声解析
+var audioAnalyser = null;
+
+
+// 録音バッファ作成（録音中自動で繰り返し呼び出される）
+var onAudioProcess = function(e) {
+ if (!recordingFlg) return;
+
+ // 音声のバッファを作成
+ var input = e.inputBuffer.getChannelData(0);
+ var bufferData = new Float32Array(bufferSize);
+ for (var i = 0; i < bufferSize; i++) {
+ bufferData[i] = input[i];
+ }
+ audioData.push(bufferData);//録音データに追加
+
+ // オーディオデータ取得
+ var fsDivN = audioContext.sampleRate / audioAnalyser.fftSize;
+ var spectrums = new Uint8Array(audioAnalyser.frequencyBinCount);
+ audioAnalyser.getByteFrequencyData(spectrums);
+
+ //...spectrumsというUint8Arrayデータをあとは解析する
+ //例えば、Circular Audio WaveのようなUint8Arrayを扱っているオーディオビジュアライザにわたすとマイクの音声を視覚化できる
+ 
+};
+
+
+
+// 解析開始
+var startRecording = function() {
+ recordingFlg = true;
+ navigator.getUserMedia({audio: true}, function(stream) {
+ // 録音関連
+ localMediaStream = stream;
+ var scriptProcessor = audioContext.createScriptProcessor(bufferSize, 1, 1);
+ localScriptProcessor = scriptProcessor;
+ var mediastreamsource = audioContext.createMediaStreamSource(stream);
+ mediastreamsource.connect(scriptProcessor);
+ scriptProcessor.onaudioprocess = onAudioProcess;
+ scriptProcessor.connect(audioContext.destination);
+
+ // 音声解析関連
+ audioAnalyser = audioContext.createAnalyser();
+ audioAnalyser.fftSize = 2048;
+ frequencyData = new Uint8Array(audioAnalyser.frequencyBinCount);
+ timeDomainData = new Uint8Array(audioAnalyser.frequencyBinCount);
+ mediastreamsource.connect(audioAnalyser);
+
+ },
+ function(e) {
+ console.log(e);
+ });
+};
+
+// 解析終了
+var endRecording = function() {
+ recordingFlg = false;
+
+ //audioDataをサーバに送信するなど終了処理
+};
+
+</script>
