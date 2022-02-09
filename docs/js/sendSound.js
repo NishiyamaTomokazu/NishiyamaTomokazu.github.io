@@ -211,6 +211,7 @@ function sendHRData(){
     sendDataArray[0] = 253;
     sendDataArray[1] = 1;
     sendDataArray[2] = 0;
+
     sendDataArray[3] = 230;
     sendDataArray[4] = 3;
     sendDataArray[5] = 231;
@@ -226,6 +227,7 @@ function sendHRData(){
     sendDataArray[15] = 10;
     sendDataArray[16] = 251;
     sendDataArray[17] = 252;
+    sendDataArray[18] = 0;
     sendDataBySound(sendDataArray);
 }
 function sendHRRun(){
