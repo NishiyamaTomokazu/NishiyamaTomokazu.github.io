@@ -205,7 +205,7 @@ function sendHRConnect(){
     sendDataArray[0] = 253;
     sendDataArray[1] = 3;
     sendDataBySound(sendDataArray);
-    sendDataBySound(sendDataArray);    
+    sendDataBySound(sendDataArray);
 }
 function sendHRData(){
     sendDataArray.fill(0);
@@ -214,21 +214,36 @@ function sendHRData(){
     sendDataArray[2] = 0;
 
     sendDataArray[3] = 230;
-    sendDataArray[4] = 3;
-    sendDataArray[5] = 231;
-    sendDataArray[6] = 130;
-    sendDataArray[7] = 4;
-    sendDataArray[8] = 6;
-    sendDataArray[9] = 131;
-    sendDataArray[10] = 4;
-    sendDataArray[11] = 9;
-    sendDataArray[12] = 132;
-    sendDataArray[13] = 4;
-    sendDataArray[14] = 2;
-    sendDataArray[15] = 10;
-    sendDataArray[16] = 251;
-    sendDataArray[17] = 252;
-    sendDataArray[18] = 0;
+    sendDataArray[4] = 2;
+    sendDataArray[5] = 130;
+    sendDataArray[6] = 1;
+    sendDataArray[7] = 5;
+    sendDataArray[8] = 131;
+    sendDataArray[9] = 1;
+    sendDataArray[10] = 8;
+    sendDataArray[11] = 132;
+    sendDataArray[12] = 1;
+    sendDataArray[13] = 11;
+    sendDataArray[14] = 133;
+    sendDataArray[15] = 1;
+    sendDataArray[16] = 14;
+    sendDataArray[17] = 136;
+    sendDataArray[18] = 1;
+    sendDataBySound(sendDataArray);
+
+    sendDataArray.fill(0);
+    sendDataArray[0] = 253;
+    sendDataArray[1] = 1;
+    sendDataArray[2] = 1;
+
+    sendDataArray[3] = 17;
+    sendDataArray[4] = 135;
+    sendDataArray[5] = 1;
+    sendDataArray[6] = 20;
+    sendDataArray[7] = 231;
+    sendDataArray[8] = 10;
+    sendDataArray[9] = 251;
+    sendDataArray[10] = 252;
     sendDataBySound(sendDataArray);
 }
 function sendHRRun(){
@@ -300,7 +315,7 @@ function outputSoundData(binaryDataArray) {
         element.map(x => {
             //スタートビット
              if((counter % 8) == 0) {
-                 tmp = 20;
+                tmp = 20;
                 while(i++ < tmp){
                     newArray[i] = 0;
                 }
