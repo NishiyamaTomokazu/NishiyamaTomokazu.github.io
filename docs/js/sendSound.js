@@ -215,20 +215,20 @@ function sendHRData(){
 
     sendDataArray[3] = 230;
     sendDataArray[4] = 2;
-    sendDataArray[5] = 130;
-    sendDataArray[6] = 1;
-    sendDataArray[7] = 5;
-    sendDataArray[8] = 131;
-    sendDataArray[9] = 1;
-    sendDataArray[10] = 8;
-    sendDataArray[11] = 132;
-    sendDataArray[12] = 1;
-    sendDataArray[13] = 11;
-    sendDataArray[14] = 133;
-    sendDataArray[15] = 1;
-    sendDataArray[16] = 14;
-    sendDataArray[17] = 136;
-    sendDataArray[18] = 1;
+    sendDataArray[5] = 150;
+    sendDataArray[6] = 10;
+    sendDataArray[7] = 200;
+    sendDataArray[8] = 200;
+    sendDataArray[9] = 7;
+    sendDataArray[10] = 150;
+    sendDataArray[11] = 10;
+    sendDataArray[12] = 0;
+    sendDataArray[13] = 0;
+    sendDataArray[14] = 12;
+    sendDataArray[15] = 182;
+    sendDataArray[16] = 50;
+    sendDataArray[17] = 15;
+    sendDataArray[18] = 130;
     sendDataBySound(sendDataArray);
 }
 
@@ -238,16 +238,50 @@ function sendHRData2(){
     sendDataArray[1] = 1;
     sendDataArray[2] = 1;
 
-    sendDataArray[3] = 17;
-    sendDataArray[4] = 135;
-    sendDataArray[5] = 1;
+    sendDataArray[3] = 2;
+    sendDataArray[4] = 18;
+    sendDataArray[5] = 180;
     sendDataArray[6] = 20;
-    sendDataArray[7] = 231;
-    sendDataArray[8] = 10;
-    sendDataArray[9] = 251;
-    sendDataArray[10] = 252;
+    sendDataArray[7] = 131;
+    sendDataArray[8] = 2;
+    sendDataArray[9] = 23;
+    sendDataArray[10] = 183;
+    sendDataArray[11] = 25;
+    sendDataArray[12] = 132;
+    sendDataArray[13] = 2;
+    sendDataArray[14] = 28;
+    sendDataArray[15] = 184;
+    sendDataArray[16] = 30;
+    sendDataArray[17] = 136;
+    sendDataArray[18] = 2;    
     sendDataBySound(sendDataArray);
 }
+
+function sendHRData3(){
+    sendDataArray.fill(0);
+    sendDataArray[0] = 253;
+    sendDataArray[1] = 1;
+    sendDataArray[2] = 2;
+
+    sendDataArray[3] = 33;
+    sendDataArray[4] = 231;
+    sendDataArray[5] = 10;
+    sendDataArray[6] =251;
+    sendDataArray[7] = 252;
+    sendDataArray[8] = 0;
+    sendDataArray[9] = 0;
+    sendDataArray[10] = 0;
+    sendDataArray[11] = 0;
+    sendDataArray[12] = 0;
+    sendDataArray[13] = 0;
+    sendDataArray[14] = 0;
+    sendDataArray[15] = 0;
+    sendDataArray[16] = 0;
+    sendDataArray[17] = 0;
+    sendDataArray[18] = 0;
+    sendDataBySound(sendDataArray);
+}
+
 function sendHRRun(){
     sendDataArray.fill(0);
     sendDataArray[0] = 253;
