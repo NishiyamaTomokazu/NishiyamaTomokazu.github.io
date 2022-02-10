@@ -272,6 +272,144 @@ function sendHRData3(){
     sendDataBySound(sendDataArray);
 }
 
+
+////////////////////////////////////////
+function SDA1(){
+    sendDataArray.fill(0);
+    sendDataArray[0] = 253;
+    sendDataArray[1] = 1;
+    sendDataArray[2] = ;
+
+    sendDataBySound(sendDataArray);
+}
+function SDA2(){
+    sendDataArray.fill(0);
+    sendDataArray[0] = 253;
+    sendDataArray[1] = 1;
+    sendDataArray[2] = ;
+
+    sendDataBySound(sendDataArray);
+}
+function SDA3(){
+    sendDataArray.fill(0);
+    sendDataArray[0] = 253;
+    sendDataArray[1] = 1;
+    sendDataArray[2] = ;
+
+    sendDataBySound(sendDataArray);
+}
+function SDA4(){
+    sendDataArray.fill(0);
+    sendDataArray[0] = 253;
+    sendDataArray[1] = 1;
+    sendDataArray[2] = ;
+
+    sendDataBySound(sendDataArray);
+}
+function SDA5(){
+    sendDataArray.fill(0);
+    sendDataArray[0] = 253;
+    sendDataArray[1] = 1;
+    sendDataArray[2] = ;
+
+    sendDataBySound(sendDataArray);
+}
+function SDA6(){
+    sendDataArray.fill(0);
+    sendDataArray[0] = 253;
+    sendDataArray[1] = 1;
+    sendDataArray[2] = ;
+
+    sendDataBySound(sendDataArray);
+}
+function SDA7(){
+    sendDataArray.fill(0);
+    sendDataArray[0] = 253;
+    sendDataArray[1] = 1;
+    sendDataArray[2] = ;
+
+    sendDataBySound(sendDataArray);
+}
+function SDA8(){
+    sendDataArray.fill(0);
+    sendDataArray[0] = 253;
+    sendDataArray[1] = 1;
+    sendDataArray[2] = ;
+
+    sendDataBySound(sendDataArray);
+}
+function SDA9(){
+    sendDataArray.fill(0);
+    sendDataArray[0] = 253;
+    sendDataArray[1] = 1;
+    sendDataArray[2] = ;
+
+    sendDataBySound(sendDataArray);
+}
+function SDA10(){
+    sendDataArray.fill(0);
+    sendDataArray[0] = 253;
+    sendDataArray[1] = 1;
+    sendDataArray[2] = ;
+
+    sendDataBySound(sendDataArray);
+}
+function SDA11(){
+    sendDataArray.fill(0);
+    sendDataArray[0] = 253;
+    sendDataArray[1] = 1;
+    sendDataArray[2] = ;
+
+    sendDataBySound(sendDataArray);
+}
+function SDA12(){
+    sendDataArray.fill(0);
+    sendDataArray[0] = 253;
+    sendDataArray[1] = 1;
+    sendDataArray[2] = ;
+
+    sendDataBySound(sendDataArray);
+}
+function SDA13(){
+    sendDataArray.fill(0);
+    sendDataArray[0] = 253;
+    sendDataArray[1] = 1;
+    sendDataArray[2] = ;
+
+    sendDataBySound(sendDataArray);
+}
+function SDA14(){
+    sendDataArray.fill(0);
+    sendDataArray[0] = 253;
+    sendDataArray[1] = 1;
+    sendDataArray[2] = ;
+
+    sendDataBySound(sendDataArray);
+}
+function SDA15(){
+    sendDataArray.fill(0);
+    sendDataArray[0] = 253;
+    sendDataArray[1] = 1;
+    sendDataArray[2] = ;
+
+    sendDataBySound(sendDataArray);
+}
+function SDA16(){
+    sendDataArray.fill(0);
+    sendDataArray[0] = 253;
+    sendDataArray[1] = 1;
+    sendDataArray[2] = ;
+
+    sendDataBySound(sendDataArray);
+}
+
+////////////////////////////////////////////////////
+
+
+
+
+
+
 function sendHRRun(){
     sendDataArray.fill(0);
     sendDataArray[0] = 253;
