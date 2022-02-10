@@ -298,6 +298,7 @@ function SDA3(){
     sendDataArray[1] = 1;
     sendDataArray[2] = 2;
 
+    console.log(sendDataArray);
     sendDataBySound(sendDataArray);
 }
 function SDA4(){
@@ -306,6 +307,7 @@ function SDA4(){
     sendDataArray[1] = 1;
     sendDataArray[2] = 3;
 
+    console.log(sendDataArray);
     sendDataBySound(sendDataArray);
 }
 function SDA5(){
@@ -314,6 +316,8 @@ function SDA5(){
     sendDataArray[1] = 1;
     sendDataArray[2] = 4;
 
+    
+    console.log(sendDataArray);
     sendDataBySound(sendDataArray);
 }
 function SDA6(){
@@ -322,6 +326,7 @@ function SDA6(){
     sendDataArray[1] = 1;
     sendDataArray[2] = 5;
 
+    console.log(sendDataArray);
     sendDataBySound(sendDataArray);
 }
 function SDA7(){
@@ -330,6 +335,7 @@ function SDA7(){
     sendDataArray[1] = 1;
     sendDataArray[2] = 6;
 
+    console.log(sendDataArray);
     sendDataBySound(sendDataArray);
 }
 function SDA8(){
@@ -338,6 +344,7 @@ function SDA8(){
     sendDataArray[1] = 1;
     sendDataArray[2] = 7;
 
+    console.log(sendDataArray);
     sendDataBySound(sendDataArray);
 }
 function SDA9(){
@@ -346,6 +353,7 @@ function SDA9(){
     sendDataArray[1] = 1;
     sendDataArray[2] = 8;
 
+    console.log(sendDataArray);
     sendDataBySound(sendDataArray);
 }
 function SDA10(){
@@ -354,6 +362,7 @@ function SDA10(){
     sendDataArray[1] = 1;
     sendDataArray[2] = 9;
 
+    console.log(sendDataArray);
     sendDataBySound(sendDataArray);
 }
 function SDA11(){
@@ -362,6 +371,7 @@ function SDA11(){
     sendDataArray[1] = 1;
     sendDataArray[2] = 10;
 
+    console.log(sendDataArray);
     sendDataBySound(sendDataArray);
 }
 function SDA12(){
@@ -370,6 +380,7 @@ function SDA12(){
     sendDataArray[1] = 1;
     sendDataArray[2] = 11;
 
+    console.log(sendDataArray);
     sendDataBySound(sendDataArray);
 }
 function SDA13(){
@@ -378,6 +389,7 @@ function SDA13(){
     sendDataArray[1] = 1;
     sendDataArray[2] = 12;
 
+    console.log(sendDataArray);
     sendDataBySound(sendDataArray);
 }
 function SDA14(){
@@ -386,6 +398,7 @@ function SDA14(){
     sendDataArray[1] = 1;
     sendDataArray[2] = 13;
 
+    console.log(sendDataArray);
     sendDataBySound(sendDataArray);
 }
 function SDA15(){
@@ -394,6 +407,7 @@ function SDA15(){
     sendDataArray[1] = 1;
     sendDataArray[2] = 14;
 
+    console.log(sendDataArray);
     sendDataBySound(sendDataArray);
 }
 function SDA16(){
@@ -402,6 +416,7 @@ function SDA16(){
     sendDataArray[1] = 1;
     sendDataArray[2] = 15;
 
+    console.log(sendDataArray);
     sendDataBySound(sendDataArray);
 }
 
