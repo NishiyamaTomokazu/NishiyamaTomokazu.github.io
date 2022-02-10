@@ -280,6 +280,7 @@ function SDA1(){
     sendDataArray[1] = 1;
     sendDataArray[2] = 0;
 
+    console.log(sendDataArray);
     sendDataBySound(sendDataArray);
 }
 function SDA2(){
@@ -288,6 +289,7 @@ function SDA2(){
     sendDataArray[1] = 1;
     sendDataArray[2] = 1;
 
+    console.log(sendDataArray);
     sendDataBySound(sendDataArray);
 }
 function SDA3(){
