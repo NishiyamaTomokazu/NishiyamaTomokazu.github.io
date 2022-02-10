@@ -205,7 +205,7 @@ function sendHRConnect(){
     sendDataArray[0] = 253;
     sendDataArray[1] = 3;
     sendDataBySound(sendDataArray);
-    sendDataBySound(sendDataArray);
+    //sendDataBySound(sendDataArray);
 }
 function sendHRData(){
     sendDataArray.fill(0);
