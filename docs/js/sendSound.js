@@ -230,7 +230,9 @@ function sendHRData(){
     sendDataArray[17] = 136;
     sendDataArray[18] = 1;
     sendDataBySound(sendDataArray);
+}
 
+function sendHRData2(){
     sendDataArray.fill(0);
     sendDataArray[0] = 253;
     sendDataArray[1] = 1;
