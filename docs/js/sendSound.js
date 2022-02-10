@@ -225,10 +225,10 @@ function sendHRData(){
     sendDataArray[12] = 0;
     sendDataArray[13] = 0;
     sendDataArray[14] = 12;
-    sendDataArray[15] = 182;
-    sendDataArray[16] = 50;
-    sendDataArray[17] = 15;
-    sendDataArray[18] = 130;
+    sendDataArray[15] = 180;
+    sendDataArray[16] = 14;
+    sendDataArray[17] = 130;
+    sendDataArray[18] = 4;
     sendDataBySound(sendDataArray);
 }
 
@@ -238,22 +238,22 @@ function sendHRData2(){
     sendDataArray[1] = 1;
     sendDataArray[2] = 1;
 
-    sendDataArray[3] = 2;
-    sendDataArray[4] = 18;
-    sendDataArray[5] = 180;
+    sendDataArray[3] = 17;
+    sendDataArray[4] = 182;
+    sendDataArray[5] = 50;
     sendDataArray[6] = 20;
     sendDataArray[7] = 131;
-    sendDataArray[8] = 2;
+    sendDataArray[8] = 4;
     sendDataArray[9] = 23;
     sendDataArray[10] = 183;
     sendDataArray[11] = 25;
     sendDataArray[12] = 132;
-    sendDataArray[13] = 2;
+    sendDataArray[13] = 4;
     sendDataArray[14] = 28;
     sendDataArray[15] = 184;
     sendDataArray[16] = 30;
     sendDataArray[17] = 136;
-    sendDataArray[18] = 2;    
+    sendDataArray[18] = 4;
     sendDataBySound(sendDataArray);
 }
 
@@ -268,17 +268,7 @@ function sendHRData3(){
     sendDataArray[5] = 10;
     sendDataArray[6] =251;
     sendDataArray[7] = 252;
-    sendDataArray[8] = 0;
-    sendDataArray[9] = 0;
-    sendDataArray[10] = 0;
-    sendDataArray[11] = 0;
-    sendDataArray[12] = 0;
-    sendDataArray[13] = 0;
-    sendDataArray[14] = 0;
-    sendDataArray[15] = 0;
-    sendDataArray[16] = 0;
-    sendDataArray[17] = 0;
-    sendDataArray[18] = 0;
+
     sendDataBySound(sendDataArray);
 }
 
