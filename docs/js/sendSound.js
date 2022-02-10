@@ -278,127 +278,127 @@ function SDA1(){
     sendDataArray.fill(0);
     sendDataArray[0] = 253;
     sendDataArray[1] = 1;
-    sendDataArray[2] = ;
+    sendDataArray[2] = 0;
 
     sendDataBySound(sendDataArray);
 }
 function SDA2(){
-    sendDataArray.fill(0);
+    sendDataArray.fill(1);
     sendDataArray[0] = 253;
     sendDataArray[1] = 1;
-    sendDataArray[2] = ;
+    sendDataArray[2] = 1;
 
     sendDataBySound(sendDataArray);
 }
 function SDA3(){
-    sendDataArray.fill(0);
+    sendDataArray.fill(2);
     sendDataArray[0] = 253;
     sendDataArray[1] = 1;
-    sendDataArray[2] = ;
+    sendDataArray[2] = 2;
 
     sendDataBySound(sendDataArray);
 }
 function SDA4(){
-    sendDataArray.fill(0);
+    sendDataArray.fill(3);
     sendDataArray[0] = 253;
     sendDataArray[1] = 1;
-    sendDataArray[2] = ;
+    sendDataArray[2] = 3;
 
     sendDataBySound(sendDataArray);
 }
 function SDA5(){
-    sendDataArray.fill(0);
+    sendDataArray.fill(4);
     sendDataArray[0] = 253;
     sendDataArray[1] = 1;
-    sendDataArray[2] = ;
+    sendDataArray[2] = 4;
 
     sendDataBySound(sendDataArray);
 }
 function SDA6(){
-    sendDataArray.fill(0);
+    sendDataArray.fill(5);
     sendDataArray[0] = 253;
     sendDataArray[1] = 1;
-    sendDataArray[2] = ;
+    sendDataArray[2] = 5;
 
     sendDataBySound(sendDataArray);
 }
 function SDA7(){
-    sendDataArray.fill(0);
+    sendDataArray.fill(6);
     sendDataArray[0] = 253;
     sendDataArray[1] = 1;
-    sendDataArray[2] = ;
+    sendDataArray[2] = 6;
 
     sendDataBySound(sendDataArray);
 }
 function SDA8(){
-    sendDataArray.fill(0);
+    sendDataArray.fill(7);
     sendDataArray[0] = 253;
     sendDataArray[1] = 1;
-    sendDataArray[2] = ;
+    sendDataArray[2] = 7;
 
     sendDataBySound(sendDataArray);
 }
 function SDA9(){
-    sendDataArray.fill(0);
+    sendDataArray.fill(8);
     sendDataArray[0] = 253;
     sendDataArray[1] = 1;
-    sendDataArray[2] = ;
+    sendDataArray[2] = 8;
 
     sendDataBySound(sendDataArray);
 }
 function SDA10(){
-    sendDataArray.fill(0);
+    sendDataArray.fill(9);
     sendDataArray[0] = 253;
     sendDataArray[1] = 1;
-    sendDataArray[2] = ;
+    sendDataArray[2] = 9;
 
     sendDataBySound(sendDataArray);
 }
 function SDA11(){
-    sendDataArray.fill(0);
+    sendDataArray.fill(10);
     sendDataArray[0] = 253;
     sendDataArray[1] = 1;
-    sendDataArray[2] = ;
+    sendDataArray[2] = 10;
 
     sendDataBySound(sendDataArray);
 }
 function SDA12(){
-    sendDataArray.fill(0);
+    sendDataArray.fill(11);
     sendDataArray[0] = 253;
     sendDataArray[1] = 1;
-    sendDataArray[2] = ;
+    sendDataArray[2] = 11;
 
     sendDataBySound(sendDataArray);
 }
 function SDA13(){
-    sendDataArray.fill(0);
+    sendDataArray.fill(12);
     sendDataArray[0] = 253;
     sendDataArray[1] = 1;
-    sendDataArray[2] = ;
+    sendDataArray[2] = 12;
 
     sendDataBySound(sendDataArray);
 }
 function SDA14(){
-    sendDataArray.fill(0);
+    sendDataArray.fill(13);
     sendDataArray[0] = 253;
     sendDataArray[1] = 1;
-    sendDataArray[2] = ;
+    sendDataArray[2] = 13;
 
     sendDataBySound(sendDataArray);
 }
 function SDA15(){
-    sendDataArray.fill(0);
+    sendDataArray.fill(14);
     sendDataArray[0] = 253;
     sendDataArray[1] = 1;
-    sendDataArray[2] = ;
+    sendDataArray[2] = 14;
 
     sendDataBySound(sendDataArray);
 }
 function SDA16(){
-    sendDataArray.fill(0);
+    sendDataArray.fill(15);
     sendDataArray[0] = 253;
     sendDataArray[1] = 1;
-    sendDataArray[2] = ;
+    sendDataArray[2] = 15;
 
     sendDataBySound(sendDataArray);
 }
