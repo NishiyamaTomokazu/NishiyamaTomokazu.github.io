@@ -280,6 +280,22 @@ function SDA1(){
     sendDataArray[1] = 1;
     sendDataArray[2] = 0;
 
+    sendDataArray[3] = 230;
+    sendDataArray[4] = 2;
+    sendDataArray[5] = 130;
+    sendDataArray[6] = 4;
+    sendDataArray[7] = 5;
+    sendDataArray[8] = 131;
+    sendDataArray[9] = 4;
+    sendDataArray[10] = 8;
+    sendDataArray[11] = 132;
+    sendDataArray[12] = 4;
+    sendDataArray[13] = 11;
+    sendDataArray[14] = 231;
+    sendDataArray[15] = 250;
+    sendDataArray[16] = 10;
+    sendDataArray[17] = 251;
+    sendDataArray[18] = 252;
     console.log(sendDataArray);
     sendDataBySound(sendDataArray);
 }
