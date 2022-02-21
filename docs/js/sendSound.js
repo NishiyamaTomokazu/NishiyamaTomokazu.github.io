@@ -314,6 +314,23 @@ function SDA3(){
     sendDataArray[1] = 1;
     sendDataArray[2] = 2;
 
+    sendDataArray[3] = 230;
+    sendDataArray[4] = 2;
+    sendDataArray[5] = 130;
+    sendDataArray[6] = 1;
+    sendDataArray[7] = 5;
+    sendDataArray[8] = 131;
+    sendDataArray[9] = 1;
+    sendDataArray[10] = 8;
+    sendDataArray[11] = 231;
+    sendDataArray[12] = 10;
+    sendDataArray[13] = 251;
+    sendDataArray[14] = 252;
+    sendDataArray[15] = 255;
+    sendDataArray[16] = 255;
+    sendDataArray[17] = 255;
+    sendDataArray[18] = 255;
+
     console.log(sendDataArray);
     sendDataBySound(sendDataArray);
 }
