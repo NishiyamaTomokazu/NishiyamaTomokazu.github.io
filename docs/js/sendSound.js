@@ -280,7 +280,7 @@ function SDA1(){
     sendDataArray[1] = 1;
     sendDataArray[2] = 0;
 
-    sendDataArray[3] = 230;
+/*     sendDataArray[3] = 230;
     sendDataArray[4] = 3;
     sendDataArray[5] = 231;
     sendDataArray[6] = 130;
@@ -295,7 +295,7 @@ function SDA1(){
     sendDataArray[15] = 251;
     sendDataArray[16] = 252;
     sendDataArray[17] = 255;
-    sendDataArray[18] = 255;
+    sendDataArray[18] = 255; */
     console.log(sendDataArray);
     sendDataBySound(sendDataArray);
 }
@@ -314,7 +314,7 @@ function SDA3(){
     sendDataArray[1] = 1;
     sendDataArray[2] = 2;
 
-    sendDataArray[3] = 230;
+/*     sendDataArray[3] = 230;
     sendDataArray[4] = 2;
     sendDataArray[5] = 130;
     sendDataArray[6] = 1;
@@ -329,7 +329,7 @@ function SDA3(){
     sendDataArray[15] = 255;
     sendDataArray[16] = 255;
     sendDataArray[17] = 255;
-    sendDataArray[18] = 255;
+    sendDataArray[18] = 255; */
 
     console.log(sendDataArray);
     sendDataBySound(sendDataArray);
