@@ -340,6 +340,23 @@ function SDA4(){
     sendDataArray[1] = 1;
     sendDataArray[2] = 3;
 
+    sendDataArray[3] = 255;
+    sendDataArray[4] = 255;
+    sendDataArray[5] = 255;
+    sendDataArray[6] = 255;
+    sendDataArray[7] = 255;
+    sendDataArray[8] = 255;
+    sendDataArray[9] = 255;
+    sendDataArray[10] = 255;
+    sendDataArray[11] = 255;
+    sendDataArray[12] = 255;
+    sendDataArray[13] = 255;
+    sendDataArray[14] = 255;
+    sendDataArray[15] = 255;
+    sendDataArray[16] = 255;
+    sendDataArray[17] = 255;
+    sendDataArray[18] = 255;
+
     console.log(sendDataArray);
     sendDataBySound(sendDataArray);
 }
@@ -348,6 +365,23 @@ function SDA5(){
     sendDataArray[0] = 253;
     sendDataArray[1] = 1;
     sendDataArray[2] = 4;
+
+    sendDataArray[3] = 255;
+    sendDataArray[4] = 255;
+    sendDataArray[5] = 255;
+    sendDataArray[6] = 255;
+    sendDataArray[7] = 255;
+    sendDataArray[8] = 255;
+    sendDataArray[9] = 255;
+    sendDataArray[10] = 255;
+    sendDataArray[11] = 255;
+    sendDataArray[12] = 255;
+    sendDataArray[13] = 255;
+    sendDataArray[14] = 255;
+    sendDataArray[15] = 255;
+    sendDataArray[16] = 255;
+    sendDataArray[17] = 255;
+    sendDataArray[18] = 255;
 
     
     console.log(sendDataArray);
@@ -359,6 +393,23 @@ function SDA6(){
     sendDataArray[1] = 1;
     sendDataArray[2] = 5;
 
+    sendDataArray[3] = 255;
+    sendDataArray[4] = 255;
+    sendDataArray[5] = 255;
+    sendDataArray[6] = 255;
+    sendDataArray[7] = 255;
+    sendDataArray[8] = 255;
+    sendDataArray[9] = 255;
+    sendDataArray[10] = 255;
+    sendDataArray[11] = 255;
+    sendDataArray[12] = 255;
+    sendDataArray[13] = 255;
+    sendDataArray[14] = 255;
+    sendDataArray[15] = 255;
+    sendDataArray[16] = 255;
+    sendDataArray[17] = 255;
+    sendDataArray[18] = 255;
+
     console.log(sendDataArray);
     sendDataBySound(sendDataArray);
 }
@@ -367,6 +418,23 @@ function SDA7(){
     sendDataArray[0] = 253;
     sendDataArray[1] = 1;
     sendDataArray[2] = 6;
+
+    sendDataArray[3] = 255;
+    sendDataArray[4] = 255;
+    sendDataArray[5] = 255;
+    sendDataArray[6] = 255;
+    sendDataArray[7] = 255;
+    sendDataArray[8] = 255;
+    sendDataArray[9] = 255;
+    sendDataArray[10] = 255;
+    sendDataArray[11] = 255;
+    sendDataArray[12] = 255;
+    sendDataArray[13] = 255;
+    sendDataArray[14] = 255;
+    sendDataArray[15] = 255;
+    sendDataArray[16] = 255;
+    sendDataArray[17] = 255;
+    sendDataArray[18] = 255;
 
     console.log(sendDataArray);
     sendDataBySound(sendDataArray);
@@ -377,6 +445,23 @@ function SDA8(){
     sendDataArray[1] = 1;
     sendDataArray[2] = 7;
 
+    sendDataArray[3] = 255;
+    sendDataArray[4] = 255;
+    sendDataArray[5] = 255;
+    sendDataArray[6] = 255;
+    sendDataArray[7] = 255;
+    sendDataArray[8] = 255;
+    sendDataArray[9] = 255;
+    sendDataArray[10] = 255;
+    sendDataArray[11] = 255;
+    sendDataArray[12] = 255;
+    sendDataArray[13] = 255;
+    sendDataArray[14] = 255;
+    sendDataArray[15] = 255;
+    sendDataArray[16] = 255;
+    sendDataArray[17] = 255;
+    sendDataArray[18] = 255;
+
     console.log(sendDataArray);
     sendDataBySound(sendDataArray);
 }
@@ -385,6 +470,23 @@ function SDA9(){
     sendDataArray[0] = 253;
     sendDataArray[1] = 1;
     sendDataArray[2] = 8;
+
+    sendDataArray[3] = 255;
+    sendDataArray[4] = 255;
+    sendDataArray[5] = 255;
+    sendDataArray[6] = 255;
+    sendDataArray[7] = 255;
+    sendDataArray[8] = 255;
+    sendDataArray[9] = 255;
+    sendDataArray[10] = 255;
+    sendDataArray[11] = 255;
+    sendDataArray[12] = 255;
+    sendDataArray[13] = 255;
+    sendDataArray[14] = 255;
+    sendDataArray[15] = 255;
+    sendDataArray[16] = 255;
+    sendDataArray[17] = 255;
+    sendDataArray[18] = 255;
 
     console.log(sendDataArray);
     sendDataBySound(sendDataArray);
@@ -395,6 +497,23 @@ function SDA10(){
     sendDataArray[1] = 1;
     sendDataArray[2] = 9;
 
+    sendDataArray[3] = 255;
+    sendDataArray[4] = 255;
+    sendDataArray[5] = 255;
+    sendDataArray[6] = 255;
+    sendDataArray[7] = 255;
+    sendDataArray[8] = 255;
+    sendDataArray[9] = 255;
+    sendDataArray[10] = 255;
+    sendDataArray[11] = 255;
+    sendDataArray[12] = 255;
+    sendDataArray[13] = 255;
+    sendDataArray[14] = 255;
+    sendDataArray[15] = 255;
+    sendDataArray[16] = 255;
+    sendDataArray[17] = 255;
+    sendDataArray[18] = 255;
+
     console.log(sendDataArray);
     sendDataBySound(sendDataArray);
 }
@@ -403,6 +522,23 @@ function SDA11(){
     sendDataArray[0] = 253;
     sendDataArray[1] = 1;
     sendDataArray[2] = 10;
+
+    sendDataArray[3] = 255;
+    sendDataArray[4] = 255;
+    sendDataArray[5] = 255;
+    sendDataArray[6] = 255;
+    sendDataArray[7] = 255;
+    sendDataArray[8] = 255;
+    sendDataArray[9] = 255;
+    sendDataArray[10] = 255;
+    sendDataArray[11] = 255;
+    sendDataArray[12] = 255;
+    sendDataArray[13] = 255;
+    sendDataArray[14] = 255;
+    sendDataArray[15] = 255;
+    sendDataArray[16] = 255;
+    sendDataArray[17] = 255;
+    sendDataArray[18] = 255;
 
     console.log(sendDataArray);
     sendDataBySound(sendDataArray);
@@ -413,6 +549,23 @@ function SDA12(){
     sendDataArray[1] = 1;
     sendDataArray[2] = 11;
 
+    sendDataArray[3] = 255;
+    sendDataArray[4] = 255;
+    sendDataArray[5] = 255;
+    sendDataArray[6] = 255;
+    sendDataArray[7] = 255;
+    sendDataArray[8] = 255;
+    sendDataArray[9] = 255;
+    sendDataArray[10] = 255;
+    sendDataArray[11] = 255;
+    sendDataArray[12] = 255;
+    sendDataArray[13] = 255;
+    sendDataArray[14] = 255;
+    sendDataArray[15] = 255;
+    sendDataArray[16] = 255;
+    sendDataArray[17] = 255;
+    sendDataArray[18] = 255;
+
     console.log(sendDataArray);
     sendDataBySound(sendDataArray);
 }
@@ -421,6 +574,23 @@ function SDA13(){
     sendDataArray[0] = 253;
     sendDataArray[1] = 1;
     sendDataArray[2] = 12;
+
+    sendDataArray[3] = 255;
+    sendDataArray[4] = 255;
+    sendDataArray[5] = 255;
+    sendDataArray[6] = 255;
+    sendDataArray[7] = 255;
+    sendDataArray[8] = 255;
+    sendDataArray[9] = 255;
+    sendDataArray[10] = 255;
+    sendDataArray[11] = 255;
+    sendDataArray[12] = 255;
+    sendDataArray[13] = 255;
+    sendDataArray[14] = 255;
+    sendDataArray[15] = 255;
+    sendDataArray[16] = 255;
+    sendDataArray[17] = 255;
+    sendDataArray[18] = 255;
 
     console.log(sendDataArray);
     sendDataBySound(sendDataArray);
@@ -431,6 +601,23 @@ function SDA14(){
     sendDataArray[1] = 1;
     sendDataArray[2] = 13;
 
+    sendDataArray[3] = 255;
+    sendDataArray[4] = 255;
+    sendDataArray[5] = 255;
+    sendDataArray[6] = 255;
+    sendDataArray[7] = 255;
+    sendDataArray[8] = 255;
+    sendDataArray[9] = 255;
+    sendDataArray[10] = 255;
+    sendDataArray[11] = 255;
+    sendDataArray[12] = 255;
+    sendDataArray[13] = 255;
+    sendDataArray[14] = 255;
+    sendDataArray[15] = 255;
+    sendDataArray[16] = 255;
+    sendDataArray[17] = 255;
+    sendDataArray[18] = 255;
+
     console.log(sendDataArray);
     sendDataBySound(sendDataArray);
 }
@@ -440,6 +627,23 @@ function SDA15(){
     sendDataArray[1] = 1;
     sendDataArray[2] = 14;
 
+    sendDataArray[3] = 255;
+    sendDataArray[4] = 255;
+    sendDataArray[5] = 255;
+    sendDataArray[6] = 255;
+    sendDataArray[7] = 255;
+    sendDataArray[8] = 255;
+    sendDataArray[9] = 255;
+    sendDataArray[10] = 255;
+    sendDataArray[11] = 255;
+    sendDataArray[12] = 255;
+    sendDataArray[13] = 255;
+    sendDataArray[14] = 255;
+    sendDataArray[15] = 255;
+    sendDataArray[16] = 255;
+    sendDataArray[17] = 255;
+    sendDataArray[18] = 255;
+
     console.log(sendDataArray);
     sendDataBySound(sendDataArray);
 }
@@ -448,6 +652,23 @@ function SDA16(){
     sendDataArray[0] = 253;
     sendDataArray[1] = 1;
     sendDataArray[2] = 15;
+
+    sendDataArray[3] = 255;
+    sendDataArray[4] = 255;
+    sendDataArray[5] = 255;
+    sendDataArray[6] = 255;
+    sendDataArray[7] = 255;
+    sendDataArray[8] = 255;
+    sendDataArray[9] = 255;
+    sendDataArray[10] = 255;
+    sendDataArray[11] = 255;
+    sendDataArray[12] = 255;
+    sendDataArray[13] = 255;
+    sendDataArray[14] = 255;
+    sendDataArray[15] = 255;
+    sendDataArray[16] = 255;
+    sendDataArray[17] = 255;
+    sendDataArray[18] = 255;
 
     console.log(sendDataArray);
     sendDataBySound(sendDataArray);
