@@ -36,7 +36,7 @@ function download() {
     // ダウンロード可能なa要素を作成する
     let link = document.createElement('a');
     link.href = url;
-    link.download = 'test.txt';
+    link.download = 'test1.txt';
     // 要素の追加
     document.body.appendChild(link);
 
