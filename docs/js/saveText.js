@@ -22,3 +22,15 @@ function saveTextAsFile(){
 function destroyClickedElement(event){
     document.body.removeChild(event.target);
 }
+
+function download(){
+    const text.getElementById('textarea').value;
+    let blobedText = new Blob([text], {type: 'text/plain'});
+    let url = URL.createObjectURL(blobedText);
+    let link = document.createElement('a');
+    link.href = url;
+    link.download = "ダウンロード時のファイル名"
+    document.body.appendChild(link);
+    link.click();
+    link.parentNode.removeChild(link);
+}
