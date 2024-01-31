@@ -8,7 +8,7 @@
 <body>
 <h1>iPad-HRテスト</h1>
 
-<textarea id="textarea">sample!!</textarea>
+<textarea id="textarea">ここに数字を入れる</textarea>
 
 <!-- クッリクした際に、テキストエリア内の文字列をダウンロードさせたい -->
 <a href='javascript:download()' id="edit-btn">ダウンロード</a>
@@ -27,7 +27,7 @@
         // ダウンロード可能なa要素を作成する
         let link = document.createElement('a');
         link.href = url;
-        link.download = 'ダウンロード時のファイル名(例えば、sample.txt)';
+        link.download = 'test.txt';
         // 要素の追加
         document.body.appendChild(link);
 
