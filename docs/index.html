@@ -1,35 +1,64 @@
 <!DOCTYPE html>
 <html lang="ja">
 <head>
-    <meta charset="UTF-8">
-    <title>音声再生テスト</title>
-    <script src="js/saveText.js"></script>
+  <meta charset="UTF-8">
+  <title>キャンバス点滅</title>
+  <style>
+    body {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      height: 100vh;
+      background-color: #f0f0f0;
+      font-family: sans-serif;
+    }
+    canvas {
+      border: 1px solid #000;
+      background-color: white;
+    }
+    button {
+      margin-top: 20px;
+      padding: 8px 16px;
+      font-size: 16px;
+      cursor: pointer;
+    }
+  </style>
 </head>
 <body>
-<!--
-<h1>iPad-HRテスト</h1>
+  <canvas id="blinkCanvas" width="100" height="100"></canvas>
+  <button id="startButton">スタート</button>
 
-<textarea id="textarea">ここに数字を入れる</textarea>
-<br>
-<a href='javascript:download()' id="edit-btn">ダウンロード</a>
--->
-<h1>iPad音声送信テスト</h1>
-<button onclick="SDA1()">No1</button><br><br>
-<!--
-<textarea id="textarea">sample!</textarea>
-<button onclick="download()">ダウンロード</button>
--->
+  <script>
+    const canvas = document.getElementById('blinkCanvas');
+    const ctx = canvas.getContext('2d');
+    const button = document.getElementById('startButton');
 
-<!--
-<button onclick="SDA1()">No1</button><br><br>
-<button onclick="SDA2()">No2</button><br><br>
-<button onclick="SDA3()">No3</button><br><br>
-<button onclick="SDA4()">No4</button><br><br>
-<button onclick="SDA5()">No5</button><br><br>
+    let intervalId = null;
 
+    function drawBackground(color) {
+      ctx.fillStyle = color;
+      ctx.fillRect(0, 0, canvas.width, canvas.height);
+    }
 
-<script src="./js/sendSound.js"></script>
--->
-</script>
+    button.addEventListener('click', () => {
+      if (intervalId !== null) return; // 二重起動防止
+
+      let count = 0;
+      let isWhite = true;
+      drawBackground('white');
+
+      intervalId = setInterval(() => {
+        isWhite = !isWhite;
+        drawBackground(isWhite ? 'white' : 'black');
+        count++;
+
+        if (count >= 100) {
+          clearInterval(intervalId);
+          intervalId = null;
+        }
+      }, 10); // 0.1秒ごと（100ミリ秒）
+    });
+  </script>
 </body>
 </html>
