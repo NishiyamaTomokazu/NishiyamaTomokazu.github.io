@@ -1,64 +1,382 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="ja">
 <head>
-  <meta charset="UTF-8">
-  <title>キャンバス点滅</title>
-  <style>
-    body {
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      justify-content: center;
-      height: 100vh;
-      background-color: #f0f0f0;
-      font-family: sans-serif;
-    }
-    canvas {
-      border: 1px solid #000;
-      background-color: white;
-    }
-    button {
-      margin-top: 20px;
-      padding: 8px 16px;
-      font-size: 16px;
-      cursor: pointer;
-    }
-  </style>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>FSK 1200/2400Hz (300bps) Demodulator - Calibrated (iPad Safari)</title>
+<style>
+  body { font-family: system-ui, -apple-system, "Helvetica Neue", Arial; padding:16px; color:#111; }
+  h1 { font-size:18px; margin:0 0 8px; }
+  .controls { display:flex; gap:8px; flex-wrap:wrap; margin-bottom:12px; }
+  button { padding:8px 12px; border-radius:8px; border:1px solid #888; background:#f8f8f8; }
+  label { display:block; font-size:13px; margin-top:6px; }
+  input[type="range"] { width:200px; }
+  textarea { width:100%; height:140px; font-family:monospace; font-size:13px; padding:8px; }
+  .small { font-size:12px; color:#444; }
+  .status { margin-top:8px; font-size:13px; }
+</style>
 </head>
 <body>
-  <canvas id="blinkCanvas" width="100" height="100"></canvas>
-  <button id="startButton">スタート</button>
+  <h1>FSK demodulator — 1200/2400Hz @300bps (iPad Safari) — Calibrated</h1>
 
-  <script>
-    const canvas = document.getElementById('blinkCanvas');
-    const ctx = canvas.getContext('2d');
-    const button = document.getElementById('startButton');
+  <div class="controls">
+    <button id="startBtn">Start (マイク許可)</button>
+    <button id="stopBtn" disabled>Stop</button>
+    <button id="autoCalBtn" disabled>Auto Calibrate (0.6s)</button>
+    <button id="clearBtn">Clear Output</button>
+  </div>
 
-    let intervalId = null;
+  <div>
+    <label>Threshold (time-domain) <span id="thVal">0.01</span></label>
+    <input id="th" type="range" min="0.001" max="0.3" step="0.001" value="0.01">
+    <div class="small">（Auto Calibrate を使うとこの値が推定されます）</div>
+  </div>
 
-    function drawBackground(color) {
-      ctx.fillStyle = color;
-      ctx.fillRect(0, 0, canvas.width, canvas.height);
+  <div>
+    <label>Buffer ms (analysis window) <span id="bufMsVal">30</span> ms</label>
+    <input id="bufMs" type="range" min="8" max="120" step="2" value="30">
+  </div>
+
+  <div class="status">
+    <div>Sample rate: <span id="sr">--</span> Hz</div>
+    <div>Baud: <strong>300</strong> &nbsp; Bit samples (approx): <span id="bitSamples">--</span></div>
+    <div>Receiving: <span id="receiving">no</span></div>
+    <div id="calibInfo" class="small"></div>
+  </div>
+
+  <h2>Decoded bytes (hex)</h2>
+  <textarea id="hexOut" readonly placeholder="Decoded bytes will appear here (e.g. 7E 7E 01 AB ...)"></textarea>
+
+  <h2 class="small">Log</h2>
+  <div id="log" class="small" style="max-height:120px; overflow:auto; border:1px solid #eee; padding:8px; background:#fafafa;"></div>
+
+<script>
+(async function(){
+  const MARK = 2400; // '1'
+  const SPACE = 1200; // '0'
+  const BAUD = 300;
+
+  let audioCtx = null, micStream = null, processor = null;
+  let sampleRate = 48000;
+  let running = false;
+
+  // UI
+  const startBtn = document.getElementById('startBtn');
+  const stopBtn  = document.getElementById('stopBtn');
+  const autoCalBtn = document.getElementById('autoCalBtn');
+  const clearBtn = document.getElementById('clearBtn');
+  const hexOut = document.getElementById('hexOut');
+  const logEl = document.getElementById('log');
+  const srEl = document.getElementById('sr');
+  const bitSamplesEl = document.getElementById('bitSamples');
+  const receivingEl = document.getElementById('receiving');
+  const thRange = document.getElementById('th');
+  const thVal = document.getElementById('thVal');
+  const bufMsRange = document.getElementById('bufMs');
+  const bufMsVal = document.getElementById('bufMsVal');
+  const calibInfo = document.getElementById('calibInfo');
+
+  thRange.addEventListener('input', ()=> { thVal.textContent = Number(thRange.value).toFixed(3); });
+  bufMsRange.addEventListener('input', ()=> { bufMsVal.textContent = bufMsRange.value; });
+
+  function log(msg){
+    const t = new Date().toLocaleTimeString();
+    logEl.innerText = `[${t}] ${msg}\n` + logEl.innerText;
+  }
+
+  clearBtn.onclick = ()=> { hexOut.value=''; log('output cleared'); calibInfo.textContent=''; }
+
+  startBtn.onclick = start;
+  stopBtn.onclick = stop;
+  autoCalBtn.onclick = autoCalibrate;
+
+  function stop(){
+    running = false;
+    stopBtn.disabled = true;
+    startBtn.disabled = false;
+    autoCalBtn.disabled = true;
+    receivingEl.textContent = 'no';
+    if (processor) { try { processor.disconnect(); } catch(e){} processor.onaudioprocess = null; processor=null; }
+    if (micStream){ micStream.getTracks().forEach(t=>t.stop()); micStream=null; }
+    if (audioCtx){ try{ audioCtx.close(); }catch(e){} audioCtx=null; }
+    log('stopped');
+  }
+
+  async function start(){
+    if (running) return;
+    try {
+      micStream = await navigator.mediaDevices.getUserMedia({ audio: {channelCount:1}, video:false });
+    } catch(e){
+      alert('マイクの許可が必要です: ' + e.message);
+      return;
     }
 
-    button.addEventListener('click', () => {
-      if (intervalId !== null) return; // 二重起動防止
+    audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+    sampleRate = audioCtx.sampleRate || 48000;
+    srEl.textContent = sampleRate;
+    running = true;
+    startBtn.disabled = true;
+    stopBtn.disabled = false;
+    autoCalBtn.disabled = false;
+    log('microphone opened (sampleRate=' + sampleRate + ')');
 
-      let count = 0;
-      let isWhite = true;
-      drawBackground('white');
+    // setup script processor
+    const bufferSize = 4096;
+    processor = audioCtx.createScriptProcessor(bufferSize, 1, 1);
+    const src = audioCtx.createMediaStreamSource(micStream);
+    src.connect(processor);
+    // connect to destination to keep alive in some Safari versions
+    processor.connect(audioCtx.destination);
 
-      intervalId = setInterval(() => {
-        isWhite = !isWhite;
-        drawBackground(isWhite ? 'white' : 'black');
-        count++;
+    // circular buffer for float samples
+    const maxBufSeconds = 2.5;
+    const maxBufSamples = Math.ceil(maxBufSeconds * sampleRate);
+    const circ = new Float32Array(maxBufSamples);
+    let circWrite = 0;
+    let circCount = 0;
 
-        if (count >= 100) {
-          clearInterval(intervalId);
-          intervalId = null;
+    // dynamic baseline/tone tracking for adaptive threshold
+    let minObserved = 1.0, maxObserved = 0.0;
+
+    // compute bitSamples from detected sampleRate
+    function bitSamplesForSr(){
+      return Math.max(2, Math.round(sampleRate / BAUD));
+    }
+    function updateBitInfo(){
+      const bs = bitSamplesForSr();
+      bitSamplesEl.textContent = bs;
+    }
+    updateBitInfo();
+
+    // Goertzel helpers
+    function makeGoertzelTarget(freq, N){
+      const k = Math.round(0.5 + (N * freq) / sampleRate);
+      const omega = (2 * Math.PI * k) / N;
+      const coeff = 2 * Math.cos(omega);
+      return {k, omega, coeff, N};
+    }
+    function goertzelMag(samples, start, N, target){
+      let s0=0, s1=0, s2=0;
+      const coeff = target.coeff;
+      const end = Math.min(start+N, samples.length);
+      for(let i=start;i<end;i++){
+        s0 = samples[i] + coeff * s1 - s2;
+        s2 = s1;
+        s1 = s0;
+      }
+      const real = s1 - s2 * Math.cos(target.omega);
+      const imag = s2 * Math.sin(target.omega);
+      return real*real + imag*imag;
+    }
+
+    let receiving = false;
+    let silenceCounter = 0;
+    const silenceNeededSamples = Math.round(sampleRate * 0.06); // 60ms silence => end of burst
+    let bitStream = [];
+    let byteBuffer = [];
+
+    function attemptParseBits(){
+      let i = 0;
+      while(i + 10 <= bitStream.length){
+        if (bitStream[i] !== 0){ i++; continue; } // start bit = 0
+        let val = 0;
+        for(let b=0;b<8;b++){
+          val |= ( (bitStream[i+1+b]&1) << b );
         }
-      }, 10); // 0.1秒ごと（100ミリ秒）
-    });
-  </script>
+        const stopBit = bitStream[i+1+8];
+        if (stopBit !== 1){
+          // framing error: skip one bit and try again
+          i++;
+          continue;
+        }
+        byteBuffer.push(val);
+        bitStream.splice(0, 10); // consume
+        i = 0;
+      }
+    }
+
+    function pushDecodedBytesToUI(){
+      if (byteBuffer.length === 0) return;
+      const hexs = byteBuffer.map(b => ('0'+b.toString(16).toUpperCase()).slice(-2));
+      hexOut.value += (hexOut.value ? ' ' : '') + hexs.join(' ');
+      hexOut.scrollTop = hexOut.scrollHeight;
+      // optionally check preamble...
+      byteBuffer = [];
+    }
+
+    // audio processing
+    processor.onaudioprocess = (ev) => {
+      const inBuf = ev.inputBuffer.getChannelData(0);
+      for(let i=0;i<inBuf.length;i++){
+        const v = inBuf[i];
+        circ[circWrite] = v;
+        circWrite = (circWrite + 1) % circ.length;
+        if (circCount < circ.length) circCount++;
+        // update observed min/max for auto threshold heuristics
+        const a = Math.abs(v);
+        if (a < minObserved) minObserved = a;
+        if (a > maxObserved) maxObserved = a;
+      }
+
+      // short-term RMS (20 ms)
+      const lookback = Math.min(circCount, Math.floor(sampleRate * 0.02));
+      let sum=0;
+      for(let i=0;i<lookback;i++){
+        const idx = (circWrite - 1 - i + circ.length) % circ.length;
+        const v = circ[idx];
+        sum += v*v;
+      }
+      const rms = Math.sqrt(sum/(lookback||1));
+      // use slider value as absolute threshold (user can adjust), but also maintain minObserved/maxObserved
+      const sliderThreshold = parseFloat(thRange.value);
+
+      // decide tone presence using RMS relative to observed levels
+      // dynamicThreshold: mix slider and adaptive suggestion
+      const dynamicSuggested = Math.max(sliderThreshold, (minObserved + maxObserved) * 0.28);
+      const threshold = dynamicSuggested;
+
+      if (rms > threshold){
+        silenceCounter = 0;
+        if (!receiving){
+          receiving = true;
+          receivingEl.textContent = 'yes';
+          log('tone detected (rms='+rms.toFixed(4)+'). starting capture.');
+        }
+      } else {
+        if (receiving){
+          silenceCounter += inBuf.length;
+          if (silenceCounter > silenceNeededSamples){
+            receiving = false;
+            receivingEl.textContent = 'no';
+            log('silence -> end of burst');
+            attemptParseBits();
+            pushDecodedBytesToUI();
+            bitStream = [];
+            // reset observed ranges a bit to adapt for next burst
+            minObserved = Math.min(minObserved, 0.001);
+            maxObserved = Math.max(maxObserved, 0.01);
+          }
+        }
+      }
+
+      // If receiving, decode bits using Goertzel per-bit windows
+      if (receiving){
+        const avail = circCount;
+        if (avail < 1) return;
+        // build linear snapshot
+        const tmp = new Float32Array(avail);
+        const startIdx = (circWrite - circCount + circ.length) % circ.length;
+        for(let i=0;i<avail;i++){
+          tmp[i] = circ[(startIdx + i) % circ.length];
+        }
+
+        // find onset index with simple threshold on absolute value
+        let onset = 0;
+        const absTmp = tmp.map(x => Math.abs(x));
+        for(let i=0;i<tmp.length;i++){
+          if (absTmp[i] > threshold*0.6){ onset = i; break; }
+        }
+
+        // compute bitSamples and Goertzel targets
+        const bitSamples = bitSamplesForSr();
+        updateBitInfo();
+        const N = bitSamples;
+        const g1200 = makeGoertzelTarget(SPACE, N);
+        const g2400 = makeGoertzelTarget(MARK, N);
+
+        // sample centers
+        let center = onset + Math.floor(N/2);
+        // keep list of centers we will analyze
+        let centers = [];
+        while(center + Math.ceil(N/2) <= tmp.length){
+          centers.push(center);
+          center += N;
+          // safety cap
+          if (centers.length > 2000) break;
+        }
+
+        // compute energy for each window and append bits
+        for(let ci=0; ci<centers.length; ci++){
+          const c = centers[ci];
+          const winStart = c - Math.floor(N/2);
+          const e0 = goertzelMag(tmp, winStart, N, g1200);
+          const e1 = goertzelMag(tmp, winStart, N, g2400);
+          const bit = (e1 > e0) ? 1 : 0;
+          bitStream.push(bit);
+          if (bitStream.length > 2000) bitStream.splice(0, bitStream.length - 2000);
+        }
+
+        // drop consumed samples from circular buffer by decreasing circCount
+        const consumed = centers.length * N;
+        if (consumed > 0){
+          const drop = Math.min(consumed, circCount);
+          circCount -= drop;
+        }
+
+        // parse into bytes and push to UI
+        attemptParseBits();
+        pushDecodedBytesToUI();
+      }
+    };
+
+    log('processor started. Bring the FSK source near the iPad mic.');
+    calibInfo.textContent = 'Auto Calibrate を使うと閾値を端末ごとに最適化できます。';
+  }
+
+  // Auto calibration: record ~0.6s and compute percentiles to propose threshold
+  async function autoCalibrate(){
+    if (!running || !audioCtx) { alert('まず Start を押してください'); return; }
+    autoCalBtn.disabled = true;
+    log('Auto calibration: 0.6秒間キャプチャしてしきい値を推定します...');
+    // We'll capture a short buffer via AnalyserNode (time-domain)
+    const analyser = audioCtx.createAnalyser();
+    analyser.fftSize = 2048;
+    const src = audioCtx.createMediaStreamSource(micStream);
+    src.connect(analyser);
+    const arr = new Uint8Array(analyser.fftSize);
+    const samples = [];
+    const captureMs = 600;
+    const t0 = performance.now();
+    while(performance.now() - t0 < captureMs){
+      analyser.getByteTimeDomainData(arr);
+      // convert to -1..1 float
+      for(let i=0;i<arr.length;i++){
+        const v = (arr[i] - 128) / 128.0;
+        samples.push(Math.abs(v));
+      }
+      await new Promise(r => setTimeout(r, 20));
+    }
+    // compute percentiles
+    samples.sort((a,b)=>a-b);
+    function pct(p){ return samples[Math.floor((samples.length-1)*p)]; }
+    const p10 = pct(0.10);
+    const p90 = pct(0.90);
+    // suggested threshold heuristic (same as used in analysis): (silence + tone) * 0.35
+    const suggested = Math.max(0.002, (p10 + p90) * 0.35);
+    thRange.value = suggested;
+    thVal.textContent = Number(suggested).toFixed(3);
+    calibInfo.textContent = `AutoCal: p10=${p10.toFixed(4)}, p90=${p90.toFixed(4)} → threshold=${suggested.toFixed(3)}`;
+    log('Auto calibration done. threshold set to ' + suggested.toFixed(4));
+    // cleanup
+    try{ src.disconnect(analyser); }catch(e){}
+    autoCalBtn.disabled = false;
+  }
+
+  // initial UI defaults: prefer smaller analysis buffer for quick bit windows
+  // default buf ms already set in HTML (30ms)
+  // update displayed bitSamples when sample rate is known (will be updated on start)
+
+  // On page load show suggested defaults based on typical devices (48k)
+  (function initDefaults(){
+    const srApprox = 48000;
+    const bs = Math.round(srApprox / BAUD);
+    bitSamplesEl.textContent = bs;
+    // default threshold chosen conservatively low; user should Auto Calibrate
+    thRange.value = 0.02;
+    thVal.textContent = Number(thRange.value).toFixed(3);
+  })();
+
+})();
+</script>
 </body>
 </html>
