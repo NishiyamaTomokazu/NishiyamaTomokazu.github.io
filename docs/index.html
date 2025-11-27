@@ -1,654 +1,302 @@
-<!doctype html>
+<!DOCTYPE html>
 <html lang="ja">
 <head>
-<meta charset="utf-8" />
-<meta name="viewport" content="width=device-width,initial-scale=1.0">
-<title>FSK 300bps (1200/2400Hz) Demodulator — iPad Safari</title>
+<meta charset="UTF-8">
+<title>FSK復調テスト（iPad Safari対応）</title>
 <style>
-  body{font-family:system-ui,-apple-system,Segoe UI,Roboto,"Hiragino Kaku Gothic ProN",sans-serif;padding:18px;background:#f7f7f8;color:#111}
-  h1{font-size:1.2rem;margin-bottom:6px}
-  .row{display:flex;gap:8px;flex-wrap:wrap;margin:8px 0}
-  button{padding:8px 12px;border-radius:8px;border:1px solid #bbb;background:white}
-  .green{background:#e6ffef}
-  textarea{width:100%;height:160px;padding:8px;border-radius:8px;border:1px solid #ccc;font-family:monospace;white-space:pre-wrap;overflow:auto}
-  .meter{height:14px;border-radius:6px;background:#ddd;overflow:hidden}
-  .meter-fill{height:100%;width:0%;background:linear-gradient(90deg,#4caf50,#8bc34a)}
-  .logsmall{font-size:0.9rem;color:#555;margin-top:6px}
-  .highlight{background: #fff3a7; padding:2px 4px; border-radius:3px}
-  .controls{display:flex;gap:8px;align-items:center}
-  .small{font-size:0.85rem}
-  .danger{color:#c62828}
-  .ok{color:#2e7d32}
+body {
+    font-family: sans-serif;
+    margin: 20px;
+}
+textarea {
+    width: 100%;
+    height: 200px;
+}
+button {
+    margin-right: 10px;
+    margin-top: 5px;
+}
 </style>
 </head>
 <body>
 
-<h1>FSK 300bps (1200Hz=0 / 2400Hz=1) Demodulator（iPad Safari 用）</h1>
-
 <!--
-動作確認手順（簡潔）：
-1. このHTMLを iPad の Safari で開く（ファイル転送、Web サーバ、または置換）。
-2. 「開始」ボタンをタップしてマイク使用許可を与える（必須）。
-3. 「テスト送信」を ON にするとブラウザが1200/2400HzのFSK信号を生成してスピーカー再生します。
-   - 同一iPadのスピーカー→マイクで自己テスト可能（音量を小さくして行ってください）。
-4. テスト送信に先頭バイト 0x7E を含めたバイト列を送出します。受信ログに "0x7E" がハイライトされ、以降のバイトが表示されます。
-5. 必要に応じて「CSVダウンロード」や「コピー」ボタンで保存可能。
+==========================================================
+【動作確認手順（iPad Safari 推奨）】
+==========================================================
+
+1. iPad の Safari で本 HTML を開く
+2. 「開始」ボタンを押す（Safari がマイク権限を要求 → 許可）
+3. 別のマイコンまたは本アプリの「テスト送信」機能で
+   1200/2400Hz FSK (300bps, LSB first) を送信
+4. スタートバイト 0x7E を検出すると同期し、
+   後続バイトが 16進数でテキストエリアに表示される
+5. テスト送信モードで自己ループ動作（マイク経由）を確認可能
+6. 「ログ消去」で受信履歴をクリア可能
+
+==========================================================
 -->
 
-<!-- パラメータ表示 -->
-<div class="row">
-  <div><strong>ボーレート：</strong>300 baud (bit period ≈ 3.333 ms)</div>
-  <div><strong>トーン：</strong>0 → 1200 Hz, 1 → 2400 Hz</div>
-  <div><strong>Byte sync：</strong>0x7E (LSB ファースト: bits [0..7] = 0,1,1,1,1,1,1,0)</div>
-</div>
+<h2>FSK復調テスト（マイク入力）</h2>
 
-<div class="controls">
-  <button id="startBtn">開始（マイク許可）</button>
-  <button id="stopBtn" disabled>停止</button>
+<button id="startBtn">開始</button>
+<button id="stopBtn">停止</button>
+<button id="clearBtn">ログ消去</button>
+<button id="testBtn">テスト送信（ON/OFF）</button>
 
-  <label class="small" style="display:flex;align-items:center;gap:6px;margin-left:8px">
-    <input type="checkbox" id="testTone"> テスト送信
-  </label>
-
-  <button id="downloadBtn" disabled>CSVダウンロード</button>
-  <button id="copyBtn" disabled>クリップボードにコピー</button>
-
-</div>
-
-<div class="row" style="margin-top:10px">
-  <div style="flex:1 1 300px">
-    <label><strong>受信ログ（追記式）</strong></label>
-    <textarea id="logArea" readonly></textarea>
-    <div class="logsmall">最後に検出したスタートバイトは <span id="startDetect">未検出</span></div>
-  </div>
-
-  <div style="width:220px">
-    <label><strong>検出強度メーター（簡易）</strong></label>
-    <div style="margin:6px 0">1200Hz</div>
-    <div class="meter"><div id="meter1200" class="meter-fill"></div></div>
-    <div style="margin:6px 0">2400Hz</div>
-    <div class="meter"><div id="meter2400" class="meter-fill"></div></div>
-    <div style="margin-top:8px" class="logsmall">SNR（簡易）: <span id="snrText">--</span></div>
-    <div style="margin-top:8px" class="logsmall">同期状態: <span id="syncState" class="danger">未同期</span></div>
-  </div>
-</div>
-
-<div style="margin-top:12px" class="logsmall">
-  <strong>メモ：</strong>無信号状態は閾値で除去します。環境ノイズが大きい場合は音量を下げるか、マイク近傍に音源を寄せてください。
-</div>
+<p>受信ログ（1バイトごとに16進で記録）</p>
+<textarea id="log" readonly></textarea>
 
 <script>
-/*
-  FSK 300bps Demodulator (single-file)
-  - 1200Hz => bit 0, 2400Hz => bit 1
-  - 300 baud (Tbit = 1/300 s ≈ 0.003333... s)
-  - LSB-first, synchronise on byte 0x7E (bits LSB-first: 0,1,1,1,1,1,1,0)
-  - Implementation summary:
-    * Use WebAudio getUserMedia -> ScriptProcessorNode (onaudioprocess) to obtain audio samples.
-    * For tone detection, use continuous quadrature mixing:
-        i(t) = s(t) * cos(2π f t)
-        q(t) = s(t) * sin(2π f t)
-      then low-pass (IIR) to smooth i,q and compute magnitude = sqrt(i^2+q^2).
-    * Maintain rolling buffer of tone-magnitudes at sample resolution.
-    * Estimate samplesPerBit = sampleRate / baud. Use sliding-phase search to find alignment:
-      - For offsets 0..samplesPerBit-1, sample integrated magnitude at center of each bit period and decode bits.
-      - When a sequence of 8 bits matches 0x7E (LSB first), lock phase.
-    * Once locked, sample every samplesPerBit (using the locked offset) to form subsequent bytes.
-    * If synchronization is lost (errors, long mismatch), return to search mode.
-  - Notes:
-    * Many heuristics/thresholds are tuned for general cases. May need to adjust in noisy environments.
-    * This is a best-effort, single-file implementation suitable for testing and iterative improvement.
-*/
+// =====================================================
+// 仕様:
+//  - 0ビット = 1200Hz
+//  - 1ビット = 2400Hz
+//  - ボーレート = 300bps (1bit ≒ 3.33ms)
+//  - LSB first
+//  - スタートバイト 0x7E を検出して同期
+//  - iPad Safari で getUserMedia + AudioWorklet を利用
+// =====================================================
 
-(() => {
+// UI要素
+const startBtn = document.getElementById("startBtn");
+const stopBtn  = document.getElementById("stopBtn");
+const clearBtn = document.getElementById("clearBtn");
+const logArea  = document.getElementById("log");
+const testBtn  = document.getElementById("testBtn");
 
-const BAUD = 300;
-const BIT_PERIOD = 1 / BAUD; // seconds
-const FREQ0 = 1200; // Hz -> bit 0
-const FREQ1 = 2400; // Hz -> bit 1
-const START_BYTE = 0x7E; // 0b01111110 (LSB first -> [0,1,1,1,1,1,1,0])
-
-// --- Tunable parameters ---
-let MAG_SMOOTH_ALPHA = 0.02; // IIR smoothing for quadrature outputs (0..1 small => slow smoothing)
-let NOISE_FLOOR_ALPHA = 0.001; // slow estimate of noise floor
-let DETECT_THRESHOLD = 0.012; // magnitude threshold above noise floor to consider "signal" (tuneable)
-let LOCK_MIN_CONFIDENCE = 0.8; // fraction of bits matching required to accept sync (for the 8-bit check)
-let MAX_SYNC_SEARCH_BITS = 64; // how many bits window to search for start pattern
-// -----------------------------
-
-// UI elements
-const startBtn = document.getElementById('startBtn');
-const stopBtn = document.getElementById('stopBtn');
-const testToneCheckbox = document.getElementById('testTone');
-const logArea = document.getElementById('logArea');
-const meter1200 = document.getElementById('meter1200');
-const meter2400 = document.getElementById('meter2400');
-const snrText = document.getElementById('snrText');
-const syncState = document.getElementById('syncState');
-const startDetect = document.getElementById('startDetect');
-const downloadBtn = document.getElementById('downloadBtn');
-const copyBtn = document.getElementById('copyBtn');
-
-// Audio setup
+// WebAudio変数
 let audioCtx = null;
 let micStream = null;
-let sourceNode = null;
-let procNode = null;
-let testOscNodes = null; // for test tone oscillator graph
-let sampleRate = 48000; // will be set to audioCtx.sampleRate
-let samplesPerBit = null;
+let testOsc = null;
 
-// Buffers and state
-let globalSampleIndex = 0; // continuous sample count for phase calculations
-let rollMagnitudes1200 = []; // circular buffer of per-sample magnitudes for 1200Hz
-let rollMagnitudes2400 = []; // same for 2400Hz
-let rollBufLen = 48000 * 2; // keep 2 sec buffer worst-case (will resize if needed)
-let noiseFloor1200 = 0;
-let noiseFloor2400 = 0;
-let locked = false;
-let lockedOffset = 0; // sample offset into bit window for alignment
-let bitClockSamples = null; // samples per bit (float)
-let decodedBytes = []; // array of numbers
-let lastLockTime = 0;
+// 復調用パラメータ
+const bitRate = 300;
+const bitDuration = 1 / bitRate;
+const freq0 = 1200;   // 0ビット
+const freq1 = 2400;   // 1ビット
+let sampleRate = 44100;
 
-// Helpers: push to rolling buffer with limit
-function pushToRoll(buf, v) {
-  buf.push(v);
-  if (buf.length > rollBufLen) buf.shift();
-}
+// Goertzel処理用のワークレットファイルを動的生成
+// AudioWorkletProcessor を1ファイルHTML内に埋め込むための DataURL
+const workletCode = `
+class FSKDemodWorklet extends AudioWorkletProcessor {
 
-// Simple UI helpers
-function appendLogByte(byte, isStart=false) {
-  const s = '0x' + byte.toString(16).padStart(2,'0').toUpperCase();
-  if (isStart) {
-    logArea.value += ' ' + s;
-    // highlight: we will replace last occurrence for visual highlight - simple approach
-    // (UI limitation: textarea only plain text; show last start in separate field)
-    startDetect.textContent = s;
-    startDetect.className = 'highlight';
-  } else {
-    logArea.value += ' ' + s;
-  }
-  // enable download/copy
-  downloadBtn.disabled = false;
-  copyBtn.disabled = false;
-  // keep scroll bottom
-  logArea.scrollTop = logArea.scrollHeight;
-}
+    constructor() {
+        super();
+        // サンプルレート取得
+        this.fs = sampleRate;
+        // ビット時間（サンプル数）
+        this.bitSamples = Math.floor(this.fs / 300);
 
-function setSyncState(s, ok=false) {
-  syncState.textContent = s;
-  syncState.className = ok ? 'ok' : 'danger';
-}
+        // 周波数検出用のGoertzel係数
+        this.k0 = Math.round(this.bitSamples * 1200 / this.fs);
+        this.k1 = Math.round(this.bitSamples * 2400 / this.fs);
 
-// CSV download
-downloadBtn.addEventListener('click', () => {
-  if (!decodedBytes.length) return;
-  const csv = decodedBytes.map(b=>'0x'+b.toString(16).padStart(2,'0')).join(',');
-  const blob = new Blob([csv], {type: 'text/csv'});
-  const url = URL.createObjectURL(blob);
-  const a = document.createElement('a');
-  a.href = url;
-  a.download = 'fsk_rx.csv';
-  a.click();
-  URL.revokeObjectURL(url);
-});
+        this.w0 = 2 * Math.PI * this.k0 / this.bitSamples;
+        this.w1 = 2 * Math.PI * this.k1 / this.bitSamples;
 
-// Copy to clipboard
-copyBtn.addEventListener('click', async () => {
-  if (!decodedBytes.length) return;
-  const txt = decodedBytes.map(b=>'0x'+b.toString(16).padStart(2,'0')).join(' ');
-  try {
-    await navigator.clipboard.writeText(txt);
-    alert('受信データをクリップボードにコピーしました');
-  } catch (e) {
-    alert('コピーに失敗しました: ' + e);
-  }
-});
+        // バッファ（ビット長分貯める）
+        this.buffer = [];
 
-// test tone generation graph: produce FSK sequence with leading 0x7E and a repeating payload
-function startTestToneSequence(payloadBytes=[0x7E,0x12,0x34,0xAB], loop=true) {
-  if (!audioCtx) return;
-  stopTestToneSequence();
+        // 復号状態
+        this.bitCount = 0;
+        this.currentByte = 0;
+        this.synced = false;
 
-  // We'll generate a script node that writes samples for desired bitstream
-  const ctx = audioCtx;
-  const bufferSize = 1024;
-  const script = ctx.createScriptProcessor(bufferSize, 0, 1);
-
-  // Build bitstream: for simplicity, generate continuous bytes with no extra start/stop bits.
-  // Each bit period is BIT_PERIOD seconds => samplesPerBit
-  const spb = samplesPerBit || (ctx.sampleRate / BAUD);
-  // expand into array of bit values (0/1)
-  const bitArray = [];
-  for (let b of payloadBytes) {
-    for (let i=0;i<8;i++) {
-      bitArray.push( (b >> i) & 1 ); // LSB first
-    }
-  }
-  let bitIndex = 0;
-  let samplePosInBit = 0;
-
-  // For tone generation, maintain phase for two frequencies
-  let phase0 = 0, phase1 = 0;
-  const w0 = 2*Math.PI*FREQ0 / ctx.sampleRate;
-  const w1 = 2*Math.PI*FREQ1 / ctx.sampleRate;
-
-  script.onaudioprocess = (e) => {
-    const out = e.outputBuffer.getChannelData(0);
-    for (let i=0;i<out.length;i++) {
-      const currentBit = bitArray[bitIndex % bitArray.length];
-      // choose frequency
-      const w = currentBit ? w1 : w0;
-      // simple sine wave
-      const sample = Math.sin(currentBit ? (phase1 += w) : (phase0 += w));
-      out[i] = sample * 0.6; // volume
-      // advance sample pointer
-      samplePosInBit++;
-      if (samplePosInBit >= spb) {
-        samplePosInBit = 0;
-        bitIndex++;
-      }
-    }
-  };
-
-  script.connect(ctx.destination);
-  testOscNodes = script;
-}
-
-function stopTestToneSequence() {
-  if (testOscNodes) {
-    try { testOscNodes.disconnect(); } catch(e){}
-    try { testOscNodes.onaudioprocess = null; } catch(e){}
-    testOscNodes = null;
-  }
-}
-
-// Toggle test tone
-testToneCheckbox.addEventListener('change', (e) => {
-  if (e.target.checked) {
-    // default payload includes start byte
-    startTestToneSequence([START_BYTE, 0x01, 0x02, 0xA5], true);
-  } else {
-    stopTestToneSequence();
-  }
-});
-
-// Main audio processing: set up audio chain and handler
-async function startAudio() {
-  if (audioCtx) return;
-  audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-  sampleRate = audioCtx.sampleRate;
-  samplesPerBit = sampleRate / BAUD;
-  bitClockSamples = samplesPerBit;
-  console.log('SampleRate', sampleRate, 'samplesPerBit', samplesPerBit);
-
-  // request mic
-  try {
-    micStream = await navigator.mediaDevices.getUserMedia({ audio: { channelCount:1, noiseSuppression:true, echoCancellation:true }});
-  } catch (e) {
-    alert('マイクの取得に失敗しました: ' + e.message);
-    return;
-  }
-
-  sourceNode = audioCtx.createMediaStreamSource(micStream);
-
-  // ScriptProcessorNode fallback (works in many Safari versions)
-  const bufferSize = 1024; // power of two; tradeoff latency vs CPU
-  procNode = audioCtx.createScriptProcessor(bufferSize, 1, 1);
-
-  // For quadrature mixing we'll maintain phase per tone
-  let phase1200 = 0, phase2400 = 0;
-  const w1200 = 2*Math.PI*FREQ0 / sampleRate;
-  const w2400 = 2*Math.PI*FREQ1 / sampleRate;
-
-  // low-pass IIR state for in-phase and quadrature for each tone
-  let i1200 = 0, q1200 = 0, i2400 = 0, q2400 = 0;
-  // simple IIR smoothing alpha
-  const alpha = MAG_SMOOTH_ALPHA;
-
-  // ring buffer length for sample-level magnitudes: keep at least a few bit periods
-  rollBufLen = Math.max( Math.ceil(samplesPerBit * (MAX_SYNC_SEARCH_BITS + 8)), sampleRate * 2); // ensure big enough
-  rollMagnitudes1200 = [];
-  rollMagnitudes2400 = [];
-
-  // For noise floor estimate
-  noiseFloor1200 = 0;
-  noiseFloor2400 = 0;
-
-  // On audio process: compute per-sample magnitude estimates and push to rolling buffers
-  procNode.onaudioprocess = (e) => {
-    const inBuf = e.inputBuffer.getChannelData(0);
-    const N = inBuf.length;
-    for (let n=0;n<N;n++) {
-      const s = inBuf[n];
-
-      // update oscillator phases
-      phase1200 += w1200; if (phase1200 > Math.PI*2) phase1200 -= Math.PI*2;
-      phase2400 += w2400; if (phase2400 > Math.PI*2) phase2400 -= Math.PI*2;
-
-      // multiply by quadrature carriers
-      const cos1200 = Math.cos(phase1200);
-      const sin1200 = Math.sin(phase1200);
-      const cos2400 = Math.cos(phase2400);
-      const sin2400 = Math.sin(phase2400);
-
-      // instantaneous mixers
-      const ix1200 = s * cos1200;
-      const qx1200 = s * sin1200;
-      const ix2400 = s * cos2400;
-      const qx2400 = s * sin2400;
-
-      // IIR lowpass smoothing to get slow-varying envelopes
-      i1200 = (1 - alpha) * i1200 + alpha * ix1200;
-      q1200 = (1 - alpha) * q1200 + alpha * qx1200;
-      i2400 = (1 - alpha) * i2400 + alpha * ix2400;
-      q2400 = (1 - alpha) * q2400 + alpha * qx2400;
-
-      // magnitude estimation (squared magnitude suffices)
-      const mag1200 = i1200*i1200 + q1200*q1200;
-      const mag2400 = i2400*i2400 + q2400*q2400;
-
-      pushToRoll(rollMagnitudes1200, mag1200);
-      pushToRoll(rollMagnitudes2400, mag2400);
-
-      // update slow noise floor estimates
-      noiseFloor1200 = (1 - NOISE_FLOOR_ALPHA) * noiseFloor1200 + NOISE_FLOOR_ALPHA * mag1200;
-      noiseFloor2400 = (1 - NOISE_FLOOR_ALPHA) * noiseFloor2400 + NOISE_FLOOR_ALPHA * mag2400;
-
-      globalSampleIndex++;
-    }
-
-    // After pushing samples, attempt bit extraction steps periodically
-    processDecoding();
-    // update meters (use latest avg of recent window)
-    updateMeters();
-  };
-
-  // connect nodes
-  sourceNode.connect(procNode);
-  procNode.connect(audioCtx.destination); // we don't output mic but connecting reduces some iOS restrictions
-
-  setSyncState('同期探索中', false);
-  startBtn.disabled = true;
-  stopBtn.disabled = false;
-}
-
-// stop/cleanup
-function stopAudio() {
-  if (procNode) {
-    try { procNode.disconnect(); } catch(e){}
-    procNode.onaudioprocess = null;
-    procNode = null;
-  }
-  if (sourceNode) {
-    try { sourceNode.disconnect(); } catch(e){}
-    sourceNode = null;
-  }
-  if (micStream) {
-    const tracks = micStream.getTracks();
-    for (const t of tracks) t.stop();
-    micStream = null;
-  }
-  if (audioCtx) {
-    try { audioCtx.close(); } catch(e){}
-    audioCtx = null;
-  }
-  stopTestToneSequence();
-  startBtn.disabled = false;
-  stopBtn.disabled = true;
-  setSyncState('停止中', false);
-}
-
-// attach start/stop buttons
-startBtn.addEventListener('click', async () => {
-  await startAudio();
-});
-stopBtn.addEventListener('click', () => {
-  stopAudio();
-});
-
-// --- Core decoding logic ---
-// Idea: maintain rolling per-sample magnitudes for both tones. To decode bits we sample integrated magnitude
-// around the center of each bit period. Because bit boundaries are unknown, perform sliding offset search
-// for alignment that yields the known start byte pattern (0x7E). Once found, lock offset and extract bytes.
-// After lock, continue sampling each samplesPerBit and group into bytes LSB-first.
-
-function processDecoding() {
-  if (!audioCtx) return;
-  if (rollMagnitudes1200.length < 4) return;
-
-  // compute simple SNR-like metric
-  const recentLen = Math.min( Math.floor(samplesPerBit * 10), rollMagnitudes1200.length );
-  const tail1200 = rollMagnitudes1200.slice(-recentLen);
-  const tail2400 = rollMagnitudes2400.slice(-recentLen);
-  const avg1200 = tail1200.reduce((a,b)=>a+b,0)/tail1200.length;
-  const avg2400 = tail2400.reduce((a,b)=>a+b,0)/tail2400.length;
-  const noiseEst = (noiseFloor1200 + noiseFloor2400) / 2 + 1e-12;
-  const snrEst = Math.max(avg1200, avg2400) / noiseEst;
-  snrText.textContent = snrEst.toFixed(2);
-
-  // If not locked, attempt to find start pattern by searching offsets
-  if (!locked) {
-    // need at least enough samples to cover MAX_SYNC_SEARCH_BITS bits
-    const neededSamples = Math.ceil(samplesPerBit * MAX_SYNC_SEARCH_BITS);
-    if (rollMagnitudes1200.length < neededSamples) return;
-
-    // We'll attempt offsets from 0 .. samplesPerBit-1 (rounded to int)
-    const spb = Math.round(samplesPerBit);
-    // take last window of samples we will search in
-    const windowSamples = rollMagnitudes1200.slice(-neededSamples);
-    const windowSamples2400 = rollMagnitudes2400.slice(-neededSamples);
-    // try each offset
-    for (let offset=0; offset<spb; offset++) {
-      // build bits at positions offset + k*spb, but to reduce noise average small neighborhood around center
-      const bits = [];
-      const maxBits = Math.floor(windowSamples.length / spb);
-      // limit to at most MAX_SYNC_SEARCH_BITS
-      const bitsToExtract = Math.min(maxBits, MAX_SYNC_SEARCH_BITS);
-      for (let k=0;k<bitsToExtract;k++) {
-        const center = offset + Math.round((k + 0.5) * spb);
-        // average ±win around center
-        const win = Math.max(2, Math.round(spb * 0.25));
-        let sum0=0,sum1=0,count=0;
-        for (let w=-win; w<=win; w++) {
-          const idx = center + w;
-          if (idx < 0 || idx >= windowSamples.length) continue;
-          sum0 += windowSamples[idx];
-          sum1 += windowSamples2400[idx];
-          count++;
-        }
-        if (count === 0) { bits.push(0); continue; }
-        const m0 = sum0/count, m1 = sum1/count;
-        // compare magnitudes relative to noise floor
-        const nf0 = noiseFloor1200 + 1e-12;
-        const nf1 = noiseFloor2400 + 1e-12;
-        const rel0 = m0 / nf0;
-        const rel1 = m1 / nf1;
-        // decide bit: choose tone with larger relative magnitude if above DETECT_THRESHOLD
-        let bit = 0;
-        if (rel1 > rel0 && (rel1 > 1 + DETECT_THRESHOLD)) bit = 1;
-        else if (rel0 > rel1 && (rel0 > 1 + DETECT_THRESHOLD)) bit = 0;
-        else {
-          // if both near noise, mark as -1 for unknown
-          bit = -1;
-        }
-        bits.push(bit);
-      }
-
-      // Now scan bits for a run of 8 bits matching START_BYTE (LSB-first).
-      // Because bits may include -1, allow some tolerance: require LOCK_MIN_CONFIDENCE fraction of matching bits among the 8.
-      for (let startBit=0; startBit + 8 <= bits.length; startBit++) {
-        let matchCount = 0;
-        let validCount = 0;
-        for (let b=0;b<8;b++) {
-          const expected = (START_BYTE >> b) & 1;
-          const observed = bits[startBit + b];
-          if (observed === -1) continue;
-          validCount++;
-          if (observed === expected) matchCount++;
-        }
-        if (validCount >= 6) { // need at least 6 valid bit decisions in this byte window
-          const conf = matchCount / 8.0;
-          if (conf >= LOCK_MIN_CONFIDENCE) {
-            // success: compute absolute sample index of this byte's first bit (in global buffer)
-            // global buffer last index corresponds to globalSampleIndex - 1
-            const samplesFromWindowEnd = windowSamples.length - (offset + Math.round((startBit + 0.5) * spb));
-            // approximate sample index for the center of start byte first bit:
-            // we'll compute lockedOffset as the sample index within a bit period relative to globalSampleIndex
-            const centerSampleGlobal = globalSampleIndex - windowSamples.length + (offset + Math.round((startBit + 0.5) * spb));
-            // The first bit's start location (we used center of each bit), so the first bit center is at centerSampleGlobal.
-            // Set lockedOffset so that subsequent sampling uses centers at centerSampleGlobal + n*spb
-            locked = true;
-            lockedOffset = (offset + Math.round(startBit * spb)) % spb;
-            lastLockTime = Date.now();
-            setSyncState('同期確立 (start byte 検出)', true);
-            // We will decode starting at that aligned position: extract bytes from bits array starting at startBit.
-            // Build bytes from the bits we already computed (may have -1 entries). Fill unknowns conservatively.
-            // Decode the first few bytes from this bits[] and then continue streaming decode with locked offset.
-            // Convert bits starting at startBit into bytes
-            const availableBits = bits.slice(startBit);
-            const bytes = [];
-            for (let idx=0; idx + 8 <= availableBits.length; idx += 8) {
-              let val = 0;
-              let validByte = true;
-              for (let bi=0; bi<8; bi++) {
-                const ob = availableBits[idx + bi];
-                if (ob === -1) { validByte = false; break; }
-                val |= (ob & 1) << bi;
-              }
-              if (!validByte) break;
-              bytes.push(val);
+        this.port.onmessage = (event) => {
+            if (event.data === "reset") {
+                this.synced = false;
+                this.bitCount = 0;
             }
-            // append discovered bytes to decoded list and UI
-            for (let i=0;i<bytes.length;i++) {
-              const b = bytes[i];
-              decodedBytes.push(b);
-              appendLogByte(b, b === START_BYTE);
-            }
-            // after initial extraction, return to main loop where locked==true; remaining bits will be decoded by locked decoder.
-            return;
-          }
+        };
+    }
+
+    // Goertzelのパワー計算
+    goertzelPower(samples, w) {
+        let s_prev = 0, s_prev2 = 0;
+        const coeff = 2 * Math.cos(w);
+        for (let i = 0; i < samples.length; i++) {
+            let s = samples[i] + coeff * s_prev - s_prev2;
+            s_prev2 = s_prev;
+            s_prev = s;
         }
-      }
-    }
-  } else {
-    // locked: sample periodic bit centers starting from lockedOffset relative to newest samples.
-    // We convert recent samples into bits and group into bytes.
-    // Determine the sample index (global) for the center of the next unread bit.
-    // We'll maintain a pointer of nextSampleToDecode (in global sample coordinates). For simplicity,
-    // compute from lastLockTime and globalSampleIndex.
-    // Simpler approach: use the rolling buffer and decode all full bit periods available since lastLockTime.
-    const spb = Math.round(samplesPerBit);
-    // compute how many samples we have available in the buffer (always keep last rollMagnitudes length)
-    const bufLen = rollMagnitudes1200.length;
-    // Determine the sample index (relative to buffer start) of the aligned bit centers:
-    // Find the most recent absolute sample index that corresponds to a bit center congruent to lockedOffset
-    // We'll decode bits from oldest aligned center up to the newest complete bit center.
-    // Compute index of latest possible center:
-    const latestCenterGlobal = globalSampleIndex - 1 - Math.floor(spb/2); // last complete bit center approx
-    // Determine nearest center that matches lockedOffset modulo spb:
-    // compute the global index of the sample that is congruent to lockedOffset mod spb and <= latestCenterGlobal
-    const mod = lockedOffset % spb;
-    const latestAlignedCenter = latestCenterGlobal - ((latestCenterGlobal - mod) % spb + spb) % spb;
-    // Compute number of centers we can decode from buffer: centers that lie within the buffer's saved samples
-    // bufferGlobalStart = globalSampleIndex - bufLen
-    const bufferGlobalStart = globalSampleIndex - bufLen;
-    let firstCenter = latestAlignedCenter - spb * Math.floor(MAX_SYNC_SEARCH_BITS/2);
-    if (firstCenter < bufferGlobalStart) firstCenter = bufferGlobalStart + (mod - ((bufferGlobalStart - mod) % spb + spb) % spb);
-    // Now iterate centers from firstCenter up to latestAlignedCenter
-    let centers = [];
-    for (let c = firstCenter; c <= latestAlignedCenter; c += spb) centers.push(c);
-
-    // For each center, map to buffer index and get averaged magnitude
-    const bits = [];
-    for (let c of centers) {
-      const idxInBuf = c - bufferGlobalStart;
-      if (idxInBuf < 0 || idxInBuf >= bufLen) { bits.push(-1); continue; }
-      // average ± small window
-      const win = Math.max(1, Math.round(spb*0.15));
-      let sum0=0,sum1=0,count=0;
-      for (let w=-win; w<=win; w++) {
-        const idx = idxInBuf + w;
-        if (idx < 0 || idx >= bufLen) continue;
-        sum0 += rollMagnitudes1200[idx];
-        sum1 += rollMagnitudes2400[idx];
-        count++;
-      }
-      if (count === 0) { bits.push(-1); continue; }
-      const m0 = sum0/count, m1 = sum1/count;
-      const rel0 = m0 / (noiseFloor1200 + 1e-12);
-      const rel1 = m1 / (noiseFloor2400 + 1e-12);
-      let bit = -1;
-      if (rel1 > rel0 && (rel1 > 1 + DETECT_THRESHOLD)) bit = 1;
-      else if (rel0 > rel1 && (rel0 > 1 + DETECT_THRESHOLD)) bit = 0;
-      else bit = -1;
-      bits.push(bit);
+        return s_prev2 * s_prev2 + s_prev * s_prev - coeff * s_prev * s_prev2;
     }
 
-    // Group bits into bytes (8-bit LSB-first)
-    // Only take sequential full bytes without -1 entries
-    for (let i=0; i + 8 <= bits.length; i += 8) {
-      // convert bits[i..i+7] into byte; stop if invalid
-      let valid = true;
-      let val = 0;
-      for (let b=0;b<8;b++) {
-        if (bits[i+b] === -1) { valid = false; break; }
-        val |= (bits[i+b] & 1) << b;
-      }
-      if (!valid) continue;
-      // Only append if this byte is new (avoid duplicates): keep track of last appended global center index
-      const byteCenterGlobal = centers[i] ;
-      // If decodedBytes is empty or this byte's center is after last appended center, append
-      const lastAppendedCount = decodedBytes.length;
-      // For simplicity, append if we haven't appended this specific frame before; detect by time gap
-      const lastLockGapMs = Date.now() - lastLockTime;
-      // pushing bytes
-      decodedBytes.push(val);
-      appendLogByte(val, val === START_BYTE);
-      lastLockTime = Date.now();
-      // check for sync loss heuristic: if too many consecutive invalid bits, drop lock
-      // (not implemented fully here; basic check:)
-      if ((Date.now() - lastLockTime) > 5000) { // 5s no new bytes
-        locked = false;
-        setSyncState('同期喪失（タイムアウト）', false);
+    process(inputs) {
+        const input = inputs[0];
+        if (!input || input.length === 0) return true;
+        const ch = input[0];
+
+        for (let i = 0; i < ch.length; i++) {
+            this.buffer.push(ch[i]);
+
+            // ビット長分たまったら処理
+            if (this.buffer.length >= this.bitSamples) {
+                const block = this.buffer.slice(0, this.bitSamples);
+                this.buffer = this.buffer.slice(this.bitSamples);
+
+                // 周波数判定
+                const p0 = this.goertzelPower(block, this.w0);
+                const p1 = this.goertzelPower(block, this.w1);
+
+                const bit = (p1 > p0) ? 1 : 0;
+
+                // 同期していない時はスタートバイトを探す
+                if (!this.synced) {
+                    this.currentByte = (this.currentByte >> 1) | (bit << 7);
+                    this.bitCount++;
+
+                    if (this.bitCount >= 8) {
+                        if (this.currentByte === 0x7E) {
+                            this.synced = true;
+                            this.port.postMessage({type: "startByte"});
+                        }
+                        this.bitCount = 0;
+                        this.currentByte = 0;
+                    }
+                }
+                else {
+                    // 同期後は通常バイト受信
+                    this.currentByte = this.currentByte >> 1;
+                    if (bit) this.currentByte |= 0x80;
+                    this.bitCount++;
+
+                    if (this.bitCount >= 8) {
+                        this.port.postMessage({type: "byte", value: this.currentByte});
+                        this.bitCount = 0;
+                        this.currentByte = 0;
+                    }
+                }
+            }
+        }
+        return true;
+    }
+}
+registerProcessor("fsk-demod", FSKDemodWorklet);
+`;
+
+// ==========================
+// ログ追記
+// ==========================
+function appendLog(txt) {
+    logArea.value += txt + " ";
+    logArea.scrollTop = logArea.scrollHeight;
+}
+
+// ==========================
+// テスト送信（FSK生成）
+// ==========================
+function toggleTestTone() {
+    if (!audioCtx) audioCtx = new AudioContext();
+
+    if (testOsc) {
+        testOsc.stop();
+        testOsc = null;
+        testBtn.textContent = "テスト送信（ON/OFF）";
         return;
-      }
     }
-    // if we reach here, keep locked
-    setSyncState('同期維持中', true);
-  }
+
+    // テスト送信用（簡易版：スタートバイト0x7E + カウンタ）
+    testOsc = audioCtx.createOscillator();
+    const freqNode = audioCtx.createConstantSource();
+    const gain = audioCtx.createGain();
+
+    gain.gain.value = 0.3;
+
+    freqNode.connect(testOsc.frequency);
+    testOsc.connect(gain).connect(audioCtx.destination);
+
+    freqNode.start();
+    testOsc.start();
+
+    let byte = 0x7E;
+    let counter = 0;
+
+    function sendByte(b) {
+        for (let i = 0; i < 8; i++) {
+            const bit = (b >> i) & 1;
+            freqNode.offset.setValueAtTime(bit ? 2400 : 1200, audioCtx.currentTime + i * bitDuration);
+        }
+    }
+
+    setInterval(() => {
+        sendByte(byte);
+        byte = (byte + 1) & 0xFF;
+    }, 8 * bitDuration * 1000);
+
+    testBtn.textContent = "テスト送信（停止）";
 }
 
-// UI meters update
-function updateMeters() {
-  const recent = Math.min( Math.floor(samplesPerBit * 4), rollMagnitudes1200.length );
-  if (recent <= 0) return;
-  const m1200 = rollMagnitudes1200.slice(-recent).reduce((a,b)=>a+b,0)/recent;
-  const m2400 = rollMagnitudes2400.slice(-recent).reduce((a,b)=>a+b,0)/recent;
-  const nf1200 = noiseFloor1200 + 1e-12;
-  const nf2400 = noiseFloor2400 + 1e-12;
-  // convert to normalized 0..1 level
-  let level1200 = Math.min(1, (m1200 - nf1200) / (nf1200 + 1e-9) / 4); // scale down
-  let level2400 = Math.min(1, (m2400 - nf2400) / (nf2400 + 1e-9) / 4);
-  if (level1200 < 0) level1200 = 0;
-  if (level2400 < 0) level2400 = 0;
-  meter1200.style.width = (level1200*100).toFixed(1) + '%';
-  meter2400.style.width = (level2400*100).toFixed(1) + '%';
+// ==========================
+// FSK復調開始
+// ==========================
+async function startFSK() {
+    if (audioCtx) return;
+
+    audioCtx = new AudioContext();
+    sampleRate = audioCtx.sampleRate; // 実際のfsを取得
+
+    micStream = await navigator.mediaDevices.getUserMedia({ audio: true });
+
+    const src = audioCtx.createMediaStreamSource(micStream);
+
+    // AudioWorklet登録
+    const blob = new Blob([workletCode], { type: "application/javascript" });
+    const url = URL.createObjectURL(blob);
+    await audioCtx.audioWorklet.addModule(url);
+
+    // Worklet生成
+    const demod = new AudioWorkletNode(audioCtx, "fsk-demod");
+
+    // 結果受信
+    demod.port.onmessage = e => {
+        const msg = e.data;
+        if (msg.type === "startByte") {
+            appendLog("[7E]");
+        }
+        else if (msg.type === "byte") {
+            appendLog("0x" + msg.value.toString(16).padStart(2, "0"));
+        }
+    };
+
+    src.connect(demod);
+
+    appendLog("=== 受信開始 ===");
 }
 
-// Initialization: nothing else required
+// ==========================
+// 停止
+// ==========================
+function stopFSK() {
+    if (micStream) {
+        const tracks = micStream.getTracks();
+        tracks.forEach(t => t.stop());
+        micStream = null;
+    }
+    if (audioCtx) {
+        audioCtx.close();
+        audioCtx = null;
+    }
+    appendLog("=== 停止 ===");
+}
 
-// Final notes in comments:
-// - 重要な数式:
-//    samplesPerBit = sampleRate / baud
-//    mixing: i = s(t) * cos(2π f t), q = s(t) * sin(2π f t)
-//    magnitude ≈ sqrt(i^2 + q^2) (we use squared magnitude for比較)
-// - Goertzel とは異なり、ここでは連続 quadrature-mixing + IIR 平滑でトーン強度を常時算出しています。
-// - 閾値 DETECT_THRESHOLD、平滑係数 MAG_SMOOTH_ALPHA, NOISE_FLOOR_ALPHA は環境に合わせて調整してください。
+// ==========================
+// ログ消去
+// ==========================
+function clearLog() {
+    logArea.value = "";
+}
 
-})(); // end IIFE
+// ==========================
+// ボタン動作
+// ==========================
+startBtn.onclick = startFSK;
+stopBtn.onclick  = stopFSK;
+clearBtn.onclick = clearLog;
+testBtn.onclick  = toggleTestTone;
+
 </script>
-
 </body>
 </html>
