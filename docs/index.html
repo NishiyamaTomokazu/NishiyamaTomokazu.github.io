@@ -1,586 +1,275 @@
-<!doctype html>
+<!DOCTYPE html>
 <html lang="ja">
 <head>
-<meta charset="utf-8" />
-<meta name="viewport" content="width=device-width,initial-scale=1.0">
-<title>FSK 300bps Demodulator（Goertzel・iPad Safari向け）</title>
-<style>
-  body{font-family:system-ui,-apple-system,Segoe UI,Roboto,"Hiragino Kaku Gothic ProN",sans-serif;padding:18px;background:#f7f7f8;color:#111}
-  h1{font-size:1.15rem;margin-bottom:6px}
-  .row{display:flex;gap:8px;flex-wrap:wrap;margin:8px 0}
-  button, input[type="checkbox"]{padding:8px 12px;border-radius:8px;border:1px solid #bbb;background:white;cursor:pointer}
-  textarea{width:100%;height:160px;padding:8px;border-radius:8px;border:1px solid #ccc;font-family:monospace;white-space:pre-wrap;overflow:auto}
-  .meter{height:12px;border-radius:6px;background:#ddd;overflow:hidden;margin-bottom:6px}
-  .meter-fill{height:100%;width:0%;background:linear-gradient(90deg,#4caf50,#8bc34a)}
-  .logsmall{font-size:0.9rem;color:#555;margin-top:6px}
-  .highlight{background: #fff3a7; padding:2px 4px; border-radius:3px}
-  .controls{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
-  .small{font-size:0.85rem}
-  .danger{color:#c62828}
-  .ok{color:#2e7d32}
-  .note{font-size:0.9rem;color:#333;margin-top:8px}
-</style>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>iPad FSK Terminal</title>
+    <style>
+        body { font-family: -apple-system, BlinkMacSystemFont, sans-serif; padding: 20px; background: #f0f0f0; }
+        .container { max-width: 600px; margin: 0 auto; background: white; padding: 20px; border-radius: 12px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); }
+        h2 { margin-top: 0; color: #333; }
+        button {
+            display: block; width: 100%; padding: 15px; margin: 10px 0;
+            font-size: 18px; border: none; border-radius: 8px;
+            background-color: #007AFF; color: white; cursor: pointer;
+        }
+        button:disabled { background-color: #ccc; }
+        button.stop { background-color: #FF3B30; }
+        textarea { width: 100%; height: 150px; font-family: monospace; font-size: 16px; border: 1px solid #ddd; border-radius: 8px; padding: 10px; box-sizing: border-box; }
+        .status { margin: 10px 0; color: #666; font-size: 14px; text-align: center; }
+        .control-group { margin-bottom: 20px; border-top: 1px solid #eee; padding-top: 20px; }
+    </style>
 </head>
 <body>
 
-<h1>FSK 300bps (1200Hz=0 / 2400Hz=1) Demodulator — Goertzel版</h1>
+<div class="container">
+    <h2>FSK Terminal (300bps)</h2>
 
-<!--
-動作確認手順（簡潔）：
-1) iPad の Safari でこのHTMLを開く（ファイルサーバ、AirDrop経由で開く等）。
-2) 「開始」ボタンをタップ → Safari がマイク許可を要求 → 許可する。
-3) 必要なら「テスト送信」を ON にして同機でスピーカー再生 → マイクでループバックして自己テスト可能。
-4) 送信するバイト列はLSBファースト、先頭に 0x7E を含めること。
-5) 受信ログに "0x7E"（スタート）がハイライトされ、その後のバイトが16進で表示されます。
--->
+    <div id="initArea">
+        <p>マイクとスピーカーの使用を許可してください。</p>
+        <button onclick="initAudio()">オーディオ機能を開始</button>
+    </div>
 
-<div class="row controls">
-  <button id="startBtn">開始（マイク許可）</button>
-  <button id="stopBtn" disabled>停止</button>
-  <label class="small" style="display:flex;align-items:center;gap:6px">
-    <input type="checkbox" id="testTone"> テスト送信
-  </label>
-  <button id="clearBtn">ログ消去</button>
-  <button id="downloadBtn" disabled>CSVダウンロード</button>
-  <button id="copyBtn" disabled>クリップボードにコピー</button>
-</div>
+    <div id="mainArea" style="display:none;">
+        <div class="status" id="statusText">待機中...</div>
 
-<div class="row" style="margin-top:10px">
-  <div style="flex:1 1 320px">
-    <label><strong>受信ログ（追記式）</strong></label>
-    <textarea id="logArea" readonly></textarea>
-    <div class="logsmall">最後に検出したスタートバイトは <span id="startDetect">未検出</span></div>
-  </div>
+        <div class="control-group">
+            <h3>受信データ (Rx)</h3>
+            <textarea id="rxLog" readonly placeholder="受信したデータがここに16進数で表示されます..."></textarea>
+            <button onclick="clearLog()" style="background-color: #8E8E93; width: auto; display: inline-block; padding: 8px 16px; font-size: 14px;">クリア</button>
+        </div>
 
-  <div style="width:240px">
-    <label><strong>検出強度メーター（簡易）</strong></label>
-    <div style="margin-top:6px">1200Hz</div>
-    <div class="meter"><div id="meter1200" class="meter-fill"></div></div>
-    <div style="margin-top:6px">2400Hz</div>
-    <div class="meter"><div id="meter2400" class="meter-fill"></div></div>
-    <div style="margin-top:8px" class="logsmall">SNR（簡易）: <span id="snrText">--</span></div>
-    <div style="margin-top:8px" class="logsmall">同期状態: <span id="syncState" class="danger">未同期</span></div>
-  </div>
-</div>
-
-<div class="note">
-  <strong>実装ノート（短く）:</strong>
-  復調は Goertzel を用いてビットごとのトーン強度を算出します。サンプリングレート（audioCtx.sampleRate）から
-  samplesPerBit = sampleRate / 300 を計算し、同期（スタートバイト 0x7E）を検出したら固定クロックで読み続けます。
+        <div class="control-group">
+            <h3>送信 (Tx)</h3>
+            <input type="text" id="txInput" placeholder="送信する文字 (例: Hello)" style="width: 100%; padding: 10px; font-size: 16px; box-sizing: border-box; margin-bottom: 10px;">
+            <button onclick="sendText()">送信</button>
+        </div>
+    </div>
 </div>
 
 <script>
-/*
-  Goertzel版 FSK復調器（日本語コメント）
-  目的:
-    - ボーレート 300bps, 0=1200Hz, 1=2400Hz
-    - LSBファースト, スタートバイト 0x7E で同期
-    - Goertzel を使い、iPad Safari上で安定動作することを目指す
+    // --- 設定値 ---
+    const BAUD_RATE = 300;
+    const FREQ_0 = 1200;
+    const FREQ_1 = 2400;
+    const BIT_TIME = 1 / BAUD_RATE; // 約0.00333秒
 
-  主要アルゴリズム:
-    - サンプルをリングバッファに蓄積
-    - 同期未確定時: 複数オフセット（粗→精）を試してスタートバイトを探索
-    - 同期確定時: 固定のビット中心位置を使ってGoertzelで各ビットを判定し、バイト化
-    - ノイズフロアと閾値で無信号時の誤検出を低減
+    let audioCtx;
+    let microphoneStream;
+    let scriptProcessor;
+    let isReceiving = false;
 
-  重要な数式:
-    samplesPerBit = sampleRate / baud
-    Goertzel(k) => パワー計算（窓幅 = samplesPerBit）
-    判定: 比較(p2400, p1200) + ノイズ閾値
-*/
+    // --- 受信ロジック用変数 ---
+    let sampleRate = 0;
+    let samplesPerBit = 0;
+    
+    // ステートマシン: 0=IDLE, 1=START_BIT_WAIT, 2=DATA_BITS
+    let rxState = 0; 
+    let rxBitIndex = 0;
+    let rxByte = 0;
+    let rxSampleCounter = 0; // 次のサンプリングまでのカウンタ
+    
+    // 信号解析用バッファ
+    const BUFFER_SIZE = 4096; 
+    
+    // 初期化処理 (ユーザーアクション必須)
+    async function initAudio() {
+        try {
+            const AudioContext = window.AudioContext || window.webkitAudioContext;
+            audioCtx = new AudioContext();
+            
+            // マイク入力を取得
+            const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+            microphoneStream = audioCtx.createMediaStreamSource(stream);
+            
+            // 受信処理用のプロセッサを作成
+            // ※ScriptProcessorNodeは非推奨ですが、単一ファイルでのデモ実装には最も手軽です
+            scriptProcessor = audioCtx.createScriptProcessor(BUFFER_SIZE, 1, 1);
+            
+            microphoneStream.connect(scriptProcessor);
+            scriptProcessor.connect(audioCtx.destination); // 処理ループを回すために接続（ミュート推奨だがデバッグ用に音が出る場合あり）
+            
+            // サンプルレート関連の計算
+            sampleRate = audioCtx.sampleRate;
+            samplesPerBit = Math.floor(sampleRate / BAUD_RATE);
 
-///// --- パラメータ（調整可） ---
-const BAUD = 300;
-const FREQ0 = 1200; // bit 0
-const FREQ1 = 2400; // bit 1
-const START_BYTE = 0x7E; // LSB-firstで送られるスタートバイト
+            // 受信ループ処理の登録
+            scriptProcessor.onaudioprocess = processAudioInput;
 
-// 検出チューニング
-let NOISE_ALPHA = 0.001;        // ノイズフロアの指数移動平均係数（小さいほど遅い）
-let DETECT_RATIO = 1.6;         // tone power / noiseFloor がこの値を超えたら有意
-let START_MIN_MATCH = 6;        // スタートバイト検出時に少なくとも何ビットが一致していればOK（8中）
-let MAX_SEARCH_BITS = 64;       // 同期探索に使う最大ビット数
-let COARSE_STEP = 4;            // 同期探索の粗ステップ（サンプルのオフセット探索時に使う）
-let BLOCK_SIZE = 512;           // ScriptProcessor のバッファ（小さすぎると負荷、でも低遅延）
-
-///// --- UI要素 ---
-const startBtn = document.getElementById('startBtn');
-const stopBtn = document.getElementById('stopBtn');
-const testToneCheckbox = document.getElementById('testTone');
-const clearBtn = document.getElementById('clearBtn');
-const downloadBtn = document.getElementById('downloadBtn');
-const copyBtn = document.getElementById('copyBtn');
-
-const logArea = document.getElementById('logArea');
-const meter1200 = document.getElementById('meter1200');
-const meter2400 = document.getElementById('meter2400');
-const snrText = document.getElementById('snrText');
-const syncState = document.getElementById('syncState');
-const startDetect = document.getElementById('startDetect');
-
-///// --- オーディオ / 状態変数 ---
-let audioCtx = null;
-let micStream = null;
-let sourceNode = null;
-let procNode = null;
-let sampleRate = 48000;
-let samplesPerBit = 160; // 実行時に上書き
-
-// サンプルリングバッファ（Float32）
-let ringBuf = null;
-let ringHead = 0; // 次に書く位置
-let ringLen = 0;  // 現在格納サンプル数
-const RING_CAP_SECONDS = 4; // 何秒分保持するか
-let RING_CAP = 48000 * RING_CAP_SECONDS;
-
-// ノイズフロア（GoertzelパワーのEMA）
-let noiseFloor0 = 1e-9;
-let noiseFloor1 = 1e-9;
-
-// 同期・復調状態
-let locked = false;
-let lockedCenterSampleGlobal = 0; // グローバルなサンプル番号での、最初のスタートバイトの中心
-let globalSampleCounter = 0;
-let decodedBytes = [];
-let lastAppendedSampleCenter = -1;
-
-// テスト送信用
-let testScriptNode = null;
-
-// ---------- ヘルパ ----------
-function appendLogByte(b, isStart=false) {
-  const s = '0x' + b.toString(16).padStart(2,'0').toUpperCase();
-  if (isStart) {
-    logArea.value += ' ' + s;
-    startDetect.textContent = s;
-    startDetect.className = 'highlight';
-  } else {
-    logArea.value += ' ' + s;
-  }
-  logArea.scrollTop = logArea.scrollHeight;
-  downloadBtn.disabled = false;
-  copyBtn.disabled = false;
-}
-function clearLog() {
-  logArea.value = '';
-  startDetect.textContent = '未検出';
-  decodedBytes = [];
-  downloadBtn.disabled = true;
-  copyBtn.disabled = true;
-}
-function setSyncStateText(s, ok=false) {
-  syncState.textContent = s;
-  syncState.className = ok ? 'ok' : 'danger';
-}
-
-// CSV ダウンロード
-downloadBtn.addEventListener('click', () => {
-  if (!decodedBytes.length) return;
-  const csv = decodedBytes.map(b=>'0x'+b.toString(16).padStart(2,'0')).join(',');
-  const blob = new Blob([csv], {type: 'text/csv'});
-  const url = URL.createObjectURL(blob);
-  const a = document.createElement('a');
-  a.href = url; a.download='fsk_rx.csv'; a.click();
-  URL.revokeObjectURL(url);
-});
-// クリップボードコピー
-copyBtn.addEventListener('click', async () => {
-  if (!decodedBytes.length) return;
-  const txt = decodedBytes.map(b=>'0x'+b.toString(16).padStart(2,'0')).join(' ');
-  try { await navigator.clipboard.writeText(txt); alert('コピーしました'); } catch(e){ alert('コピー失敗: '+e); }
-});
-
-// ログ消去
-clearBtn.addEventListener('click', clearLog);
-
-// テスト送信トグル
-testToneCheckbox.addEventListener('change', (e) => {
-  if (e.target.checked) startTestTone();
-  else stopTestTone();
-});
-
-///// --- Goertzel 実装（窓幅 N） ---
-// Goertzel: 指定窓幅 samples (Float32Array), 周波数 f, サンプリング周波数 sr
-// 返り値: パワー（非正規化）
-function goertzelPower(samples, f, sr) {
-  const N = samples.length;
-  if (N <= 0) return 0;
-  const k = Math.round(0.5 + (N * f) / sr); // 整数bins
-  const w = (2 * Math.PI * k) / N;
-  const cosw = Math.cos(w);
-  const coeff = 2 * cosw;
-  let s_prev = 0.0, s_prev2 = 0.0;
-  for (let i=0;i<N;i++) {
-    const s = samples[i] + coeff * s_prev - s_prev2;
-    s_prev2 = s_prev;
-    s_prev = s;
-  }
-  const power = s_prev2*s_prev2 + s_prev*s_prev - coeff*s_prev*s_prev2;
-  // power が負になることがある（数値誤差）ので非負化
-  return Math.max(0, power);
-}
-
-///// --- リングバッファ操作（書き込み） ---
-function ensureRingCap(minCap) {
-  if (!ringBuf || ringBuf.length < minCap) {
-    const newCap = Math.max(minCap, Math.floor(48000 * RING_CAP_SECONDS));
-    const newBuf = new Float32Array(newCap);
-    // copy existing data
-    if (ringBuf && ringLen > 0) {
-      if (ringHead >= ringLen) {
-        // contiguous from 0..ringLen-1
-        newBuf.set(ringBuf.subarray(0, ringLen), 0);
-      } else {
-        // wrapped
-        const tail = ringBuf.length - ringHead;
-        newBuf.set(ringBuf.subarray(ringHead), 0);
-        newBuf.set(ringBuf.subarray(0, ringHead), tail);
-      }
-    }
-    ringBuf = newBuf;
-    ringHead = ringLen % ringBuf.length;
-  }
-}
-function pushSamples(samples) {
-  // samples: Float32Array
-  ensureRingCap(ringLen + samples.length + 4);
-  for (let i=0;i<samples.length;i++) {
-    const pos = (ringHead + ringLen) % ringBuf.length;
-    ringBuf[pos] = samples[i];
-    ringLen++;
-  }
-  // keep cap not exceeding buffer length
-  if (ringLen > ringBuf.length) {
-    // drop oldest
-    const drop = ringLen - ringBuf.length;
-    ringHead = (ringHead + drop) % ringBuf.length;
-    ringLen = ringBuf.length;
-  }
-}
-
-function readWindowFromRing(startIndex, N) {
-  // startIndex: 0..ringLen-1 (0 is oldest sample)
-  // return Float32Array length N (if out-of-range, returns shorter)
-  const res = new Float32Array(N);
-  if (startIndex < 0 || startIndex >= ringLen) return res.subarray(0,0);
-  const avail = Math.min(N, ringLen - startIndex);
-  const bufIndex = (ringHead + startIndex) % ringBuf.length;
-  const firstChunk = Math.min(avail, ringBuf.length - bufIndex);
-  res.set(ringBuf.subarray(bufIndex, bufIndex + firstChunk), 0);
-  if (firstChunk < avail) {
-    res.set(ringBuf.subarray(0, avail - firstChunk), firstChunk);
-  }
-  return res.subarray(0, avail);
-}
-
-///// --- 同期探索（粗→精） ---
-// 戻り値: 同期が見つかれば {found:true, centerGlobal: sampleGlobalIndexOfFirstBitCenter, offsetInBuffer: offset }
-// 失敗すれば {found:false}
-function searchForStartByte() {
-  const neededSamples = Math.ceil(samplesPerBit * MAX_SEARCH_BITS);
-  if (ringLen < neededSamples) return {found:false};
-
-  // take window of last neededSamples
-  const startIndex = ringLen - neededSamples;
-  // We'll try offsets from 0..samplesPerBit-1 but in coarse steps first for speed
-  const spb = Math.round(samplesPerBit);
-  const maxOffset = spb;
-  // coarse pass
-  for (let offset = 0; offset < maxOffset; offset += Math.max(1, Math.floor(COARSE_STEP))) {
-    const bits = [];
-    const bitsToCheck = Math.min(MAX_SEARCH_BITS, Math.floor(neededSamples / spb));
-    for (let k=0;k<bitsToCheck;k++) {
-      const centerSampleIdx = startIndex + offset + Math.round((k + 0.5) * spb);
-      const winStart = centerSampleIdx - Math.floor(spb/2);
-      const window = readWindowFromRing(winStart, spb);
-      if (window.length < spb) { bits.push(-1); continue; }
-      const p0 = goertzelPower(window, FREQ0, sampleRate);
-      const p1 = goertzelPower(window, FREQ1, sampleRate);
-      // update noise floors temporary estimation (not committed)
-      const ratio0 = p0 / (noiseFloor0 + 1e-12);
-      const ratio1 = p1 / (noiseFloor1 + 1e-12);
-      let bit = -1;
-      if (ratio1 > ratio0 && ratio1 > DETECT_RATIO) bit = 1;
-      else if (ratio0 > ratio1 && ratio0 > DETECT_RATIO) bit = 0;
-      else bit = -1;
-      bits.push(bit);
-    }
-    // Now scan bits[] for a window of 8 matching START_BYTE (allow some -1 tolerant)
-    for (let s=0; s + 8 <= bits.length; s++) {
-      let match = 0;
-      let valid = 0;
-      for (let b=0;b<8;b++) {
-        const exp = (START_BYTE >> b) & 1;
-        const obs = bits[s+b];
-        if (obs === -1) continue;
-        valid++;
-        if (obs === exp) match++;
-      }
-      if (valid >= START_MIN_MATCH && match >= START_MIN_MATCH) {
-        // found candidate; refine offset by trying offsets +/- COARSE_STEP finely
-        const fineOffsetStart = Math.max(0, offset - COARSE_STEP + 1);
-        const fineOffsetEnd = Math.min(maxOffset-1, offset + COARSE_STEP - 1);
-        for (let off2 = fineOffsetStart; off2 <= fineOffsetEnd; off2++) {
-          // validate fully
-          const bits2 = [];
-          for (let k2=0;k2<Math.min(MAX_SEARCH_BITS, Math.floor(neededSamples / spb));k2++) {
-            const center2 = startIndex + off2 + Math.round((k2 + 0.5) * spb);
-            const w2 = readWindowFromRing(center2 - Math.floor(spb/2), spb);
-            if (w2.length < spb) { bits2.push(-1); continue; }
-            const p0 = goertzelPower(w2, FREQ0, sampleRate);
-            const p1 = goertzelPower(w2, FREQ1, sampleRate);
-            const ratio0 = p0 / (noiseFloor0 + 1e-12);
-            const ratio1 = p1 / (noiseFloor1 + 1e-12);
-            let bit = -1;
-            if (ratio1 > ratio0 && ratio1 > DETECT_RATIO) bit = 1;
-            else if (ratio0 > ratio1 && ratio0 > DETECT_RATIO) bit = 0;
-            else bit = -1;
-            bits2.push(bit);
-          }
-          // scan bits2
-          for (let s2=0; s2 + 8 <= bits2.length; s2++) {
-            let m2 = 0, v2 = 0;
-            for (let b2=0;b2<8;b2++) {
-              const e = (START_BYTE >> b2) & 1;
-              const o = bits2[s2+b2];
-              if (o === -1) continue;
-              v2++; if (o === e) m2++;
-            }
-            if (v2 >= START_MIN_MATCH && m2 >= START_MIN_MATCH) {
-              // compute global center sample index of the first bit center
-              const firstCenterIndexInRing = (startIndex + off2 + Math.round((s2 + 0.5) * spb));
-              // translate to global sample number:
-              const centerGlobal = globalSampleCounter - ringLen + firstCenterIndexInRing;
-              return {found:true, centerGlobal:centerGlobal, ringOffsetStartIndex: startIndex + off2 + Math.round(s2 * spb)};
-            }
-          }
+            // UI切り替え
+            document.getElementById('initArea').style.display = 'none';
+            document.getElementById('mainArea').style.display = 'block';
+            document.getElementById('statusText').innerText = "オーディオ有効。受信中...";
+            
+        } catch (e) {
+            alert("マイクのアクセスに失敗しました: " + e);
         }
-      }
     }
-  }
-  return {found:false};
-}
 
-///// --- 同期ロック後のデコード ---
-// lockedCenterSampleGlobal: グローバルなサンプル番号で、スタートバイトの最初のビット中心（または基準中心）
-// 解説: この関数は ringBuf にあるデータの範囲で読み取れるだけのビットを抽出して UI に出力する
-function decodeLockedStream() {
-  if (!locked) return;
-  // compute sample index range in ring buffer we can decode
-  // find oldest global sample index currently in buffer:
-  const bufferStartGlobal = globalSampleCounter - ringLen;
-  // start decoding from the first bit center after lastAppendedSampleCenter
-  let nextCenterGlobal = (lastAppendedSampleCenter < 0) ? lockedCenterSampleGlobal : lastAppendedSampleCenter + Math.round(samplesPerBit);
-  // while nextCenterGlobal + half window is within buffer (i.e., centerGlobal - spb/2 >= bufferStartGlobal)
-  const halfWin = Math.floor(samplesPerBit/2);
-  while (nextCenterGlobal - halfWin >= bufferStartGlobal && nextCenterGlobal + halfWin < bufferStartGlobal + ringLen) {
-    const startIndexInRing = nextCenterGlobal - halfWin - bufferStartGlobal;
-    const window = readWindowFromRing(startIndexInRing, Math.round(samplesPerBit));
-    if (window.length < Math.round(samplesPerBit)) break;
-    const p0 = goertzelPower(window, FREQ0, sampleRate);
-    const p1 = goertzelPower(window, FREQ1, sampleRate);
-    // update noise floor slowly
-    noiseFloor0 = (1 - NOISE_ALPHA) * noiseFloor0 + NOISE_ALPHA * p0;
-    noiseFloor1 = (1 - NOISE_ALPHA) * noiseFloor1 + NOISE_ALPHA * p1;
-    // decide bit
-    const ratio0 = p0 / (noiseFloor0 + 1e-12);
-    const ratio1 = p1 / (noiseFloor1 + 1e-12);
-    let bit = -1;
-    if (ratio1 > ratio0 && ratio1 > DETECT_RATIO) bit = 1;
-    else if (ratio0 > ratio1 && ratio0 > DETECT_RATIO) bit = 0;
-    else bit = -1;
-    // accumulate into byte
-    // We will assemble bytes LSB-first
-    // For simplicity, keep a small bit queue per decoded byte
-    if (!decodeLockedStream.bitQueue) decodeLockedStream.bitQueue = [];
-    decodeLockedStream.bitQueue.push(bit);
-    // if we've got 8 bits (no -1 allowed), form byte
-    while (decodeLockedStream.bitQueue.length >= 8) {
-      const bits = decodeLockedStream.bitQueue.splice(0,8);
-      if (bits.some(x=>x===-1)) {
-        // invalid byte: treat as framing error; drop and continue
-        setSyncStateText('フレーミング異常（ビット欠落）', false);
-        // If too many errors, unlock
-        // count errors heuristic: (not implemented complexly here)
-        locked = false;
-        setSyncStateText('同期喪失（フレーミング）', false);
-        return;
-      } else {
-        let val = 0;
-        for (let bi=0; bi<8; bi++) val |= (bits[bi]&1) << bi;
-        // append if new (avoid duplicates)
-        const centerForThisByte = nextCenterGlobal - Math.round(samplesPerBit*(0.5*7)); // rough center for first bit? keep simple
-        if (centerForThisByte > lastAppendedSampleCenter) {
-          decodedBytes.push(val);
-          appendLogByte(val, val === START_BYTE);
-          lastAppendedSampleCenter = nextCenterGlobal;
-          setSyncStateText('同期維持中', true);
+    // --- 送信ロジック (Web Audio API Oscillator) ---
+    function sendText() {
+        const text = document.getElementById('txInput').value;
+        if (!text) return;
+
+        const oscillator = audioCtx.createOscillator();
+        const gainNode = audioCtx.createGain();
+        
+        oscillator.type = 'sine'; // FSKは正弦波が一般的
+        oscillator.connect(gainNode);
+        gainNode.connect(audioCtx.destination);
+        
+        // 音量調整 (大きすぎると音が割れるので少し下げる)
+        gainNode.gain.value = 0.8;
+
+        const startTime = audioCtx.currentTime + 0.1; // 0.1秒後から開始
+        let currentTime = startTime;
+
+        // アイドル状態 (Mark = 1) を少し出力
+        oscillator.frequency.setValueAtTime(FREQ_1, currentTime);
+        currentTime += BIT_TIME * 5;
+
+        // 文字列をバイト列に変換して送信
+        for (let i = 0; i < text.length; i++) {
+            const charCode = text.charCodeAt(i);
+            sendByte(oscillator, charCode, currentTime);
+            currentTime += BIT_TIME * 10; // 1バイト(Start+8bit+Stop) = 10ビット分
         }
-      }
+
+        // 送信終了後に停止
+        oscillator.start(startTime);
+        oscillator.stop(currentTime + BIT_TIME);
+        
+        document.getElementById('statusText').innerText = "送信中...";
+        setTimeout(() => {
+            document.getElementById('statusText').innerText = "待機中/受信中";
+        }, (currentTime - startTime) * 1000);
     }
 
-    // advance to next center
-    nextCenterGlobal += Math.round(samplesPerBit);
-  }
-}
+    function sendByte(oscillator, byte, startTime) {
+        let t = startTime;
 
-///// --- 受信ループ（ScriptProcessorNode） ---
-async function startAudio() {
-  if (audioCtx) return;
-  audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-  sampleRate = audioCtx.sampleRate;
-  samplesPerBit = sampleRate / BAUD;
-  RING_CAP = Math.max(RING_CAP, Math.ceil(sampleRate * RING_CAP_SECONDS));
-  ensureRingCap(Math.ceil(sampleRate * RING_CAP_SECONDS));
-  console.log('sampleRate', sampleRate, 'samplesPerBit', samplesPerBit);
+        // 1. Start Bit (Logic 0 = 1200Hz)
+        oscillator.frequency.setValueAtTime(FREQ_0, t);
+        t += BIT_TIME;
 
-  try {
-    micStream = await navigator.mediaDevices.getUserMedia({ audio: { channelCount:1 } });
-  } catch (e) {
-    alert('マイク取得エラー: ' + e);
-    return;
-  }
-  sourceNode = audioCtx.createMediaStreamSource(micStream);
+        // 2. Data Bits (LSB First)
+        for (let i = 0; i < 8; i++) {
+            const bit = (byte >> i) & 1;
+            oscillator.frequency.setValueAtTime(bit ? FREQ_1 : FREQ_0, t);
+            t += BIT_TIME;
+        }
 
-  procNode = audioCtx.createScriptProcessor(BLOCK_SIZE, 1, 1);
-  procNode.onaudioprocess = (e) => {
-    const inbuf = e.inputBuffer.getChannelData(0);
-    // push samples into ring
-    pushSamples(inbuf);
-    globalSampleCounter += inbuf.length;
-
-    // Quick meter: compute short average power for each tone around latest samples
-    // For performance, sample only last window of size samplesPerBit
-    const latestStart = Math.max(0, ringLen - Math.round(samplesPerBit));
-    const win = readWindowFromRing(latestStart, Math.round(samplesPerBit));
-    if (win.length >= Math.round(samplesPerBit)) {
-      const p0 = goertzelPower(win, FREQ0, sampleRate);
-      const p1 = goertzelPower(win, FREQ1, sampleRate);
-      // update noise floor slowly
-      noiseFloor0 = (1 - NOISE_ALPHA) * noiseFloor0 + NOISE_ALPHA * p0;
-      noiseFloor1 = (1 - NOISE_ALPHA) * noiseFloor1 + NOISE_ALPHA * p1;
-      // meters
-      const lv0 = Math.min(1, (p0 / (noiseFloor0 + 1e-12) - 1) / 5); // scale for UI
-      const lv1 = Math.min(1, (p1 / (noiseFloor1 + 1e-12) - 1) / 5);
-      meter1200.style.width = (Math.max(0,lv0)*100).toFixed(1) + '%';
-      meter2400.style.width = (Math.max(0,lv1)*100).toFixed(1) + '%';
-      const snr = Math.max(p0,p1) / ( (noiseFloor0 + noiseFloor1)/2 + 1e-12 );
-      snrText.textContent = snr.toFixed(2);
+        // 3. Stop Bit (Logic 1 = 2400Hz)
+        oscillator.frequency.setValueAtTime(FREQ_1, t);
     }
 
-    // If not locked, attempt to search for start byte occasionally
-    if (!locked) {
-      const res = searchForStartByte();
-      if (res.found) {
-        locked = true;
-        lockedCenterSampleGlobal = res.centerGlobal;
-        lastAppendedSampleCenter = res.centerGlobal - Math.round(samplesPerBit); // so that first appended will be this start byte
-        // reset decode queue
-        decodeLockedStream.bitQueue = [];
-        setSyncStateText('同期確立（0x7E 検出）', true);
-        // append the start byte immediately if possible
-        // ensure we can decode it now via decodeLockedStream()
-        decodeLockedStream();
-      } else {
-        setSyncStateText('同期探索中', false);
-      }
-    } else {
-      // locked -> decode available bytes
-      decodeLockedStream();
+    // --- 受信ロジック (Signal Processing) ---
+    // PCMデータを受け取り、ゼロクロス法で周波数を推定して復調する簡易実装
+    function processAudioInput(audioProcessingEvent) {
+        const inputBuffer = audioProcessingEvent.inputBuffer;
+        const inputData = inputBuffer.getChannelData(0); // モノラルデータ
+
+        // 入力バッファ内の全サンプルを走査
+        for (let i = 0; i < inputData.length; i++) {
+            processSample(inputData[i]);
+        }
     }
-  };
 
-  // connect nodes
-  sourceNode.connect(procNode);
-  // Note: connecting procNode to destination may be required on some iOS to keep audio thread alive
-  try { procNode.connect(audioCtx.destination); } catch(e) { /* ignore */ }
+    // ゼロクロス検出用の変数
+    let lastSample = 0;
+    let zeroCrossCount = 0;
+    let samplesInWindow = 0;
+    const WINDOW_SIZE = Math.floor(sampleRate / BAUD_RATE); // 1ビット分のサンプル数
 
-  startBtn.disabled = true;
-  stopBtn.disabled = false;
-  setSyncStateText('開始（同期探索）', false);
-}
+    // 1サンプルごとの処理ステートマシン
+    function processSample(sample) {
+        // ゼロクロス検出 (符号が変わったらカウント)
+        if ((lastSample >= 0 && sample < 0) || (lastSample < 0 && sample >= 0)) {
+            zeroCrossCount++;
+        }
+        lastSample = sample;
+        samplesInWindow++;
 
-function stopAudio() {
-  if (procNode) {
-    try { procNode.disconnect(); } catch(e){}
-    procNode.onaudioprocess = null;
-    procNode = null;
-  }
-  if (sourceNode) {
-    try { sourceNode.disconnect(); } catch(e){}
-    sourceNode = null;
-  }
-  if (micStream) {
-    const tracks = micStream.getTracks();
-    tracks.forEach(t=>t.stop());
-    micStream = null;
-  }
-  if (audioCtx) {
-    try { audioCtx.close(); } catch(e){}
-    audioCtx = null;
-  }
-  // cleanup ring
-  ringBuf = null;
-  ringLen = 0;
-  ringHead = 0;
-  locked = false;
-  setSyncStateText('停止', false);
-  startBtn.disabled = false;
-  stopBtn.disabled = true;
-  stopTestTone();
-}
+        // 1ビット分の時間が経過したら、周波数を判定する
+        // STM32側プログラムは「エッジ数」で判定していたので、こちらも同じアプローチをとります。
+        // 1ビット区間(3.33ms)でのゼロクロス回数:
+        // 1200Hz -> 約 8回 (4サイクル x 2エッジ)
+        // 2400Hz -> 約 16回 (8サイクル x 2エッジ)
+        // 閾値 -> 12回
 
-startBtn.addEventListener('click', startAudio);
-stopBtn.addEventListener('click', stopAudio);
-
-///// --- テスト送信（ブラウザ内でFSK音を生成） ---
-// 互換性重視：ScriptProcessor で 1200/2400Hz を切り替えて生成。
-// 先頭に 0x7E を含む繰り返しバイト列を生成（LSBファーストで送る）
-function startTestTone(payload=[START_BYTE,0x01,0x02,0xA5]) {
-  if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-  stopTestTone();
-  testScriptNode = audioCtx.createScriptProcessor(1024, 0, 1);
-  // build bitstream as sequence of bits
-  const spb = Math.round(samplesPerBit || (audioCtx.sampleRate / BAUD));
-  const bitArray = [];
-  for (let b of payload) {
-    for (let i=0;i<8;i++) bitArray.push((b>>i)&1); // LSB-first
-  }
-  // loop the bitArray
-  let bitIndex = 0;
-  let sampleInBit = 0;
-  let phase = 0;
-  testScriptNode.onaudioprocess = (e) => {
-    const out = e.outputBuffer.getChannelData(0);
-    const sr = audioCtx.sampleRate;
-    for (let i=0;i<out.length;i++) {
-      const bit = bitArray[bitIndex % bitArray.length];
-      const freq = bit ? FREQ1 : FREQ0;
-      const w = 2*Math.PI*freq/sr;
-      phase += w;
-      if (phase > Math.PI*2) phase -= Math.PI*2;
-      out[i] = Math.sin(phase) * 0.6;
-      sampleInBit++;
-      if (sampleInBit >= spb) { sampleInBit = 0; bitIndex++; }
+        if (samplesInWindow >= WINDOW_SIZE) {
+            const isMark = zeroCrossCount > 12; // 12回より多ければ2400Hz(1)
+            handleBitLogic(isMark ? 1 : 0);
+            
+            // リセット
+            zeroCrossCount = 0;
+            samplesInWindow = 0;
+        }
     }
-  };
-  testScriptNode.connect(audioCtx.destination);
-}
-// stop test tone
-function stopTestTone() {
-  if (testScriptNode) {
-    try { testScriptNode.disconnect(); } catch(e){}
-    testScriptNode.onaudioprocess = null;
-    testScriptNode = null;
-  }
-}
 
-// ページアンロード時にクリーンアップ
-window.addEventListener('beforeunload', () => {
-  stopAudio();
-  stopTestTone();
-});
+    // ビット判定後のステートマシン
+    // 受信精度向上のため、本来はスタートビットのエッジで位相同期が必要ですが、
+    // ここでは簡易的に「1ビット単位の窓」で連続監視し、0が続いた後にデータを取ります。
+    
+    // 簡易実装のため、「1ビット窓」と「通信ビット」がずれる可能性があります。
+    // 本格的にはリングバッファを用いたスライディングウィンドウが必要ですが、
+    // 今回は「0 (1200Hz)」が検出されたらそこを起点に強引に同期させる簡易ロジックにします。
 
+    let syncCounter = 0; // 連続するMark(1)の数
+
+    function handleBitLogic(bit) {
+        switch (rxState) {
+            case 0: // IDLE
+                if (bit === 1) {
+                    syncCounter++;
+                } else {
+                    // 0が来た = スタートビットの可能性
+                    // ただしノイズ耐性のため、直前に十分なアイドル(1)があったか確認してもよい
+                    if (syncCounter > 2) { 
+                        rxState = 1; // データ受信開始
+                        rxBitIndex = 0;
+                        rxByte = 0;
+                    }
+                    syncCounter = 0;
+                }
+                break;
+
+            case 1: // DATA BITS (8 bits)
+                if (bit === 1) {
+                    rxByte |= (1 << rxBitIndex);
+                }
+                rxBitIndex++;
+                
+                if (rxBitIndex >= 8) {
+                    rxState = 2; // STOP BIT待ち
+                }
+                break;
+
+            case 2: // STOP BIT
+                // ストップビットは本来 1 であるべき
+                if (bit === 1) {
+                    displayByte(rxByte);
+                } else {
+                    console.log("Framing Error");
+                }
+                rxState = 0; // IDLEに戻る
+                syncCounter = 0; 
+                break;
+        }
+    }
+
+    function displayByte(byte) {
+        const textArea = document.getElementById('rxLog');
+        // 16進数 2桁に変換 (例: 41)
+        const hex = byte.toString(16).toUpperCase().padStart(2, '0');
+        textArea.value += "0x" + hex + " ";
+        textArea.scrollTop = textArea.scrollHeight; // 自動スクロール
+    }
+
+    function clearLog() {
+        document.getElementById('rxLog').value = "";
+    }
 </script>
+
 </body>
 </html>
