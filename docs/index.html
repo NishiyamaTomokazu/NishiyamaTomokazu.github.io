@@ -3,46 +3,55 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>iPad FSK Terminal</title>
+    <title>iPad FSK Terminal (Fixed)</title>
     <style>
-        body { font-family: -apple-system, BlinkMacSystemFont, sans-serif; padding: 20px; background: #f0f0f0; }
-        .container { max-width: 600px; margin: 0 auto; background: white; padding: 20px; border-radius: 12px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); }
-        h2 { margin-top: 0; color: #333; }
+        body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; padding: 20px; background: #f2f2f7; color: #1c1c1e; }
+        .container { max-width: 600px; margin: 0 auto; background: white; padding: 20px; border-radius: 16px; box-shadow: 0 4px 20px rgba(0,0,0,0.1); }
+        h2 { margin-top: 0; text-align: center; }
+        
         button {
-            display: block; width: 100%; padding: 15px; margin: 10px 0;
-            font-size: 18px; border: none; border-radius: 8px;
+            display: block; width: 100%; padding: 16px; margin: 12px 0;
+            font-size: 18px; font-weight: bold; border: none; border-radius: 12px;
             background-color: #007AFF; color: white; cursor: pointer;
+            transition: opacity 0.2s;
         }
-        button:disabled { background-color: #ccc; }
-        button.stop { background-color: #FF3B30; }
-        textarea { width: 100%; height: 150px; font-family: monospace; font-size: 16px; border: 1px solid #ddd; border-radius: 8px; padding: 10px; box-sizing: border-box; }
-        .status { margin: 10px 0; color: #666; font-size: 14px; text-align: center; }
-        .control-group { margin-bottom: 20px; border-top: 1px solid #eee; padding-top: 20px; }
+        button:active { opacity: 0.7; }
+        button:disabled { background-color: #c7c7cc; color: #8e8e93; }
+        
+        textarea { width: 100%; height: 120px; font-family: 'Menlo', 'Courier New', monospace; font-size: 16px; border: 1px solid #c7c7cc; border-radius: 8px; padding: 10px; box-sizing: border-box; -webkit-appearance: none; }
+        input[type="text"] { width: 100%; padding: 12px; font-size: 16px; border: 1px solid #c7c7cc; border-radius: 8px; box-sizing: border-box; margin-bottom: 10px; -webkit-appearance: none;}
+        
+        .status { margin: 10px 0; color: #8e8e93; font-size: 14px; text-align: center; height: 20px; }
+        .control-group { margin-bottom: 24px; border-top: 1px solid #e5e5ea; padding-top: 20px; }
+        
+        /* エラー表示用 */
+        #errorMsg { color: #ff3b30; font-size: 14px; text-align: center; display: none; margin-bottom: 10px;}
     </style>
 </head>
 <body>
 
 <div class="container">
     <h2>FSK Terminal (300bps)</h2>
+    <div id="errorMsg"></div>
 
     <div id="initArea">
-        <p>マイクとスピーカーの使用を許可してください。</p>
-        <button onclick="initAudio()">オーディオ機能を開始</button>
+        <p style="text-align:center;">マイク許可とオーディオ再生の準備</p>
+        <button onclick="initAudio()" id="initBtn">スタート (ここをタップ)</button>
     </div>
 
     <div id="mainArea" style="display:none;">
-        <div class="status" id="statusText">待機中...</div>
+        <div class="status" id="statusText">待機中</div>
 
         <div class="control-group">
-            <h3>受信データ (Rx)</h3>
-            <textarea id="rxLog" readonly placeholder="受信したデータがここに16進数で表示されます..."></textarea>
-            <button onclick="clearLog()" style="background-color: #8E8E93; width: auto; display: inline-block; padding: 8px 16px; font-size: 14px;">クリア</button>
+            <h3>送信 (Tx) - 音が出ます</h3>
+            <input type="text" id="txInput" value="Hello" placeholder="送信する文字">
+            <button onclick="sendText()">送信実行</button>
         </div>
 
         <div class="control-group">
-            <h3>送信 (Tx)</h3>
-            <input type="text" id="txInput" placeholder="送信する文字 (例: Hello)" style="width: 100%; padding: 10px; font-size: 16px; box-sizing: border-box; margin-bottom: 10px;">
-            <button onclick="sendText()">送信</button>
+            <h3>受信データ (Rx)</h3>
+            <textarea id="rxLog" readonly></textarea>
+            <button onclick="document.getElementById('rxLog').value=''" style="background-color: #8E8E93; width: auto; display: inline-block; padding: 8px 16px; font-size: 14px; margin-top:0;">クリア</button>
         </div>
     </div>
 </div>
@@ -52,223 +61,216 @@
     const BAUD_RATE = 300;
     const FREQ_0 = 1200;
     const FREQ_1 = 2400;
-    const BIT_TIME = 1 / BAUD_RATE; // 約0.00333秒
+    const BIT_TIME = 1 / BAUD_RATE; 
 
-    let audioCtx;
-    let microphoneStream;
-    let scriptProcessor;
-    let isReceiving = false;
+    let audioCtx = null;
+    let microphoneStream = null;
+    let scriptProcessor = null;
 
-    // --- 受信ロジック用変数 ---
+    // 受信ロジック用
     let sampleRate = 0;
-    let samplesPerBit = 0;
-    
-    // ステートマシン: 0=IDLE, 1=START_BIT_WAIT, 2=DATA_BITS
-    let rxState = 0; 
+    let rxState = 0; // 0=IDLE, 1=DATA
     let rxBitIndex = 0;
     let rxByte = 0;
-    let rxSampleCounter = 0; // 次のサンプリングまでのカウンタ
-    
-    // 信号解析用バッファ
-    const BUFFER_SIZE = 4096; 
-    
-    // 初期化処理 (ユーザーアクション必須)
+    let syncCounter = 0;
+    let zeroCrossCount = 0;
+    let samplesInWindow = 0;
+    let samplesPerBitWindow = 0;
+
+    // エラー表示ヘルパー
+    function showError(msg) {
+        const el = document.getElementById('errorMsg');
+        el.innerText = msg;
+        el.style.display = 'block';
+    }
+
+    // 1. 初期化処理 (必ずユーザーのタップで発火させる)
     async function initAudio() {
+        const btn = document.getElementById('initBtn');
+        btn.disabled = true;
+        btn.innerText = "初期化中...";
+
         try {
+            // AudioContextの作成
             const AudioContext = window.AudioContext || window.webkitAudioContext;
             audioCtx = new AudioContext();
+
+            // ★重要: iOS対策。コンテキストがサスペンド状態なら強制的に再開する
+            if (audioCtx.state === 'suspended') {
+                await audioCtx.resume();
+            }
+
+            // ダミー音を瞬間的に鳴らしてオーディオエンジンを確実にロック解除する
+            const buffer = audioCtx.createBuffer(1, 1, 22050);
+            const source = audioCtx.createBufferSource();
+            source.buffer = buffer;
+            source.connect(audioCtx.destination);
+            source.start(0);
+
+            // マイク入力の取得
+            const stream = await navigator.mediaDevices.getUserMedia({ 
+                audio: { 
+                    echoCancellation: false, // FSK信号のため余計な処理を切る
+                    noiseSuppression: false,
+                    autoGainControl: false 
+                } 
+            });
             
-            // マイク入力を取得
-            const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
             microphoneStream = audioCtx.createMediaStreamSource(stream);
             
-            // 受信処理用のプロセッサを作成
-            // ※ScriptProcessorNodeは非推奨ですが、単一ファイルでのデモ実装には最も手軽です
-            scriptProcessor = audioCtx.createScriptProcessor(BUFFER_SIZE, 1, 1);
-            
+            // 受信用プロセッサ (非推奨だが単一ファイルで動くScriptProcessorを使用)
+            scriptProcessor = audioCtx.createScriptProcessor(4096, 1, 1);
             microphoneStream.connect(scriptProcessor);
-            scriptProcessor.connect(audioCtx.destination); // 処理ループを回すために接続（ミュート推奨だがデバッグ用に音が出る場合あり）
-            
-            // サンプルレート関連の計算
-            sampleRate = audioCtx.sampleRate;
-            samplesPerBit = Math.floor(sampleRate / BAUD_RATE);
+            scriptProcessor.connect(audioCtx.destination); // 必須: これがないとChrome/Safariでonaudioprocessが動かない場合がある
 
-            // 受信ループ処理の登録
             scriptProcessor.onaudioprocess = processAudioInput;
 
-            // UI切り替え
+            // 変数セットアップ
+            sampleRate = audioCtx.sampleRate;
+            samplesPerBitWindow = Math.floor(sampleRate / BAUD_RATE);
+
+            // 画面切り替え
             document.getElementById('initArea').style.display = 'none';
             document.getElementById('mainArea').style.display = 'block';
-            document.getElementById('statusText').innerText = "オーディオ有効。受信中...";
-            
+            document.getElementById('statusText').innerText = "オーディオ準備完了";
+
         } catch (e) {
-            alert("マイクのアクセスに失敗しました: " + e);
+            showError("初期化エラー: " + e.message + "\n設定アプリでSafariのマイク権限を確認してください。");
+            btn.disabled = false;
+            btn.innerText = "再試行";
         }
     }
 
-    // --- 送信ロジック (Web Audio API Oscillator) ---
+    // 2. 送信処理 (ここでも念のためresumeを呼ぶ)
     function sendText() {
+        if (!audioCtx) return;
+
+        // ★念には念を: 送信ボタンを押したときにもResumeを試みる
+        if (audioCtx.state === 'suspended') {
+            audioCtx.resume();
+        }
+
         const text = document.getElementById('txInput').value;
         if (!text) return;
 
         const oscillator = audioCtx.createOscillator();
         const gainNode = audioCtx.createGain();
         
-        oscillator.type = 'sine'; // FSKは正弦波が一般的
+        oscillator.type = 'sine';
         oscillator.connect(gainNode);
         gainNode.connect(audioCtx.destination);
         
-        // 音量調整 (大きすぎると音が割れるので少し下げる)
-        gainNode.gain.value = 0.8;
+        // 音量設定 (1.0だと割れる可能性があるため少し下げる)
+        gainNode.gain.setValueAtTime(0.8, audioCtx.currentTime);
 
-        const startTime = audioCtx.currentTime + 0.1; // 0.1秒後から開始
-        let currentTime = startTime;
-
-        // アイドル状態 (Mark = 1) を少し出力
-        oscillator.frequency.setValueAtTime(FREQ_1, currentTime);
-        currentTime += BIT_TIME * 5;
-
-        // 文字列をバイト列に変換して送信
-        for (let i = 0; i < text.length; i++) {
-            const charCode = text.charCodeAt(i);
-            sendByte(oscillator, charCode, currentTime);
-            currentTime += BIT_TIME * 10; // 1バイト(Start+8bit+Stop) = 10ビット分
-        }
-
-        // 送信終了後に停止
-        oscillator.start(startTime);
-        oscillator.stop(currentTime + BIT_TIME);
-        
-        document.getElementById('statusText').innerText = "送信中...";
-        setTimeout(() => {
-            document.getElementById('statusText').innerText = "待機中/受信中";
-        }, (currentTime - startTime) * 1000);
-    }
-
-    function sendByte(oscillator, byte, startTime) {
+        const startTime = audioCtx.currentTime + 0.05; // 50ms後から開始
         let t = startTime;
 
-        // 1. Start Bit (Logic 0 = 1200Hz)
-        oscillator.frequency.setValueAtTime(FREQ_0, t);
-        t += BIT_TIME;
+        // --- アイドルトーン (Mark=1) ---
+        oscillator.frequency.setValueAtTime(FREQ_1, t);
+        t += BIT_TIME * 2; // 少し長めに
 
-        // 2. Data Bits (LSB First)
-        for (let i = 0; i < 8; i++) {
-            const bit = (byte >> i) & 1;
-            oscillator.frequency.setValueAtTime(bit ? FREQ_1 : FREQ_0, t);
+        // --- データ送信 ---
+        for (let i = 0; i < text.length; i++) {
+            const charCode = text.charCodeAt(i);
+            
+            // Start Bit (0)
+            oscillator.frequency.setValueAtTime(FREQ_0, t);
+            t += BIT_TIME;
+
+            // Data Bits (LSB first)
+            for (let b = 0; b < 8; b++) {
+                const bit = (charCode >> b) & 1;
+                oscillator.frequency.setValueAtTime(bit ? FREQ_1 : FREQ_0, t);
+                t += BIT_TIME;
+            }
+
+            // Stop Bit (1)
+            oscillator.frequency.setValueAtTime(FREQ_1, t);
             t += BIT_TIME;
         }
 
-        // 3. Stop Bit (Logic 1 = 2400Hz)
-        oscillator.frequency.setValueAtTime(FREQ_1, t);
+        // 終了処理
+        oscillator.start(startTime);
+        oscillator.stop(t);
+
+        // UI表示更新
+        const statusEl = document.getElementById('statusText');
+        statusEl.innerText = "送信中... (音が鳴ります)";
+        
+        // 送信完了予測時刻にメッセージを戻す
+        setTimeout(() => {
+            statusEl.innerText = "待機中";
+        }, (t - audioCtx.currentTime) * 1000);
     }
 
-    // --- 受信ロジック (Signal Processing) ---
-    // PCMデータを受け取り、ゼロクロス法で周波数を推定して復調する簡易実装
-    function processAudioInput(audioProcessingEvent) {
-        const inputBuffer = audioProcessingEvent.inputBuffer;
-        const inputData = inputBuffer.getChannelData(0); // モノラルデータ
+    // 3. 受信処理 (ゼロクロス法)
+    function processAudioInput(e) {
+        const inputData = e.inputBuffer.getChannelData(0);
+        let lastSample = 0; // 簡易的な保持
 
-        // 入力バッファ内の全サンプルを走査
         for (let i = 0; i < inputData.length; i++) {
-            processSample(inputData[i]);
-        }
-    }
+            const sample = inputData[i];
 
-    // ゼロクロス検出用の変数
-    let lastSample = 0;
-    let zeroCrossCount = 0;
-    let samplesInWindow = 0;
-    const WINDOW_SIZE = Math.floor(sampleRate / BAUD_RATE); // 1ビット分のサンプル数
+            // ゼロクロス検出
+            if ((lastSample >= 0 && sample < 0) || (lastSample < 0 && sample >= 0)) {
+                zeroCrossCount++;
+            }
+            lastSample = sample;
+            samplesInWindow++;
 
-    // 1サンプルごとの処理ステートマシン
-    function processSample(sample) {
-        // ゼロクロス検出 (符号が変わったらカウント)
-        if ((lastSample >= 0 && sample < 0) || (lastSample < 0 && sample >= 0)) {
-            zeroCrossCount++;
-        }
-        lastSample = sample;
-        samplesInWindow++;
-
-        // 1ビット分の時間が経過したら、周波数を判定する
-        // STM32側プログラムは「エッジ数」で判定していたので、こちらも同じアプローチをとります。
-        // 1ビット区間(3.33ms)でのゼロクロス回数:
-        // 1200Hz -> 約 8回 (4サイクル x 2エッジ)
-        // 2400Hz -> 約 16回 (8サイクル x 2エッジ)
-        // 閾値 -> 12回
-
-        if (samplesInWindow >= WINDOW_SIZE) {
-            const isMark = zeroCrossCount > 12; // 12回より多ければ2400Hz(1)
-            handleBitLogic(isMark ? 1 : 0);
-            
-            // リセット
-            zeroCrossCount = 0;
-            samplesInWindow = 0;
-        }
-    }
-
-    // ビット判定後のステートマシン
-    // 受信精度向上のため、本来はスタートビットのエッジで位相同期が必要ですが、
-    // ここでは簡易的に「1ビット単位の窓」で連続監視し、0が続いた後にデータを取ります。
-    
-    // 簡易実装のため、「1ビット窓」と「通信ビット」がずれる可能性があります。
-    // 本格的にはリングバッファを用いたスライディングウィンドウが必要ですが、
-    // 今回は「0 (1200Hz)」が検出されたらそこを起点に強引に同期させる簡易ロジックにします。
-
-    let syncCounter = 0; // 連続するMark(1)の数
-
-    function handleBitLogic(bit) {
-        switch (rxState) {
-            case 0: // IDLE
-                if (bit === 1) {
-                    syncCounter++;
-                } else {
-                    // 0が来た = スタートビットの可能性
-                    // ただしノイズ耐性のため、直前に十分なアイドル(1)があったか確認してもよい
-                    if (syncCounter > 2) { 
-                        rxState = 1; // データ受信開始
-                        rxBitIndex = 0;
-                        rxByte = 0;
-                    }
-                    syncCounter = 0;
-                }
-                break;
-
-            case 1: // DATA BITS (8 bits)
-                if (bit === 1) {
-                    rxByte |= (1 << rxBitIndex);
-                }
-                rxBitIndex++;
+            // 1ビット分のウィンドウが埋まったら判定
+            if (samplesInWindow >= samplesPerBitWindow) {
+                // 1200Hz(0)なら約8回, 2400Hz(1)なら約16回
+                // 閾値を12とする
+                const bit = (zeroCrossCount > 12) ? 1 : 0;
                 
-                if (rxBitIndex >= 8) {
-                    rxState = 2; // STOP BIT待ち
-                }
-                break;
+                stateMachine(bit);
 
-            case 2: // STOP BIT
-                // ストップビットは本来 1 であるべき
-                if (bit === 1) {
-                    displayByte(rxByte);
-                } else {
-                    console.log("Framing Error");
-                }
-                rxState = 0; // IDLEに戻る
-                syncCounter = 0; 
-                break;
+                // リセット
+                zeroCrossCount = 0;
+                samplesInWindow = 0;
+            }
         }
     }
 
-    function displayByte(byte) {
-        const textArea = document.getElementById('rxLog');
-        // 16進数 2桁に変換 (例: 41)
-        const hex = byte.toString(16).toUpperCase().padStart(2, '0');
-        textArea.value += "0x" + hex + " ";
-        textArea.scrollTop = textArea.scrollHeight; // 自動スクロール
+    // 受信ステートマシン
+    function stateMachine(bit) {
+        // IDLE状態
+        if (rxState === 0) {
+            if (bit === 1) {
+                syncCounter++;
+            } else {
+                // 0が来た -> スタートビットの可能性
+                // ノイズ誤検知を防ぐため、直前に1が数回あったか確認するとベターだが
+                // ここでは単純に0が来たら開始する
+                rxState = 1;
+                rxBitIndex = 0;
+                rxByte = 0;
+            }
+        }
+        // データ受信状態
+        else if (rxState === 1) {
+            if (bit === 1) {
+                rxByte |= (1 << rxBitIndex);
+            }
+            rxBitIndex++;
+
+            if (rxBitIndex >= 8) {
+                // 8ビット受信完了 -> ストップビット待ちへ（今回は即表示）
+                displayByte(rxByte);
+                rxState = 0; // IDLEへ戻る
+            }
+        }
     }
 
-    function clearLog() {
-        document.getElementById('rxLog').value = "";
+    function displayByte(val) {
+        const textArea = document.getElementById('rxLog');
+        const hex = val.toString(16).toUpperCase().padStart(2, '0');
+        textArea.value += "0x" + hex + " ";
+        textArea.scrollTop = textArea.scrollHeight;
     }
+
 </script>
 
 </body>
