@@ -3,331 +3,398 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>iPad FSK Terminal v3</title>
+    <title>FSK送受信 (1200/2400Hz, 300bps)</title>
     <style>
-        body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; padding: 20px; background: #f2f2f7; color: #1c1c1e; }
-        .container { max-width: 600px; margin: 0 auto; background: white; padding: 20px; border-radius: 16px; box-shadow: 0 4px 20px rgba(0,0,0,0.1); }
-        h2 { margin-top: 0; text-align: center; }
-        
-        button {
-            width: 100%; padding: 14px; margin: 8px 0;
-            font-size: 16px; font-weight: bold; border: none; border-radius: 10px;
-            color: white; cursor: pointer; transition: opacity 0.2s;
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 20px auto;
+            padding: 20px;
+            background-color: #f5f5f5;
         }
-        button:active { opacity: 0.7; }
-        button:disabled { background-color: #c7c7cc; color: #8e8e93; cursor: not-allowed; }
-
-        .btn-init { background-color: #007AFF; }
-        .btn-tx { background-color: #34C759; }
-        .btn-start { background-color: #007AFF; }
-        .btn-stop { background-color: #FF3B30; }
-        .btn-clear { background-color: #8E8E93; }
-
-        .button-group { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 10px; margin-bottom: 10px; }
-        
-        textarea { width: 100%; height: 120px; font-family: 'Menlo', 'Courier New', monospace; font-size: 16px; border: 1px solid #c7c7cc; border-radius: 8px; padding: 10px; box-sizing: border-box; -webkit-appearance: none; background: #fafafa; }
-        input[type="text"] { width: 100%; padding: 12px; font-size: 16px; border: 1px solid #c7c7cc; border-radius: 8px; box-sizing: border-box; margin-bottom: 10px; -webkit-appearance: none;}
-        
-        .status { margin: 10px 0; color: #8e8e93; font-size: 14px; text-align: center; height: 20px; font-weight: bold;}
-        .control-group { margin-bottom: 24px; border-top: 1px solid #e5e5ea; padding-top: 20px; }
-        #errorMsg { color: #ff3b30; font-size: 14px; text-align: center; display: none; margin-bottom: 10px;}
+        .container {
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            margin-bottom: 20px;
+        }
+        h2 {
+            margin-top: 0;
+            color: #333;
+        }
+        textarea {
+            width: 100%;
+            height: 150px;
+            font-family: monospace;
+            font-size: 14px;
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            box-sizing: border-box;
+            resize: vertical;
+        }
+        input[type="text"] {
+            width: 100%;
+            padding: 10px;
+            font-size: 14px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            box-sizing: border-box;
+            margin-bottom: 10px;
+        }
+        button {
+            padding: 10px 20px;
+            margin: 5px;
+            font-size: 14px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            transition: background-color 0.3s;
+        }
+        .btn-start {
+            background-color: #4CAF50;
+            color: white;
+        }
+        .btn-start:hover {
+            background-color: #45a049;
+        }
+        .btn-stop {
+            background-color: #f44336;
+            color: white;
+        }
+        .btn-stop:hover {
+            background-color: #da190b;
+        }
+        .btn-clear {
+            background-color: #ff9800;
+            color: white;
+        }
+        .btn-clear:hover {
+            background-color: #e68900;
+        }
+        .btn-send {
+            background-color: #2196F3;
+            color: white;
+        }
+        .btn-send:hover {
+            background-color: #0b7dda;
+        }
+        .status {
+            padding: 10px;
+            margin-top: 10px;
+            border-radius: 4px;
+            font-size: 14px;
+        }
+        .status.idle {
+            background-color: #e0e0e0;
+            color: #666;
+        }
+        .status.receiving {
+            background-color: #c8e6c9;
+            color: #2e7d32;
+        }
+        .status.error {
+            background-color: #ffcdd2;
+            color: #c62828;
+        }
     </style>
 </head>
 <body>
-
-<div class="container">
-    <h2>FSK Terminal (300bps)</h2>
-    <div id="errorMsg"></div>
-
-    <div id="initArea">
-        <p style="text-align:center;">マイク許可とオーディオ再生の準備</p>
-        <button onclick="initAudio()" id="initBtn" class="btn-init">オーディオ機能を開始 (タップ)</button>
+    <div class="container">
+        <h2>ﾘ=ﾜ・FSK受信 (1200/2400Hz, 300bps)</h2>
+        <div>
+            <button id="startBtn" class="btn-start">受信開始</button>
+            <button id="stopBtn" class="btn-stop">受信停止</button>
+            <button id="clearBtn" class="btn-clear">クリア</button>
+        </div>
+        <div id="status" class="status idle">待機中</div>
+        <textarea id="receiveText" readonly placeholder="受信データがここに表示されます..."></textarea>
     </div>
 
-    <div id="mainArea" style="display:none;">
-        <div class="status" id="statusText">待機中</div>
-
-        <div class="control-group">
-            <h3>受信操作 (Rx)</h3>
-            <div class="button-group">
-                <button onclick="startRx()" class="btn-start">受信開始</button>
-                <button onclick="stopRx()" class="btn-stop">受信停止</button>
-                <button onclick="clearLog()" class="btn-clear">クリア</button>
-            </div>
-            <textarea id="rxLog" readonly placeholder="待機中... スタートビット(0)を検出すると表示します"></textarea>
-        </div>
-
-        <div class="control-group">
-            <h3>送信 (Tx)</h3>
-            <input type="text" id="txInput" value="Hello" placeholder="送信する文字">
-            <button onclick="sendText()" class="btn-tx">送信実行</button>
-        </div>
+    <div class="container">
+        <h2>ﾘ=ﾜ・FSK送信</h2>
+        <input type="text" id="sendText" placeholder="送信する文字列を入力してください">
+        <button id="sendBtn" class="btn-send">送信</button>
+        <div id="sendStatus" class="status idle">待機中</div>
     </div>
-</div>
 
-<script>
-    // --- 定数定義 ---
-    const BAUD_RATE = 300;
-    const FREQ_0 = 1200; // Start Bit & Logic 0
-    const FREQ_1 = 2400; // Stop Bit & Logic 1
-    const BIT_TIME = 1 / BAUD_RATE; 
+    <script>
+        // FSK設定
+        const BAUD_RATE = 300;
+        const FREQ_MARK = 1200;   // "1"
+        const FREQ_SPACE = 2400;  // "0"
+        const SAMPLE_RATE = 9600;
+        const SAMPLES_PER_BIT = SAMPLE_RATE / BAUD_RATE;
 
-    // --- グローバル変数 ---
-    let audioCtx = null;
-    let microphoneStream = null;
-    let scriptProcessor = null;
-    let isRxEnabled = false; // 受信機能有効フラグ
+        // Web Audio API
+        let audioContext;
+        let analyser;
+        let microphone;
+        let scriptProcessor;
+        let isReceiving = false;
 
-    // --- 受信ステートマシン用変数 ---
-    let sampleRate = 0;
-    let samplesPerBit = 0;
-    
-    // ステート定義: 
-    // 0: IDLE (アイドル/待機状態) - スタートビット(0)が来るのを待つ
-    // 1: DATA (データ受信中) - 8ビットを受信
-    // 2: STOP (ストップビット) - ストップビット(1)を確認して終了
-    let rxState = 0; 
-    
-    let rxBitIndex = 0; // 受信中のビットカウント (0-7)
-    let rxByteBuffer = 0; // 受信中のバイトデータ組み立て用
-    let idleCounter = 0; // ノイズ防止用：アイドル(1)が連続しているか確認
-
-    // ゼロクロス検出用
-    let lastSample = 0;
-    let zeroCrossCount = 0;
-    let samplesInWindow = 0;
-
-    // --- UI関連ヘルパー ---
-    function showError(msg) {
-        const el = document.getElementById('errorMsg');
-        el.innerText = msg;
-        el.style.display = 'block';
-    }
-    function updateStatus(msg) {
-        document.getElementById('statusText').innerText = msg;
-    }
-    function logData(text) {
-        const ta = document.getElementById('rxLog');
-        ta.value += text;
-        ta.scrollTop = ta.scrollHeight;
-    }
-
-    // --- 1. 初期化処理 ---
-    async function initAudio() {
-        const btn = document.getElementById('initBtn');
-        btn.disabled = true;
-        btn.innerText = "初期化中...";
-
-        try {
-            const AudioContext = window.AudioContext || window.webkitAudioContext;
-            audioCtx = new AudioContext();
-            if (audioCtx.state === 'suspended') await audioCtx.resume();
-
-            // ダミー音再生 (iOS対策)
-            const buffer = audioCtx.createBuffer(1, 1, 22050);
-            const src = audioCtx.createBufferSource();
-            src.buffer = buffer;
-            src.connect(audioCtx.destination);
-            src.start(0);
-
-            // マイク入力設定
-            const stream = await navigator.mediaDevices.getUserMedia({ 
-                audio: { echoCancellation: false, noiseSuppression: false, autoGainControl: false } 
-            });
-            microphoneStream = audioCtx.createMediaStreamSource(stream);
-            
-            // ScriptProcessor作成 (バッファサイズ4096)
-            scriptProcessor = audioCtx.createScriptProcessor(4096, 1, 1);
-            microphoneStream.connect(scriptProcessor);
-            scriptProcessor.connect(audioCtx.destination);
-            scriptProcessor.onaudioprocess = processAudioInput;
-
-            sampleRate = audioCtx.sampleRate;
-            samplesPerBit = Math.floor(sampleRate / BAUD_RATE);
-
-            // 画面遷移
-            document.getElementById('initArea').style.display = 'none';
-            document.getElementById('mainArea').style.display = 'block';
-            stopRx(); // 初期状態は停止
-
-        } catch (e) {
-            showError("初期化エラー: " + e.message);
-            btn.disabled = false;
-        }
-    }
-
-    // --- 2. ボタン操作 ---
-    function startRx() {
-        if (!audioCtx) return;
-        isRxEnabled = true;
-        
-        // 変数リセット
-        rxState = 0; // IDLEへ
-        idleCounter = 0;
-        zeroCrossCount = 0;
-        samplesInWindow = 0;
-        rxByteBuffer = 0;
-        
-        updateStatus("● 受信中 (スタートビット待ち...)");
-    }
-
-    function stopRx() {
-        isRxEnabled = false;
-        updateStatus("■ 受信停止中");
-    }
-
-    function clearLog() {
-        document.getElementById('rxLog').value = "";
-    }
-
-    // --- 3. 受信ロジック (Signal Processing) ---
-    function processAudioInput(e) {
-        if (!isRxEnabled) return; // 停止中は処理しない
-
-        const inputData = e.inputBuffer.getChannelData(0);
-
-        for (let i = 0; i < inputData.length; i++) {
-            const sample = inputData[i];
-
-            // ゼロクロス検出
-            if ((lastSample >= 0 && sample < 0) || (lastSample < 0 && sample >= 0)) {
-                zeroCrossCount++;
+        // Goertzel アルゴリズム用
+        class GoertzelDetector {
+            constructor(targetFreq, sampleRate, numSamples) {
+                this.targetFreq = targetFreq;
+                this.sampleRate = sampleRate;
+                this.numSamples = numSamples;
+                this.coeff = 2 * Math.cos(2 * Math.PI * targetFreq / sampleRate);
+                this.reset();
             }
-            lastSample = sample;
-            samplesInWindow++;
 
-            // 1ビット分の時間が経過したら判定を行う
-            if (samplesInWindow >= samplesPerBit) {
-                // 周波数判定
-                // 1200Hz(0) なら約8回のエッジ
-                // 2400Hz(1) なら約16回のエッジ
-                // 閾値を12とする
-                const bit = (zeroCrossCount > 12) ? 1 : 0;
+            reset() {
+                this.q1 = 0;
+                this.q2 = 0;
+                this.sampleCount = 0;
+            }
 
-                // ステートマシン実行
-                runRxStateMachine(bit);
+            addSample(sample) {
+                const q0 = this.coeff * this.q1 - this.q2 + sample;
+                this.q2 = this.q1;
+                this.q1 = q0;
+                this.sampleCount++;
+            }
 
-                // 次のビットのためにリセット
-                zeroCrossCount = 0;
-                samplesInWindow = 0;
+            getMagnitude() {
+                const real = this.q1 - this.q2 * Math.cos(2 * Math.PI * this.targetFreq / this.sampleRate);
+                const imag = this.q2 * Math.sin(2 * Math.PI * this.targetFreq / this.sampleRate);
+                return Math.sqrt(real * real + imag * imag);
             }
         }
-    }
 
-    // 受信ステートマシン
-    function runRxStateMachine(bit) {
-        switch (rxState) {
-            // [State 0] IDLE: スタートビット(0)待ち
-            case 0:
-                if (bit === 1) {
-                    // アイドル状態(1)を観測中
-                    // ノイズ防止のため、ある程度連続して1が来ていたことをカウントしてもよい
-                    idleCounter++; 
-                } else {
-                    // 0 を検出！ -> スタートビットの可能性
-                    // 誤検知防止: 直前までアイドル(1)がある程度あった場合のみスタートとみなす
-                    // (ここでは簡易的に直前が1であればOKとします)
-                    if (idleCounter > 0) {
-                        // ★スタートビット検出★
-                        rxState = 1; // データ受信へ移行
-                        rxBitIndex = 0;
-                        rxByteBuffer = 0;
-                        updateStatus("受信中: データ解析...");
+        // 受信処理
+        let markDetector;
+        let spaceDetector;
+        let bitBuffer = [];
+        let sampleBuffer = [];
+        let byteBuffer = [];
+        let receivingByte = false;
+        let bitIndex = 0;
+
+        // UI要素
+        const startBtn = document.getElementById('startBtn');
+        const stopBtn = document.getElementById('stopBtn');
+        const clearBtn = document.getElementById('clearBtn');
+        const receiveText = document.getElementById('receiveText');
+        const status = document.getElementById('status');
+        const sendBtn = document.getElementById('sendBtn');
+        const sendText = document.getElementById('sendText');
+        const sendStatus = document.getElementById('sendStatus');
+
+        // 受信開始
+        startBtn.addEventListener('click', async () => {
+            try {
+                audioContext = new (window.AudioContext || window.webkitAudioContext)({
+                    sampleRate: SAMPLE_RATE
+                });
+
+                const stream = await navigator.mediaDevices.getUserMedia({ 
+                    audio: {
+                        echoCancellation: false,
+                        noiseSuppression: false,
+                        autoGainControl: false
+                    } 
+                });
+
+                microphone = audioContext.createMediaStreamSource(stream);
+                scriptProcessor = audioContext.createScriptProcessor(256, 1, 1);
+
+                markDetector = new GoertzelDetector(FREQ_MARK, SAMPLE_RATE, SAMPLES_PER_BIT);
+                spaceDetector = new GoertzelDetector(FREQ_SPACE, SAMPLE_RATE, SAMPLES_PER_BIT);
+
+                scriptProcessor.onaudioprocess = processAudio;
+
+                microphone.connect(scriptProcessor);
+                scriptProcessor.connect(audioContext.destination);
+
+                isReceiving = true;
+                status.className = 'status receiving';
+                status.textContent = '受信中...';
+                startBtn.disabled = true;
+                stopBtn.disabled = false;
+
+            } catch (error) {
+                status.className = 'status error';
+                status.textContent = 'エラー: マイクアクセスが拒否されました';
+                console.error('マイクアクセスエラー:', error);
+            }
+        });
+
+        // 受信停止
+        stopBtn.addEventListener('click', () => {
+            if (microphone) microphone.disconnect();
+            if (scriptProcessor) scriptProcessor.disconnect();
+            if (audioContext) audioContext.close();
+
+            isReceiving = false;
+            status.className = 'status idle';
+            status.textContent = '停止';
+            startBtn.disabled = false;
+            stopBtn.disabled = true;
+        });
+
+        // クリア
+        clearBtn.addEventListener('click', () => {
+            receiveText.value = '';
+        });
+
+        // オーディオ処理
+        function processAudio(event) {
+            if (!isReceiving) return;
+
+            const inputData = event.inputBuffer.getChannelData(0);
+
+            for (let i = 0; i < inputData.length; i++) {
+                sampleBuffer.push(inputData[i]);
+
+                if (sampleBuffer.length >= SAMPLES_PER_BIT) {
+                    // Goertzel検出
+                    markDetector.reset();
+                    spaceDetector.reset();
+
+                    for (let j = 0; j < SAMPLES_PER_BIT; j++) {
+                        markDetector.addSample(sampleBuffer[j]);
+                        spaceDetector.addSample(sampleBuffer[j]);
                     }
-                    idleCounter = 0; // カウンタリセット
-                }
-                break;
 
-            // [State 1] DATA: 8ビット受信 (LSB First)
-            case 1:
-                // 現在のbitをバッファに追加
-                // LSB Firstなので、index分だけ左シフトしてORをとる
-                if (bit === 1) {
-                    rxByteBuffer |= (1 << rxBitIndex);
-                }
-                
-                rxBitIndex++;
+                    const markMag = markDetector.getMagnitude();
+                    const spaceMag = spaceDetector.getMagnitude();
 
-                // 8ビット受け取ったらストップビット待ちへ
-                if (rxBitIndex >= 8) {
-                    rxState = 2;
-                }
-                break;
+                    // ビット判定 (Mark=1, Space=0)
+                    const bit = markMag > spaceMag ? 1 : 0;
+                    processBit(bit);
 
-            // [State 2] STOP: ストップビット(1)確認
-            case 2:
-                // 仕様ではストップビットは "1"
-                if (bit === 1) {
-                    // 正しく受信完了 -> 表示
-                    const hex = rxByteBuffer.toString(16).toUpperCase().padStart(2, '0');
-                    logData("0x" + hex + " ");
-                } else {
-                    // フレーミングエラー (ストップビットが0だった)
-                    // logData("[Err] ");
+                    sampleBuffer = [];
                 }
-
-                // 次のデータのためにIDLEへ戻る
-                rxState = 0;
-                idleCounter = 1; // 今1(StopBit)を受け取ったのでアイドル扱い開始
-                updateStatus("● 受信中 (スタートビット待ち...)");
-                break;
+            }
         }
-    }
 
-    // --- 4. 送信処理 ---
-    function sendText() {
-        if (!audioCtx) return;
-        if (audioCtx.state === 'suspended') audioCtx.resume();
+        // ビット処理
+        function processBit(bit) {
+            if (!receivingByte) {
+                // スタートビット待機 (0)
+                if (bit === 0) {
+                    receivingByte = true;
+                    bitIndex = 0;
+                    byteBuffer = [];
+                }
+            } else {
+                if (bitIndex < 8) {
+                    // データビット受信 (LSBファースト)
+                    byteBuffer.push(bit);
+                    bitIndex++;
+                } else {
+                    // ストップビット (1)
+                    if (bit === 1) {
+                        // バイト組み立て (LSBファースト)
+                        let byte = 0;
+                        for (let i = 0; i < 8; i++) {
+                            if (byteBuffer[i]) {
+                                byte |= (1 << i);
+                            }
+                        }
+                        
+                        // テキストエリアに追加
+                        const char = String.fromCharCode(byte);
+                        receiveText.value += char;
+                        receiveText.scrollTop = receiveText.scrollHeight;
+                    }
+                    receivingByte = false;
+                }
+            }
+        }
 
-        const text = document.getElementById('txInput').value;
-        if (!text) return;
-
-        const oscillator = audioCtx.createOscillator();
-        const gainNode = audioCtx.createGain();
-        
-        oscillator.type = 'sine';
-        oscillator.connect(gainNode);
-        gainNode.connect(audioCtx.destination);
-        gainNode.gain.setValueAtTime(0.8, audioCtx.currentTime);
-
-        const startTime = audioCtx.currentTime + 0.05;
-        let t = startTime;
-
-        // アイドル (Mark = 1)
-        oscillator.frequency.setValueAtTime(FREQ_1, t);
-        t += BIT_TIME * 2;
-
-        // データ送信
-        for (let i = 0; i < text.length; i++) {
-            const charCode = text.charCodeAt(i);
-            
-            // Start Bit (0)
-            oscillator.frequency.setValueAtTime(FREQ_0, t);
-            t += BIT_TIME;
-
-            // Data Bits (8bit, LSB first)
-            for (let b = 0; b < 8; b++) {
-                const bVal = (charCode >> b) & 1;
-                oscillator.frequency.setValueAtTime(bVal ? FREQ_1 : FREQ_0, t);
-                t += BIT_TIME;
+        // 送信機能
+        sendBtn.addEventListener('click', async () => {
+            const text = sendText.value;
+            if (!text) {
+                alert('送信する文字列を入力してください');
+                return;
             }
 
-            // Stop Bit (1)
-            oscillator.frequency.setValueAtTime(FREQ_1, t);
-            t += BIT_TIME;
+            sendBtn.disabled = true;
+            sendStatus.className = 'status receiving';
+            sendStatus.textContent = '送信中...';
+
+            try {
+                await sendString(text);
+                sendStatus.className = 'status idle';
+                sendStatus.textContent = '送信完了';
+                sendText.value = '';
+            } catch (error) {
+                sendStatus.className = 'status error';
+                sendStatus.textContent = 'エラー: 送信失敗';
+                console.error('送信エラー:', error);
+            } finally {
+                sendBtn.disabled = false;
+            }
+        });
+
+        // 文字列送信
+        async function sendString(text) {
+            const ctx = new (window.AudioContext || window.webkitAudioContext)({
+                sampleRate: SAMPLE_RATE
+            });
+
+            for (let i = 0; i < text.length; i++) {
+                await sendByte(ctx, text.charCodeAt(i));
+            }
+
+            ctx.close();
         }
 
-        oscillator.start(startTime);
-        oscillator.stop(t);
-        
-        // 表示制御
-        const currentMsg = document.getElementById('statusText').innerText;
-        updateStatus("▲ 送信中...");
-        setTimeout(() => {
-            updateStatus(currentMsg.includes("停止") ? "■ 受信停止中" : "● 受信中 (スタートビット待ち...)");
-        }, (t - audioCtx.currentTime) * 1000);
-    }
-</script>
+        // 1バイト送信
+        async function sendByte(ctx, byte) {
+            const bitDuration = 1 / BAUD_RATE;
+            let time = ctx.currentTime;
 
+            // スタートビット (0)
+            await playTone(ctx, FREQ_SPACE, time, bitDuration);
+            time += bitDuration;
+
+            // データビット (LSBファースト)
+            for (let i = 0; i < 8; i++) {
+                const bit = (byte >> i) & 0x01;
+                const freq = bit ? FREQ_MARK : FREQ_SPACE;
+                await playTone(ctx, freq, time, bitDuration);
+                time += bitDuration;
+            }
+
+            // ストップビット (1)
+            await playTone(ctx, FREQ_MARK, time, bitDuration);
+            time += bitDuration;
+
+            // 次のバイトまで待機
+            await new Promise(resolve => setTimeout(resolve, bitDuration * 10 * 1000));
+        }
+
+        // トーン再生
+        function playTone(ctx, frequency, startTime, duration) {
+            return new Promise((resolve) => {
+                const oscillator = ctx.createOscillator();
+                const gainNode = ctx.createGain();
+
+                oscillator.type = 'sine';
+                oscillator.frequency.value = frequency;
+
+                gainNode.gain.setValueAtTime(0.3, startTime);
+                gainNode.gain.setValueAtTime(0.3, startTime + duration);
+                gainNode.gain.linearRampToValueAtTime(0, startTime + duration + 0.01);
+
+                oscillator.connect(gainNode);
+                gainNode.connect(ctx.destination);
+
+                oscillator.start(startTime);
+                oscillator.stop(startTime + duration + 0.01);
+
+                setTimeout(resolve, duration * 1000);
+            });
+        }
+
+        // 初期状態
+        stopBtn.disabled = true;
+    </script>
 </body>
 </html>
