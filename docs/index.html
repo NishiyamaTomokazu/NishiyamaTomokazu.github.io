@@ -3,28 +3,42 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>iPad FSK Terminal (Fixed)</title>
+    <title>iPad FSK Terminal v2</title>
     <style>
         body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; padding: 20px; background: #f2f2f7; color: #1c1c1e; }
         .container { max-width: 600px; margin: 0 auto; background: white; padding: 20px; border-radius: 16px; box-shadow: 0 4px 20px rgba(0,0,0,0.1); }
         h2 { margin-top: 0; text-align: center; }
         
+        /* 基本ボタンデザイン */
         button {
-            display: block; width: 100%; padding: 16px; margin: 12px 0;
-            font-size: 18px; font-weight: bold; border: none; border-radius: 12px;
-            background-color: #007AFF; color: white; cursor: pointer;
-            transition: opacity 0.2s;
+            width: 100%; padding: 14px; margin: 8px 0;
+            font-size: 16px; font-weight: bold; border: none; border-radius: 10px;
+            color: white; cursor: pointer; transition: opacity 0.2s;
         }
         button:active { opacity: 0.7; }
-        button:disabled { background-color: #c7c7cc; color: #8e8e93; }
+        button:disabled { background-color: #c7c7cc; color: #8e8e93; cursor: not-allowed; }
+
+        /* ボタンの色分け */
+        .btn-init { background-color: #007AFF; }
+        .btn-tx { background-color: #34C759; }
+        .btn-start { background-color: #007AFF; }
+        .btn-stop { background-color: #FF3B30; }
+        .btn-clear { background-color: #8E8E93; }
+
+        /* ボタンを横並びにするためのグリッド */
+        .button-group {
+            display: grid;
+            grid-template-columns: 1fr 1fr 1fr; /* 3等分 */
+            gap: 10px;
+            margin-bottom: 10px;
+        }
         
-        textarea { width: 100%; height: 120px; font-family: 'Menlo', 'Courier New', monospace; font-size: 16px; border: 1px solid #c7c7cc; border-radius: 8px; padding: 10px; box-sizing: border-box; -webkit-appearance: none; }
+        textarea { width: 100%; height: 120px; font-family: 'Menlo', 'Courier New', monospace; font-size: 16px; border: 1px solid #c7c7cc; border-radius: 8px; padding: 10px; box-sizing: border-box; -webkit-appearance: none; background: #fafafa; }
         input[type="text"] { width: 100%; padding: 12px; font-size: 16px; border: 1px solid #c7c7cc; border-radius: 8px; box-sizing: border-box; margin-bottom: 10px; -webkit-appearance: none;}
         
-        .status { margin: 10px 0; color: #8e8e93; font-size: 14px; text-align: center; height: 20px; }
+        .status { margin: 10px 0; color: #8e8e93; font-size: 14px; text-align: center; height: 20px; font-weight: bold;}
         .control-group { margin-bottom: 24px; border-top: 1px solid #e5e5ea; padding-top: 20px; }
         
-        /* エラー表示用 */
         #errorMsg { color: #ff3b30; font-size: 14px; text-align: center; display: none; margin-bottom: 10px;}
     </style>
 </head>
@@ -36,22 +50,28 @@
 
     <div id="initArea">
         <p style="text-align:center;">マイク許可とオーディオ再生の準備</p>
-        <button onclick="initAudio()" id="initBtn">スタート (ここをタップ)</button>
+        <button onclick="initAudio()" id="initBtn" class="btn-init">オーディオ機能を開始 (タップ)</button>
     </div>
 
     <div id="mainArea" style="display:none;">
         <div class="status" id="statusText">待機中</div>
 
         <div class="control-group">
-            <h3>送信 (Tx) - 音が出ます</h3>
-            <input type="text" id="txInput" value="Hello" placeholder="送信する文字">
-            <button onclick="sendText()">送信実行</button>
+            <h3>受信操作 (Rx)</h3>
+            
+            <div class="button-group">
+                <button onclick="startRx()" class="btn-start">受信開始</button>
+                <button onclick="stopRx()" class="btn-stop">受信停止</button>
+                <button onclick="clearLog()" class="btn-clear">クリア</button>
+            </div>
+            
+            <textarea id="rxLog" readonly placeholder="ここに受信データが表示されます"></textarea>
         </div>
 
         <div class="control-group">
-            <h3>受信データ (Rx)</h3>
-            <textarea id="rxLog" readonly></textarea>
-            <button onclick="document.getElementById('rxLog').value=''" style="background-color: #8E8E93; width: auto; display: inline-block; padding: 8px 16px; font-size: 14px; margin-top:0;">クリア</button>
+            <h3>送信 (Tx)</h3>
+            <input type="text" id="txInput" value="Hello" placeholder="送信する文字">
+            <button onclick="sendText()" class="btn-tx">送信実行</button>
         </div>
     </div>
 </div>
@@ -67,7 +87,10 @@
     let microphoneStream = null;
     let scriptProcessor = null;
 
-    // 受信ロジック用
+    // 状態管理フラグ
+    let isRxEnabled = false; // 受信機能のON/OFF
+
+    // 受信ロジック用変数
     let sampleRate = 0;
     let rxState = 0; // 0=IDLE, 1=DATA
     let rxBitIndex = 0;
@@ -77,78 +100,93 @@
     let samplesInWindow = 0;
     let samplesPerBitWindow = 0;
 
-    // エラー表示ヘルパー
+    // エラー表示
     function showError(msg) {
         const el = document.getElementById('errorMsg');
         el.innerText = msg;
         el.style.display = 'block';
     }
 
-    // 1. 初期化処理 (必ずユーザーのタップで発火させる)
+    // ステータス更新
+    function updateStatus(msg) {
+        document.getElementById('statusText').innerText = msg;
+    }
+
+    // --- 1. 初期化処理 ---
     async function initAudio() {
         const btn = document.getElementById('initBtn');
         btn.disabled = true;
         btn.innerText = "初期化中...";
 
         try {
-            // AudioContextの作成
             const AudioContext = window.AudioContext || window.webkitAudioContext;
             audioCtx = new AudioContext();
 
-            // ★重要: iOS対策。コンテキストがサスペンド状態なら強制的に再開する
             if (audioCtx.state === 'suspended') {
                 await audioCtx.resume();
             }
 
-            // ダミー音を瞬間的に鳴らしてオーディオエンジンを確実にロック解除する
+            // ダミー音再生でオーディオエンジンをアンロック
             const buffer = audioCtx.createBuffer(1, 1, 22050);
             const source = audioCtx.createBufferSource();
             source.buffer = buffer;
             source.connect(audioCtx.destination);
             source.start(0);
 
-            // マイク入力の取得
+            // マイク入力取得
             const stream = await navigator.mediaDevices.getUserMedia({ 
-                audio: { 
-                    echoCancellation: false, // FSK信号のため余計な処理を切る
-                    noiseSuppression: false,
-                    autoGainControl: false 
-                } 
+                audio: { echoCancellation: false, noiseSuppression: false, autoGainControl: false } 
             });
             
             microphoneStream = audioCtx.createMediaStreamSource(stream);
-            
-            // 受信用プロセッサ (非推奨だが単一ファイルで動くScriptProcessorを使用)
             scriptProcessor = audioCtx.createScriptProcessor(4096, 1, 1);
             microphoneStream.connect(scriptProcessor);
-            scriptProcessor.connect(audioCtx.destination); // 必須: これがないとChrome/Safariでonaudioprocessが動かない場合がある
+            scriptProcessor.connect(audioCtx.destination);
 
             scriptProcessor.onaudioprocess = processAudioInput;
 
-            // 変数セットアップ
             sampleRate = audioCtx.sampleRate;
             samplesPerBitWindow = Math.floor(sampleRate / BAUD_RATE);
 
             // 画面切り替え
             document.getElementById('initArea').style.display = 'none';
             document.getElementById('mainArea').style.display = 'block';
-            document.getElementById('statusText').innerText = "オーディオ準備完了";
+            
+            // 初期状態は受信停止
+            stopRx(); 
 
         } catch (e) {
-            showError("初期化エラー: " + e.message + "\n設定アプリでSafariのマイク権限を確認してください。");
+            showError("初期化エラー: " + e.message);
             btn.disabled = false;
-            btn.innerText = "再試行";
         }
     }
 
-    // 2. 送信処理 (ここでも念のためresumeを呼ぶ)
+    // --- 2. ボタン操作関数 ---
+
+    function startRx() {
+        if (!audioCtx) return;
+        isRxEnabled = true;
+        // 内部変数をリセットしてクリーンな状態で開始
+        rxState = 0;
+        zeroCrossCount = 0;
+        samplesInWindow = 0;
+        syncCounter = 0;
+        updateStatus("● 受信中...");
+    }
+
+    function stopRx() {
+        isRxEnabled = false;
+        updateStatus("■ 受信停止中");
+    }
+
+    function clearLog() {
+        document.getElementById('rxLog').value = "";
+    }
+
+    // --- 3. 送信処理 ---
     function sendText() {
         if (!audioCtx) return;
-
-        // ★念には念を: 送信ボタンを押したときにもResumeを試みる
-        if (audioCtx.state === 'suspended') {
-            audioCtx.resume();
-        }
+        if (audioCtx.state === 'suspended') audioCtx.resume();
 
         const text = document.getElementById('txInput').value;
         if (!text) return;
@@ -159,18 +197,16 @@
         oscillator.type = 'sine';
         oscillator.connect(gainNode);
         gainNode.connect(audioCtx.destination);
-        
-        // 音量設定 (1.0だと割れる可能性があるため少し下げる)
         gainNode.gain.setValueAtTime(0.8, audioCtx.currentTime);
 
-        const startTime = audioCtx.currentTime + 0.05; // 50ms後から開始
+        const startTime = audioCtx.currentTime + 0.05;
         let t = startTime;
 
-        // --- アイドルトーン (Mark=1) ---
+        // Idle Tone
         oscillator.frequency.setValueAtTime(FREQ_1, t);
-        t += BIT_TIME * 2; // 少し長めに
+        t += BIT_TIME * 2;
 
-        // --- データ送信 ---
+        // Data Transmission
         for (let i = 0; i < text.length; i++) {
             const charCode = text.charCodeAt(i);
             
@@ -178,7 +214,7 @@
             oscillator.frequency.setValueAtTime(FREQ_0, t);
             t += BIT_TIME;
 
-            // Data Bits (LSB first)
+            // Data Bits
             for (let b = 0; b < 8; b++) {
                 const bit = (charCode >> b) & 1;
                 oscillator.frequency.setValueAtTime(bit ? FREQ_1 : FREQ_0, t);
@@ -190,24 +226,25 @@
             t += BIT_TIME;
         }
 
-        // 終了処理
         oscillator.start(startTime);
         oscillator.stop(t);
 
-        // UI表示更新
-        const statusEl = document.getElementById('statusText');
-        statusEl.innerText = "送信中... (音が鳴ります)";
+        // 送信中はステータス表示を変えるが、終わったら元の受信状態表示に戻す
+        const prevStatus = document.getElementById('statusText').innerText;
+        updateStatus("▲ 送信中...");
         
-        // 送信完了予測時刻にメッセージを戻す
         setTimeout(() => {
-            statusEl.innerText = "待機中";
+            updateStatus(isRxEnabled ? "● 受信中..." : "■ 受信停止中");
         }, (t - audioCtx.currentTime) * 1000);
     }
 
-    // 3. 受信処理 (ゼロクロス法)
+    // --- 4. 受信処理 (Signal Processing) ---
     function processAudioInput(e) {
+        // ★受信停止中なら処理をスキップしてCPU負荷を下げる＆誤検知を防ぐ
+        if (!isRxEnabled) return;
+
         const inputData = e.inputBuffer.getChannelData(0);
-        let lastSample = 0; // 簡易的な保持
+        let lastSample = 0;
 
         for (let i = 0; i < inputData.length; i++) {
             const sample = inputData[i];
@@ -219,37 +256,31 @@
             lastSample = sample;
             samplesInWindow++;
 
-            // 1ビット分のウィンドウが埋まったら判定
+            // 1ビット分の時間が経過したら判定
             if (samplesInWindow >= samplesPerBitWindow) {
-                // 1200Hz(0)なら約8回, 2400Hz(1)なら約16回
-                // 閾値を12とする
+                // 1200Hz(0) vs 2400Hz(1) の判定閾値 = 12
                 const bit = (zeroCrossCount > 12) ? 1 : 0;
-                
                 stateMachine(bit);
 
-                // リセット
                 zeroCrossCount = 0;
                 samplesInWindow = 0;
             }
         }
     }
 
-    // 受信ステートマシン
     function stateMachine(bit) {
-        // IDLE状態
+        // IDLE
         if (rxState === 0) {
             if (bit === 1) {
                 syncCounter++;
             } else {
-                // 0が来た -> スタートビットの可能性
-                // ノイズ誤検知を防ぐため、直前に1が数回あったか確認するとベターだが
-                // ここでは単純に0が来たら開始する
+                // スタートビット(0)検出
                 rxState = 1;
                 rxBitIndex = 0;
                 rxByte = 0;
             }
         }
-        // データ受信状態
+        // DATA
         else if (rxState === 1) {
             if (bit === 1) {
                 rxByte |= (1 << rxBitIndex);
@@ -257,9 +288,8 @@
             rxBitIndex++;
 
             if (rxBitIndex >= 8) {
-                // 8ビット受信完了 -> ストップビット待ちへ（今回は即表示）
                 displayByte(rxByte);
-                rxState = 0; // IDLEへ戻る
+                rxState = 0; // 受信完了 -> IDLE
             }
         }
     }
