@@ -3,80 +3,106 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>AIじゃんけん - 学習カスタマイズ版</title>
+    <title>AIじゃんけん - カスタム学習＆対戦版</title>
     <script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs"></script>
     <script src="https://cdn.jsdelivr.net/npm/@tensorflow-models/mobilenet"></script>
     <script src="https://cdn.jsdelivr.net/npm/@tensorflow-models/knn-classifier"></script>
     <style>
         body { font-family: sans-serif; text-align: center; background-color: #f0f8ff; margin: 0; padding: 20px; }
-        .game-board { background-color: white; border-radius: 10px; padding: 20px; max-width: 600px; margin: 0 auto; box-shadow: 0 4px 6px rgba(0,0,0,0.1); }
-        .video-container { margin: 10px auto; width: 100%; max-width: 320px; border-radius: 8px; overflow: hidden; background-color: #000; position: relative; }
-        video { width: 100%; display: block; transform: scaleX(-1); }
+        .app-container { display: flex; flex-wrap: wrap; justify-content: center; gap: 20px; max-width: 900px; margin: 0 auto; }
+        .panel { background-color: white; border-radius: 10px; padding: 20px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); flex: 1; min-width: 300px; }
         
-        /* 学習パネルのスタイル */
-        .training-panel { margin: 20px 0; padding: 15px; background: #e9ecef; border-radius: 8px; }
-        .train-btn { font-size: 16px; padding: 10px; margin: 5px; cursor: pointer; border: none; border-radius: 5px; color: white; width: 30%; }
+        /* カメラと確率エリア */
+        .video-container { margin: 10 auto; width: 100%; border-radius: 8px; overflow: hidden; background-color: #000; }
+        video { width: 100%; display: block; transform: scaleX(-1); }
+        .prob-display { display: flex; justify-content: space-around; margin: 15px 0; font-weight: bold; font-size: 16px; }
+        .prob-item { padding: 8px; border-radius: 5px; background: #f8f9fa; width: 30%; border: 1px solid #ddd; }
+        
+        /* 学習パネル */
+        .training-panel { background: #e9ecef; border-radius: 8px; padding: 15px; margin-bottom: 15px; }
+        .train-btn { font-size: 16px; padding: 10px; margin: 5px; cursor: pointer; border: none; border-radius: 5px; color: white; width: 90%; font-weight: bold; }
         #btn-rock { background-color: #e74c3c; }
         #btn-scissors { background-color: #2ecc71; }
         #btn-paper { background-color: #3498db; }
-        
-        /* 確率表示のスタイル */
-        .prob-display { display: flex; justify-content: space-around; margin: 15px 0; font-weight: bold; font-size: 18px; }
-        .prob-item { padding: 10px; border-radius: 5px; background: #fff; box-shadow: 0 2px 4px rgba(0,0,0,0.1); width: 30%; }
+        .train-btn:active { opacity: 0.8; }
+
+        /* ゲームパネル */
+        .hands { display: flex; justify-content: space-around; font-size: 20px; margin: 15px 0; }
+        .hand-emoji { font-size: 64px; margin-top: 5px; }
+        .result-message { font-size: 24px; font-weight: bold; color: #333; margin: 15px 0; min-height: 35px; }
+        #start-btn { font-size: 20px; font-weight: bold; padding: 15px; cursor: pointer; border: none; border-radius: 8px; background-color: #ff4500; color: white; width: 100%; }
+        #start-btn:disabled { background-color: #ccc; cursor: not-allowed; }
     </style>
 </head>
 <body>
 
-<div class="game-board">
-    <h1>オリジナル手信号を学習させよう</h1>
-    
-    <div id="ai-status">AI: 起動準備中... (少々お待ちください)</div>
+<h1>AIカメラじゃんけん (カスタム学習)</h1>
+<div id="ai-status" style="font-weight: bold; color: #007bff; margin-bottom: 15px;">AI: 起動準備中... (少々お待ちください)</div>
 
-    <div class="video-container">
-        <video id="webcam" autoplay playsinline width="224" height="224"></video>
+<div class="app-container">
+    <div class="panel">
+        <h2>1. AIに手を教える</h2>
+        <div class="video-container">
+            <video id="webcam" autoplay playsinline width="224" height="224"></video>
+        </div>
+        
+        <div class="prob-display">
+            <div class="prob-item" id="prob-0">✊ 0%</div>
+            <div class="prob-item" id="prob-1">✌️ 0%</div>
+            <div class="prob-item" id="prob-2">✋ 0%</div>
+        </div>
+
+        <div class="training-panel">
+            <p style="margin-top:0; font-size:14px;">ボタンを長押しして学習させてください</p>
+            <button id="btn-rock" class="train-btn" onmousedown="startTraining(0)" onmouseup="stopTraining()" onmouseleave="stopTraining()">✊ グー追加 (0)</button>
+            <button id="btn-scissors" class="train-btn" onmousedown="startTraining(1)" onmouseup="stopTraining()" onmouseleave="stopTraining()">✌️ チョキ追加 (0)</button>
+            <button id="btn-paper" class="train-btn" onmousedown="startTraining(2)" onmouseup="stopTraining()" onmouseleave="stopTraining()">✋ パー追加 (0)</button>
+        </div>
+        <button onclick="resetModel()" style="padding: 8px; background: #6c757d; color: white; border: none; border-radius: 5px; cursor: pointer;">学習をリセット</button>
     </div>
 
-    <div class="prob-display">
-        <div class="prob-item" id="prob-0">✊ 0%</div>
-        <div class="prob-item" id="prob-1">✌️ 0%</div>
-        <div class="prob-item" id="prob-2">✋ 0%</div>
+    <div class="panel">
+        <h2>2. AIと対戦する</h2>
+        <div class="hands">
+            <div>
+                <p>あなた</p>
+                <div id="player-hand" class="hand-emoji">❓</div>
+            </div>
+            <div>
+                <p>CPU</p>
+                <div id="cpu-hand" class="hand-emoji">❓</div>
+            </div>
+        </div>
+        
+        <div class="result-message" id="result-message">全ての形を学習させたらスタート！</div>
+        <button id="start-btn" onclick="startJanken()" disabled>🎮 ゲームスタート！</button>
     </div>
-
-    <div class="training-panel">
-        <p>カメラに手を映しながら、ボタンを連打（または長押し）して学習させてください</p>
-        <button id="btn-rock" class="train-btn" onmousedown="startTraining(0)" onmouseup="stopTraining()" onmouseleave="stopTraining()">✊ グー追加 (0)</button>
-        <button id="btn-scissors" class="train-btn" onmousedown="startTraining(1)" onmouseup="stopTraining()" onmouseleave="stopTraining()">✌️ チョキ追加 (0)</button>
-        <button id="btn-paper" class="train-btn" onmousedown="startTraining(2)" onmouseup="stopTraining()" onmouseleave="stopTraining()">✋ パー追加 (0)</button>
-    </div>
-    
-    <button id="reset-btn" onclick="resetModel()" style="padding: 10px; background: #555; color: white; border: none; border-radius: 5px; cursor: pointer;">学習データをリセット</button>
 </div>
 
 <script>
     const videoElement = document.getElementById('webcam');
     const statusElement = document.getElementById('ai-status');
+    const startBtn = document.getElementById('start-btn');
+    const resultMessage = document.getElementById('result-message');
     
-    let classifier; // KNN分類器
-    let mobilenetModel; // 特徴抽出モデル
+    let classifier, mobilenetModel, trainingTimer;
+    const exampleCounts = [0, 0, 0];
+    const handSymbols = ["✊", "✌️", "✋"];
     
-    let trainingTimer; // ボタン長押し学習用のタイマー
-    const exampleCounts = [0, 0, 0]; // 各クラスの学習枚数
+    // ゲームの状態管理
+    let currentPrediction = -1; // -1: 未認識, 0: グー, 1: チョキ, 2: パー
+    let isPlaying = false; // 対戦中かどうか（対戦中は画面の更新を一時停止するため）
 
-    // --- 1. AIとカメラの初期化 ---
+    // --- 1. 初期化 ---
     async function init() {
-        statusElement.innerText = "AI: モデルをダウンロード中...";
-        // KNN分類器とMobileNetの読み込み
         classifier = knnClassifier.create();
         mobilenetModel = await mobilenet.load();
         
-        statusElement.innerText = "AI: カメラを起動中...";
         try {
             const stream = await navigator.mediaDevices.getUserMedia({ video: { width: 224, height: 224 }, audio: false });
             videoElement.srcObject = stream;
-            
-            // ビデオが再生開始されたら推論ループをスタート
             videoElement.addEventListener('playing', () => {
-                statusElement.innerText = "AI: 準備完了！学習ボタンを押してください。";
+                statusElement.innerText = "AI: 準備完了！まずは手を学習させてください。";
                 predictLoop();
             });
         } catch (err) {
@@ -84,79 +110,118 @@
         }
     }
 
-    // --- 2. 画像を学習させる処理 ---
+    // --- 2. 学習処理 ---
     function addExample(classId) {
-        // カメラの現在の映像をTensor（多次元配列）に変換
         const img = tf.browser.fromPixels(videoElement);
-        // MobileNetで画像の特徴量を抽出
         const features = mobilenetModel.infer(img, true);
-        // 特徴量とクラスID（0:グー, 1:チョキ, 2:パー）をKNN分類器に登録
         classifier.addExample(features, classId);
-        
-        // メモリ解放（ブラウザが重くなるのを防ぐ）
         img.dispose();
         
-        // 学習枚数をカウントアップしてUI更新
         exampleCounts[classId]++;
         const btnLabels = ["✊ グー追加", "✌️ チョキ追加", "✋ パー追加"];
         const btnIds = ["btn-rock", "btn-scissors", "btn-paper"];
         document.getElementById(btnIds[classId]).innerText = `${btnLabels[classId]} (${exampleCounts[classId]})`;
+
+        // 3種類すべて1枚以上学習したらスタートボタンを有効化する分岐処理
+        if (exampleCounts[0] > 0 && exampleCounts[1] > 0 && exampleCounts[2] > 0) {
+            startBtn.disabled = false;
+            if (resultMessage.innerText === "全ての形を学習させたらスタート！") {
+                resultMessage.innerText = "準備OK！スタートボタンを押してね";
+            }
+        }
     }
 
-    // 長押しで連続学習させるための制御
-    function startTraining(classId) {
-        addExample(classId); // 最初の1枚
-        trainingTimer = setInterval(() => addExample(classId), 100); // 0.1秒ごとに連続追加
-    }
-    function stopTraining() {
-        clearInterval(trainingTimer);
-    }
+    function startTraining(classId) { addExample(classId); trainingTimer = setInterval(() => addExample(classId), 100); }
+    function stopTraining() { clearInterval(trainingTimer); }
 
-    // --- 3. リアルタイム推論と確率表示ループ ---
+    // --- 3. リアルタイム推論ループ ---
     async function predictLoop() {
-        // 1枚でも学習データがあれば推論を実行
         if (classifier.getNumClasses() > 0) {
             const img = tf.browser.fromPixels(videoElement);
             const features = mobilenetModel.infer(img, 'conv_preds');
-            
-            // 推論の実行（非同期）
             const result = await classifier.predictClass(features);
             
-            // result.confidences に各クラスの確率が入っている
-            // 例: { 0: 0.8, 1: 0.1, 2: 0.1 }
+            // 対戦中（ポン！の前後）は判定を固定したいので更新をスキップ
+            if (!isPlaying) {
+                currentPrediction = parseInt(result.label);
+            }
+
             for (let i = 0; i < 3; i++) {
-                // 確率を取得（未学習のクラスはundefinedになるので0にする）
                 const probability = result.confidences[i] || 0;
-                // %表記に変換して画面を更新
                 const percent = Math.round(probability * 100);
-                const labels = ["✊", "✌️", "✋"];
-                document.getElementById(`prob-${i}`).innerText = `${labels[i]} ${percent}%`;
+                document.getElementById(`prob-${i}`).innerText = `${handSymbols[i]} ${percent}%`;
                 
-                // 確率が一番高いものをハイライトする
-                document.getElementById(`prob-${i}`).style.backgroundColor = (result.label == i && percent > 50) ? '#ffeaa7' : '#fff';
+                // 一番確率が高いものをハイライト
+                if (result.label == i && percent > 50) {
+                    document.getElementById(`prob-${i}`).style.backgroundColor = '#ffeaa7';
+                    document.getElementById(`prob-${i}`).style.borderColor = '#fdcb6e';
+                } else {
+                    document.getElementById(`prob-${i}`).style.backgroundColor = '#f8f9fa';
+                    document.getElementById(`prob-${i}`).style.borderColor = '#ddd';
+                }
             }
             img.dispose();
         }
-        
-        // 次の描画タイミングで再度ループ
         await tf.nextFrame();
         predictLoop();
     }
 
-    // 学習データのリセット
+    // --- 4. じゃんけんフロー制御 ---
+    window.startJanken = function() {
+        isPlaying = true;
+        startBtn.disabled = true;
+        document.getElementById("player-hand").innerText = "✊";
+        document.getElementById("cpu-hand").innerText = "✊";
+        resultMessage.style.color = "#333";
+        
+        resultMessage.innerText = "最初はグー！";
+        setTimeout(() => { resultMessage.innerText = "じゃんけん..."; }, 1200);
+        setTimeout(() => { 
+            resultMessage.innerText = "ポン！"; 
+            judgeGame(); 
+        }, 2400);
+    }
+
+    // --- 5. 勝敗判定 ---
+    function judgeGame() {
+        const cpuChoice = Math.floor(Math.random() * 3);
+        
+        // 直前までAIが推論していた手をプレイヤーの手にセット
+        document.getElementById("player-hand").innerText = handSymbols[currentPrediction];
+        document.getElementById("cpu-hand").innerText = handSymbols[cpuChoice];
+
+        const result = (currentPrediction - cpuChoice + 3) % 3;
+        
+        if (result === 0) {
+            resultMessage.innerText = "あいこ！";
+            resultMessage.style.color = "#333";
+        } else if (result === 1) {
+            resultMessage.innerText = "あなたの負け...";
+            resultMessage.style.color = "#007bff";
+        } else if (result === 2) {
+            resultMessage.innerText = "あなたの勝ち！🎉";
+            resultMessage.style.color = "#ff4500";
+        }
+
+        startBtn.disabled = false;
+        // 2秒後に再度推論の更新を再開する
+        setTimeout(() => { isPlaying = false; }, 2000);
+    }
+
     function resetModel() {
         classifier.clearAllClasses();
         for(let i=0; i<3; i++) {
             exampleCounts[i] = 0;
-            document.getElementById(`prob-${i}`).innerText = `❓ 0%`;
-            document.getElementById(`prob-${i}`).style.backgroundColor = '#fff';
+            document.getElementById(`prob-${i}`).innerText = `${handSymbols[i]} 0%`;
+            document.getElementById(`prob-${i}`).style.backgroundColor = '#f8f9fa';
         }
         document.getElementById('btn-rock').innerText = "✊ グー追加 (0)";
         document.getElementById('btn-scissors').innerText = "✌️ チョキ追加 (0)";
         document.getElementById('btn-paper').innerText = "✋ パー追加 (0)";
+        startBtn.disabled = true;
+        resultMessage.innerText = "全ての形を学習させたらスタート！";
     }
 
-    // ページ読み込み時に実行
     window.onload = init;
 </script>
 
