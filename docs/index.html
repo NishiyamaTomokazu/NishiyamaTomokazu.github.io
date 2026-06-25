@@ -3,398 +3,130 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>FSK送受信 (1200/2400Hz, 300bps)</title>
+    <title>AIじゃんけんゲーム - ステップ3</title>
     <style>
-        body {
-            font-family: Arial, sans-serif;
-            max-width: 800px;
-            margin: 20px auto;
-            padding: 20px;
-            background-color: #f5f5f5;
-        }
-        .container {
-            background: white;
-            padding: 20px;
-            border-radius: 8px;
-            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-            margin-bottom: 20px;
-        }
-        h2 {
-            margin-top: 0;
-            color: #333;
-        }
-        textarea {
-            width: 100%;
-            height: 150px;
-            font-family: monospace;
-            font-size: 14px;
-            padding: 10px;
-            border: 1px solid #ddd;
-            border-radius: 4px;
-            box-sizing: border-box;
-            resize: vertical;
-        }
-        input[type="text"] {
-            width: 100%;
-            padding: 10px;
-            font-size: 14px;
-            border: 1px solid #ddd;
-            border-radius: 4px;
-            box-sizing: border-box;
-            margin-bottom: 10px;
-        }
-        button {
-            padding: 10px 20px;
-            margin: 5px;
-            font-size: 14px;
-            border: none;
-            border-radius: 4px;
-            cursor: pointer;
-            transition: background-color 0.3s;
-        }
-        .btn-start {
-            background-color: #4CAF50;
-            color: white;
-        }
-        .btn-start:hover {
-            background-color: #45a049;
-        }
-        .btn-stop {
-            background-color: #f44336;
-            color: white;
-        }
-        .btn-stop:hover {
-            background-color: #da190b;
-        }
-        .btn-clear {
-            background-color: #ff9800;
-            color: white;
-        }
-        .btn-clear:hover {
-            background-color: #e68900;
-        }
-        .btn-send {
-            background-color: #2196F3;
-            color: white;
-        }
-        .btn-send:hover {
-            background-color: #0b7dda;
-        }
-        .status {
-            padding: 10px;
-            margin-top: 10px;
-            border-radius: 4px;
-            font-size: 14px;
-        }
-        .status.idle {
-            background-color: #e0e0e0;
-            color: #666;
-        }
-        .status.receiving {
-            background-color: #c8e6c9;
-            color: #2e7d32;
-        }
-        .status.error {
-            background-color: #ffcdd2;
-            color: #c62828;
-        }
+        body { font-family: sans-serif; text-align: center; background-color: #f0f8ff; margin: 0; padding: 20px; }
+        .game-board { background-color: white; border-radius: 10px; padding: 20px; max-width: 500px; margin: 0 auto; box-shadow: 0 4px 6px rgba(0,0,0,0.1); }
+        .video-container { margin: 10px auto; width: 100%; max-width: 320px; border-radius: 8px; overflow: hidden; background-color: #000; position: relative; }
+        video { width: 100%; display: block; transform: scaleX(-1); }
+        .ai-status { background-color: #333; color: #00ff00; padding: 10px; border-radius: 5px; font-family: monospace; margin: 10px 0; }
+        .hands { display: flex; justify-content: space-around; font-size: 24px; margin: 20px 0; }
+        button { font-size: 18px; padding: 10px 20px; margin: 5px; cursor: pointer; border: none; border-radius: 5px; background-color: #007bff; color: white; }
     </style>
 </head>
 <body>
-    <div class="container">
-        <h2>ﾘ=ﾜ・FSK受信 (1200/2400Hz, 300bps)</h2>
-        <div>
-            <button id="startBtn" class="btn-start">受信開始</button>
-            <button id="stopBtn" class="btn-stop">受信停止</button>
-            <button id="clearBtn" class="btn-clear">クリア</button>
-        </div>
-        <div id="status" class="status idle">待機中</div>
-        <textarea id="receiveText" readonly placeholder="受信データがここに表示されます..."></textarea>
+
+<div class="game-board">
+    <h1>じゃんけんゲーム</h1>
+    
+    <div id="ai-status" class="ai-status">AI: モデルを読み込み中...</div>
+
+    <div class="video-container">
+        <video id="webcam" autoplay playsinline></video>
     </div>
 
-    <div class="container">
-        <h2>ﾘ=ﾜ・FSK送信</h2>
-        <input type="text" id="sendText" placeholder="送信する文字列を入力してください">
-        <button id="sendBtn" class="btn-send">送信</button>
-        <div id="sendStatus" class="status idle">待機中</div>
+    <div class="hands">
+        <div><p>あなた</p><div id="player-hand">❓</div></div>
+        <div><p>CPU</p><div id="cpu-hand">❓</div></div>
     </div>
+    
+    <div class="button-group">
+        <button onclick="playGame(0)">✊ グー</button>
+        <button onclick="playGame(1)">✌️ チョキ</button>
+        <button onclick="playGame(2)">✋ パー</button>
+    </div>
+</div>
 
-    <script>
-        // FSK設定
-        const BAUD_RATE = 300;
-        const FREQ_MARK = 1200;   // "1"
-        const FREQ_SPACE = 2400;  // "0"
-        const SAMPLE_RATE = 9600;
-        const SAMPLES_PER_BIT = SAMPLE_RATE / BAUD_RATE;
+<script type="module">
+    import { GestureRecognizer, FilesetResolver } from "https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@0.10.3";
 
-        // Web Audio API
-        let audioContext;
-        let analyser;
-        let microphone;
-        let scriptProcessor;
-        let isReceiving = false;
+    const videoElement = document.getElementById('webcam');
+    const aiStatusElement = document.getElementById('ai-status');
+    let gestureRecognizer;
+    let runningMode = "VIDEO";
+    let webcamRunning = false;
+    let lastVideoTime = -1;
 
-        // Goertzel アルゴリズム用
-        class GoertzelDetector {
-            constructor(targetFreq, sampleRate, numSamples) {
-                this.targetFreq = targetFreq;
-                this.sampleRate = sampleRate;
-                this.numSamples = numSamples;
-                this.coeff = 2 * Math.cos(2 * Math.PI * targetFreq / sampleRate);
-                this.reset();
-            }
-
-            reset() {
-                this.q1 = 0;
-                this.q2 = 0;
-                this.sampleCount = 0;
-            }
-
-            addSample(sample) {
-                const q0 = this.coeff * this.q1 - this.q2 + sample;
-                this.q2 = this.q1;
-                this.q1 = q0;
-                this.sampleCount++;
-            }
-
-            getMagnitude() {
-                const real = this.q1 - this.q2 * Math.cos(2 * Math.PI * this.targetFreq / this.sampleRate);
-                const imag = this.q2 * Math.sin(2 * Math.PI * this.targetFreq / this.sampleRate);
-                return Math.sqrt(real * real + imag * imag);
-            }
+    // --- 1. AIモデルの読み込みと初期化 ---
+    async function initializeMediaPipe() {
+        try {
+            const vision = await FilesetResolver.forVisionTasks(
+                "https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@0.10.3/wasm"
+            );
+            // 学習済みのジェスチャー認識モデルをダウンロードしてセット
+            gestureRecognizer = await GestureRecognizer.createFromOptions(vision, {
+                baseOptions: {
+                    modelAssetPath: "https://storage.googleapis.com/mediapipe-models/gesture_recognizer/gesture_recognizer/float16/1/gesture_recognizer.task",
+                    delegate: "GPU" // 可能ならGPUを使って高速化
+                },
+                runningMode: runningMode
+            });
+            aiStatusElement.innerText = "AI: 準備完了！カメラを待機中...";
+            startCamera(); // AIの準備ができたらカメラを起動
+        } catch (error) {
+            console.error("AIの初期化エラー:", error);
+            aiStatusElement.innerText = "AI: エラーが発生しました";
         }
+    }
 
-        // 受信処理
-        let markDetector;
-        let spaceDetector;
-        let bitBuffer = [];
-        let sampleBuffer = [];
-        let byteBuffer = [];
-        let receivingByte = false;
-        let bitIndex = 0;
-
-        // UI要素
-        const startBtn = document.getElementById('startBtn');
-        const stopBtn = document.getElementById('stopBtn');
-        const clearBtn = document.getElementById('clearBtn');
-        const receiveText = document.getElementById('receiveText');
-        const status = document.getElementById('status');
-        const sendBtn = document.getElementById('sendBtn');
-        const sendText = document.getElementById('sendText');
-        const sendStatus = document.getElementById('sendStatus');
-
-        // 受信開始
-        startBtn.addEventListener('click', async () => {
-            try {
-                audioContext = new (window.AudioContext || window.webkitAudioContext)({
-                    sampleRate: SAMPLE_RATE
-                });
-
-                const stream = await navigator.mediaDevices.getUserMedia({ 
-                    audio: {
-                        echoCancellation: false,
-                        noiseSuppression: false,
-                        autoGainControl: false
-                    } 
-                });
-
-                microphone = audioContext.createMediaStreamSource(stream);
-                scriptProcessor = audioContext.createScriptProcessor(256, 1, 1);
-
-                markDetector = new GoertzelDetector(FREQ_MARK, SAMPLE_RATE, SAMPLES_PER_BIT);
-                spaceDetector = new GoertzelDetector(FREQ_SPACE, SAMPLE_RATE, SAMPLES_PER_BIT);
-
-                scriptProcessor.onaudioprocess = processAudio;
-
-                microphone.connect(scriptProcessor);
-                scriptProcessor.connect(audioContext.destination);
-
-                isReceiving = true;
-                status.className = 'status receiving';
-                status.textContent = '受信中...';
-                startBtn.disabled = true;
-                stopBtn.disabled = false;
-
-            } catch (error) {
-                status.className = 'status error';
-                status.textContent = 'エラー: マイクアクセスが拒否されました';
-                console.error('マイクアクセスエラー:', error);
-            }
-        });
-
-        // 受信停止
-        stopBtn.addEventListener('click', () => {
-            if (microphone) microphone.disconnect();
-            if (scriptProcessor) scriptProcessor.disconnect();
-            if (audioContext) audioContext.close();
-
-            isReceiving = false;
-            status.className = 'status idle';
-            status.textContent = '停止';
-            startBtn.disabled = false;
-            stopBtn.disabled = true;
-        });
-
-        // クリア
-        clearBtn.addEventListener('click', () => {
-            receiveText.value = '';
-        });
-
-        // オーディオ処理
-        function processAudio(event) {
-            if (!isReceiving) return;
-
-            const inputData = event.inputBuffer.getChannelData(0);
-
-            for (let i = 0; i < inputData.length; i++) {
-                sampleBuffer.push(inputData[i]);
-
-                if (sampleBuffer.length >= SAMPLES_PER_BIT) {
-                    // Goertzel検出
-                    markDetector.reset();
-                    spaceDetector.reset();
-
-                    for (let j = 0; j < SAMPLES_PER_BIT; j++) {
-                        markDetector.addSample(sampleBuffer[j]);
-                        spaceDetector.addSample(sampleBuffer[j]);
-                    }
-
-                    const markMag = markDetector.getMagnitude();
-                    const spaceMag = spaceDetector.getMagnitude();
-
-                    // ビット判定 (Mark=1, Space=0)
-                    const bit = markMag > spaceMag ? 1 : 0;
-                    processBit(bit);
-
-                    sampleBuffer = [];
-                }
-            }
+    // --- 2. カメラの起動 ---
+    async function startCamera() {
+        try {
+            const stream = await navigator.mediaDevices.getUserMedia({ video: true, audio: false });
+            videoElement.srcObject = stream;
+            videoElement.addEventListener("loadeddata", predictWebcam);
+            webcamRunning = true;
+        } catch (error) {
+            console.error("カメラ起動エラー:", error);
+            aiStatusElement.innerText = "AI: カメラが見つかりません。外付けカメラを接続するか、別の端末で試してください。";
         }
+    }
 
-        // ビット処理
-        function processBit(bit) {
-            if (!receivingByte) {
-                // スタートビット待機 (0)
-                if (bit === 0) {
-                    receivingByte = true;
-                    bitIndex = 0;
-                    byteBuffer = [];
+    // --- 3. 映像から手の形をリアルタイムで推論するループ処理 ---
+    async function predictWebcam() {
+        if (!webcamRunning) return;
+
+        let nowInMs = Date.now();
+        // 映像のコマ（フレーム）が更新された時だけ推論を実行する
+        if (videoElement.currentTime !== lastVideoTime) {
+            lastVideoTime = videoElement.currentTime;
+            
+            // MediaPipeに映像を渡して手の形を判定
+            const results = gestureRecognizer.recognizeForVideo(videoElement, nowInMs);
+
+            // 手が画面内に認識された場合
+            if (results.gestures.length > 0) {
+                const categoryName = results.gestures[0][0].categoryName;
+                
+                // 英語の判定結果を日本語に変換して画面に表示
+                if (categoryName === "Closed_Fist") {
+                    aiStatusElement.innerText = "AI: 【✊ グー】を認識中";
+                } else if (categoryName === "Victory") {
+                    aiStatusElement.innerText = "AI: 【✌️ チョキ】を認識中";
+                } else if (categoryName === "Open_Palm") {
+                    aiStatusElement.innerText = "AI: 【✋ パー】を認識中";
+                } else {
+                    aiStatusElement.innerText = "AI: 手を認識中...";
                 }
             } else {
-                if (bitIndex < 8) {
-                    // データビット受信 (LSBファースト)
-                    byteBuffer.push(bit);
-                    bitIndex++;
-                } else {
-                    // ストップビット (1)
-                    if (bit === 1) {
-                        // バイト組み立て (LSBファースト)
-                        let byte = 0;
-                        for (let i = 0; i < 8; i++) {
-                            if (byteBuffer[i]) {
-                                byte |= (1 << i);
-                            }
-                        }
-                        
-                        // テキストエリアに追加
-                        const char = String.fromCharCode(byte);
-                        receiveText.value += char;
-                        receiveText.scrollTop = receiveText.scrollHeight;
-                    }
-                    receivingByte = false;
-                }
+                aiStatusElement.innerText = "AI: 手が見つかりません";
             }
         }
+        // 次のフレーム描画時にまたこの関数を呼び出す（ループ）
+        window.requestAnimationFrame(predictWebcam);
+    }
 
-        // 送信機能
-        sendBtn.addEventListener('click', async () => {
-            const text = sendText.value;
-            if (!text) {
-                alert('送信する文字列を入力してください');
-                return;
-            }
+    // ページ読み込み時にAIの準備を開始
+    initializeMediaPipe();
 
-            sendBtn.disabled = true;
-            sendStatus.className = 'status receiving';
-            sendStatus.textContent = '送信中...';
+    // --- 以下、じゃんけんロジック（そのまま） ---
+    window.playGame = function(playerChoice) {
+        const handSymbols = ["✊", "✌️", "✋"];
+        const cpuChoice = Math.floor(Math.random() * 3);
+        document.getElementById("player-hand").innerText = handSymbols[playerChoice];
+        document.getElementById("cpu-hand").innerText = handSymbols[cpuChoice];
+    }
+</script>
 
-            try {
-                await sendString(text);
-                sendStatus.className = 'status idle';
-                sendStatus.textContent = '送信完了';
-                sendText.value = '';
-            } catch (error) {
-                sendStatus.className = 'status error';
-                sendStatus.textContent = 'エラー: 送信失敗';
-                console.error('送信エラー:', error);
-            } finally {
-                sendBtn.disabled = false;
-            }
-        });
-
-        // 文字列送信
-        async function sendString(text) {
-            const ctx = new (window.AudioContext || window.webkitAudioContext)({
-                sampleRate: SAMPLE_RATE
-            });
-
-            for (let i = 0; i < text.length; i++) {
-                await sendByte(ctx, text.charCodeAt(i));
-            }
-
-            ctx.close();
-        }
-
-        // 1バイト送信
-        async function sendByte(ctx, byte) {
-            const bitDuration = 1 / BAUD_RATE;
-            let time = ctx.currentTime;
-
-            // スタートビット (0)
-            await playTone(ctx, FREQ_SPACE, time, bitDuration);
-            time += bitDuration;
-
-            // データビット (LSBファースト)
-            for (let i = 0; i < 8; i++) {
-                const bit = (byte >> i) & 0x01;
-                const freq = bit ? FREQ_MARK : FREQ_SPACE;
-                await playTone(ctx, freq, time, bitDuration);
-                time += bitDuration;
-            }
-
-            // ストップビット (1)
-            await playTone(ctx, FREQ_MARK, time, bitDuration);
-            time += bitDuration;
-
-            // 次のバイトまで待機
-            await new Promise(resolve => setTimeout(resolve, bitDuration * 10 * 1000));
-        }
-
-        // トーン再生
-        function playTone(ctx, frequency, startTime, duration) {
-            return new Promise((resolve) => {
-                const oscillator = ctx.createOscillator();
-                const gainNode = ctx.createGain();
-
-                oscillator.type = 'sine';
-                oscillator.frequency.value = frequency;
-
-                gainNode.gain.setValueAtTime(0.3, startTime);
-                gainNode.gain.setValueAtTime(0.3, startTime + duration);
-                gainNode.gain.linearRampToValueAtTime(0, startTime + duration + 0.01);
-
-                oscillator.connect(gainNode);
-                gainNode.connect(ctx.destination);
-
-                oscillator.start(startTime);
-                oscillator.stop(startTime + duration + 0.01);
-
-                setTimeout(resolve, duration * 1000);
-            });
-        }
-
-        // 初期状態
-        stopBtn.disabled = true;
-    </script>
 </body>
 </html>
