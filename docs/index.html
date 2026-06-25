@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>AIじゃんけんゲーム - ステップ3</title>
+    <title>AIじゃんけんゲーム - 完成版</title>
     <style>
         body { font-family: sans-serif; text-align: center; background-color: #f0f8ff; margin: 0; padding: 20px; }
         .game-board { background-color: white; border-radius: 10px; padding: 20px; max-width: 500px; margin: 0 auto; box-shadow: 0 4px 6px rgba(0,0,0,0.1); }
@@ -11,13 +11,32 @@
         video { width: 100%; display: block; transform: scaleX(-1); }
         .ai-status { background-color: #333; color: #00ff00; padding: 10px; border-radius: 5px; font-family: monospace; margin: 10px 0; }
         .hands { display: flex; justify-content: space-around; font-size: 24px; margin: 20px 0; }
-        button { font-size: 18px; padding: 10px 20px; margin: 5px; cursor: pointer; border: none; border-radius: 5px; background-color: #007bff; color: white; }
+        .hand-box { width: 45%; }
+        .hand-emoji { font-size: 64px; margin-top: 10px; }
+        .result-message { font-size: 28px; font-weight: bold; color: #333; margin: 20px 0; min-height: 40px; }
+        
+        /* スタートボタンを目立たせるスタイル */
+        #start-btn {
+            font-size: 22px;
+            font-weight: bold;
+            padding: 15px 30px;
+            cursor: pointer;
+            border: none;
+            border-radius: 8px;
+            background-color: #ff4500;
+            color: white;
+            transition: background-color 0.3s, transform 0.1s;
+            width: 100%;
+            box-sizing: border-box;
+        }
+        #start-btn:hover { background-color: #cc3700; }
+        #start-btn:disabled { background-color: #ccc; cursor: not-allowed; }
     </style>
 </head>
 <body>
 
 <div class="game-board">
-    <h1>じゃんけんゲーム</h1>
+    <h1>AIカメラじゃんけん</h1>
     
     <div id="ai-status" class="ai-status">AI: モデルを読み込み中...</div>
 
@@ -26,15 +45,19 @@
     </div>
 
     <div class="hands">
-        <div><p>あなた</p><div id="player-hand">❓</div></div>
-        <div><p>CPU</p><div id="cpu-hand">❓</div></div>
+        <div class="hand-box">
+            <p>あなた</p>
+            <div id="player-hand" class="hand-emoji">❓</div>
+        </div>
+        <div class="hand-box">
+            <p>CPU</p>
+            <div id="cpu-hand" class="hand-emoji">❓</div>
+        </div>
     </div>
     
-    <div class="button-group">
-        <button onclick="playGame(0)">✊ グー</button>
-        <button onclick="playGame(1)">✌️ チョキ</button>
-        <button onclick="playGame(2)">✋ パー</button>
-    </div>
+    <div class="result-message" id="result-message">準備ができたらスタート！</div>
+
+    <button id="start-btn" onclick="startJanken()" disabled>🎮 ゲームスタート！</button>
 </div>
 
 <script type="module">
@@ -42,30 +65,33 @@
 
     const videoElement = document.getElementById('webcam');
     const aiStatusElement = document.getElementById('ai-status');
+    const startBtn = document.getElementById('start-btn');
+    const resultMessage = document.getElementById('result-message');
+    
     let gestureRecognizer;
-    let runningMode = "VIDEO";
     let webcamRunning = false;
     let lastVideoTime = -1;
+    
+    // 現在AIが認識している手を保持する変数 (-1: 未認識, 0: グー, 1: チョキ, 2: パー)
+    let currentGesture = -1; 
+    const handSymbols = ["✊", "✌️", "✋"];
 
     // --- 1. AIモデルの読み込みと初期化 ---
     async function initializeMediaPipe() {
         try {
-            const vision = await FilesetResolver.forVisionTasks(
-                "https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@0.10.3/wasm"
-            );
-            // 学習済みのジェスチャー認識モデルをダウンロードしてセット
+            const vision = await FilesetResolver.forVisionTasks("https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@0.10.3/wasm");
             gestureRecognizer = await GestureRecognizer.createFromOptions(vision, {
                 baseOptions: {
                     modelAssetPath: "https://storage.googleapis.com/mediapipe-models/gesture_recognizer/gesture_recognizer/float16/1/gesture_recognizer.task",
-                    delegate: "GPU" // 可能ならGPUを使って高速化
+                    delegate: "GPU"
                 },
-                runningMode: runningMode
+                runningMode: "VIDEO"
             });
-            aiStatusElement.innerText = "AI: 準備完了！カメラを待機中...";
-            startCamera(); // AIの準備ができたらカメラを起動
+            aiStatusElement.innerText = "AI: 準備完了！";
+            startCamera();
         } catch (error) {
-            console.error("AIの初期化エラー:", error);
-            aiStatusElement.innerText = "AI: エラーが発生しました";
+            console.error(error);
+            aiStatusElement.innerText = "AI: 初期化エラー";
         }
     }
 
@@ -76,55 +102,103 @@
             videoElement.srcObject = stream;
             videoElement.addEventListener("loadeddata", predictWebcam);
             webcamRunning = true;
+            startBtn.disabled = false; // カメラが起動したらスタートボタンを有効化
         } catch (error) {
-            console.error("カメラ起動エラー:", error);
-            aiStatusElement.innerText = "AI: カメラが見つかりません。外付けカメラを接続するか、別の端末で試してください。";
+            console.error(error);
+            aiStatusElement.innerText = "AI: カメラへのアクセスが拒否されました";
         }
     }
 
-    // --- 3. 映像から手の形をリアルタイムで推論するループ処理 ---
+    // --- 3. 手の形をリアルタイム推論 ---
     async function predictWebcam() {
         if (!webcamRunning) return;
 
         let nowInMs = Date.now();
-        // 映像のコマ（フレーム）が更新された時だけ推論を実行する
         if (videoElement.currentTime !== lastVideoTime) {
             lastVideoTime = videoElement.currentTime;
-            
-            // MediaPipeに映像を渡して手の形を判定
             const results = gestureRecognizer.recognizeForVideo(videoElement, nowInMs);
 
-            // 手が画面内に認識された場合
             if (results.gestures.length > 0) {
                 const categoryName = results.gestures[0][0].categoryName;
-                
-                // 英語の判定結果を日本語に変換して画面に表示
                 if (categoryName === "Closed_Fist") {
-                    aiStatusElement.innerText = "AI: 【✊ グー】を認識中";
+                    currentGesture = 0;
+                    aiStatusElement.innerText = "AI: 【✊ グー】";
                 } else if (categoryName === "Victory") {
-                    aiStatusElement.innerText = "AI: 【✌️ チョキ】を認識中";
+                    currentGesture = 1;
+                    aiStatusElement.innerText = "AI: 【✌️ チョキ】";
                 } else if (categoryName === "Open_Palm") {
-                    aiStatusElement.innerText = "AI: 【✋ パー】を認識中";
+                    currentGesture = 2;
+                    aiStatusElement.innerText = "AI: 【✋ パー】";
                 } else {
+                    currentGesture = -1;
                     aiStatusElement.innerText = "AI: 手を認識中...";
                 }
             } else {
+                currentGesture = -1;
                 aiStatusElement.innerText = "AI: 手が見つかりません";
             }
         }
-        // 次のフレーム描画時にまたこの関数を呼び出す（ループ）
         window.requestAnimationFrame(predictWebcam);
     }
 
-    // ページ読み込み時にAIの準備を開始
     initializeMediaPipe();
 
-    // --- 以下、じゃんけんロジック（そのまま） ---
-    window.playGame = function(playerChoice) {
-        const handSymbols = ["✊", "✌️", "✋"];
+    // --- 4. じゃんけんのゲームフロー制御 ---
+    window.startJanken = function() {
+        // ボタンを連打できないように無効化
+        startBtn.disabled = true;
+        
+        // UIのリセット
+        document.getElementById("player-hand").innerText = "✊";
+        document.getElementById("cpu-hand").innerText = "✊";
+        resultMessage.style.color = "#333";
+        
+        // カウントダウン処理 (setTimeoutを利用)
+        resultMessage.innerText = "最初はグー！";
+        
+        setTimeout(() => {
+            resultMessage.innerText = "じゃんけん...";
+        }, 1200);
+
+        setTimeout(() => {
+            resultMessage.innerText = "ポン！";
+            judgeGame(); // ここで勝敗判定を呼び出す
+        }, 2400);
+    }
+
+    // --- 5. 勝敗判定 ---
+    function judgeGame() {
+        // AIが手を認識できていない場合
+        if (currentGesture === -1) {
+            resultMessage.innerText = "手が認識できませんでした。もう一度！";
+            document.getElementById("player-hand").innerText = "❓";
+            startBtn.disabled = false;
+            return;
+        }
+
+        // CPUの手をランダム決定
         const cpuChoice = Math.floor(Math.random() * 3);
-        document.getElementById("player-hand").innerText = handSymbols[playerChoice];
+        
+        // 画面更新
+        document.getElementById("player-hand").innerText = handSymbols[currentGesture];
         document.getElementById("cpu-hand").innerText = handSymbols[cpuChoice];
+
+        // 勝敗計算
+        const result = (currentGesture - cpuChoice + 3) % 3;
+        
+        if (result === 0) {
+            resultMessage.innerText = "あいこ！";
+            resultMessage.style.color = "#333";
+        } else if (result === 1) {
+            resultMessage.innerText = "あなたの負け...";
+            resultMessage.style.color = "#007bff";
+        } else if (result === 2) {
+            resultMessage.innerText = "あなたの勝ち！🎉";
+            resultMessage.style.color = "#ff4500";
+        }
+
+        // ボタンを再び押せるようにする
+        startBtn.disabled = false;
     }
 </script>
 
