@@ -3,13 +3,13 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>AI物体判定アプリ (授業用)</title>
+    <title>AI物体判定アプリ (AIの脳内可視化版)</title>
     <script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs"></script>
     <script src="https://cdn.jsdelivr.net/npm/@tensorflow-models/mobilenet"></script>
     <script src="https://cdn.jsdelivr.net/npm/@tensorflow-models/knn-classifier"></script>
     <style>
         body { font-family: sans-serif; text-align: center; background-color: #f4f7f6; margin: 0; padding: 20px; }
-        .app-container { display: flex; flex-wrap: wrap; justify-content: center; gap: 20px; max-width: 900px; margin: 0 auto; }
+        .app-container { display: flex; flex-wrap: wrap; justify-content: center; gap: 20px; max-width: 1000px; margin: 0 auto; }
         .panel { background-color: white; border-radius: 10px; padding: 20px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); flex: 1; min-width: 320px; }
         
         .video-container { margin: 10px auto; width: 100%; max-width: 300px; border-radius: 8px; overflow: hidden; background-color: #000; }
@@ -31,6 +31,14 @@
         #start-btn { font-size: 20px; font-weight: bold; padding: 15px; cursor: pointer; border: none; border-radius: 8px; background-color: #ff4500; color: white; width: 100%; transition: background-color 0.3s;}
         #start-btn:disabled { background-color: #ccc; cursor: not-allowed; }
         .reset-btn { padding: 8px 15px; background: #6c757d; color: white; border: none; border-radius: 5px; cursor: pointer; margin-top: 10px;}
+
+        /* AIの脳内（特徴量）可視化用のスタイル */
+        .feature-box { background: #1e272e; border-radius: 8px; padding: 15px; margin-top: 20px; text-align: left; color: #d2dae2; }
+        .feature-title { font-size: 14px; margin: 0 0 10px 0; border-bottom: 1px solid #485460; padding-bottom: 5px;}
+        .bar-container { display: flex; align-items: center; margin-bottom: 4px; }
+        .bar-label { width: 30px; font-size: 10px; color: #808e9b; }
+        .bar-bg { flex-grow: 1; background: #38424b; height: 12px; border-radius: 6px; overflow: hidden; margin-left: 5px; }
+        .bar-fill { background: #0fb9b1; height: 100%; width: 0%; transition: width 0.1s; }
     </style>
 </head>
 <body>
@@ -74,6 +82,15 @@
             <div class="result-name" id="result-name">❓❓❓</div>
             <div class="result-prob" id="result-prob">確率: --%</div>
         </div>
+
+        <div class="feature-box">
+            <p class="feature-title">🧠 AIの脳内（特徴量データの一部）</p>
+            <div id="feature-bars">
+                </div>
+            <p style="font-size: 10px; margin-top: 10px; color: #808e9b;">
+                ※AIは画像を約1000個の数値に変換しています。上図はその最初の10個の動きです。
+            </p>
+        </div>
     </div>
 </div>
 
@@ -83,13 +100,37 @@
     const startBtn = document.getElementById('start-btn');
     const resultName = document.getElementById('result-name');
     const resultProb = document.getElementById('result-prob');
+    const featureBarsContainer = document.getElementById('feature-bars');
     
     let classifier, mobilenetModel, trainingTimer;
     const exampleCounts = [0, 0, 0];
-    
     let isPredicting = false; 
 
-    // --- 1. 初期化 ---
+    // 可視化用のバーを10本作る
+    const NUM_FEATURES_TO_SHOW = 10;
+    const featureBars = [];
+    for (let i = 0; i < NUM_FEATURES_TO_SHOW; i++) {
+        const row = document.createElement('div');
+        row.className = 'bar-container';
+        
+        const label = document.createElement('div');
+        label.className = 'bar-label';
+        label.innerText = `No.${i+1}`;
+        
+        const bg = document.createElement('div');
+        bg.className = 'bar-bg';
+        
+        const fill = document.createElement('div');
+        fill.className = 'bar-fill';
+        
+        bg.appendChild(fill);
+        row.appendChild(label);
+        row.appendChild(bg);
+        featureBarsContainer.appendChild(row);
+        
+        featureBars.push(fill);
+    }
+
     async function init() {
         classifier = knnClassifier.create();
         mobilenetModel = await mobilenet.load();
@@ -101,11 +142,10 @@
                 statusElement.innerText = "AI: 準備完了！名前を決めて物体を学習させてください。";
             });
         } catch (err) {
-            statusElement.innerText = "カメラの起動に失敗しました。カメラの許可設定を確認してください。";
+            statusElement.innerText = "カメラの起動に失敗しました。";
         }
     }
 
-    // --- 2. 学習処理 ---
     function addExample(classId) {
         const img = tf.browser.fromPixels(videoElement);
         const features = mobilenetModel.infer(img, true);
@@ -126,13 +166,26 @@
     }
     function stopTraining() { clearInterval(trainingTimer); }
 
-    // --- 3. リアルタイム推論ループ ---
     async function predictLoop() {
         if (!isPredicting) return;
 
         if (classifier.getNumClasses() > 0) {
             const img = tf.browser.fromPixels(videoElement);
+            // 1. 画像から特徴量を抽出 (ここで数値のリストができる)
             const features = mobilenetModel.infer(img, 'conv_preds');
+            
+            // --- 【追加】AIの脳内データを画面のバーに反映 ---
+            // featuresは巨大なデータなので、同期的に取り出して最初の10個だけ使う
+            const featureValues = features.dataSync(); 
+            for (let i = 0; i < NUM_FEATURES_TO_SHOW; i++) {
+                // 値は概ね 0 〜 10 の範囲で変動するため、適当にパーセントに変換してバーの長さにします
+                let val = featureValues[i] * 15; 
+                if (val > 100) val = 100;
+                featureBars[i].style.width = `${val}%`;
+            }
+            // ---------------------------------------------
+
+            // 2. 特徴量を使ってKNNで判定
             const result = await classifier.predictClass(features);
             
             const classId = result.label; 
@@ -141,19 +194,18 @@
             
             const objectName = document.getElementById(`name-${classId}`).value || `物体 ${parseInt(classId) + 1}`;
             
-            // 【追加】確率に応じたメッセージと文字色の変更ロジック
             if (percent >= 90) {
                 resultName.innerText = `✨ ${objectName}`;
-                resultName.style.color = "#28a745"; // 緑（確信）
+                resultName.style.color = "#28a745";
             } else if (percent >= 80) {
                 resultName.innerText = `${objectName} かも...`;
-                resultName.style.color = "#fd7e14"; // オレンジ（少し自信ない）
+                resultName.style.color = "#fd7e14";
             } else if (percent >= 40) {
                 resultName.innerText = "🤔 AIが迷っています...";
-                resultName.style.color = "#6c757d"; // グレー（迷い）
+                resultName.style.color = "#6c757d";
             } else {
                 resultName.innerText = "👀 もっとよく見せてください";
-                resultName.style.color = "#dc3545"; // 赤（見えない）
+                resultName.style.color = "#dc3545";
             }
             
             resultProb.innerText = `確率: ${percent}%`;
@@ -165,7 +217,6 @@
         predictLoop(); 
     }
 
-    // --- 4. 判定 開始/停止 の切り替えフロー ---
     window.togglePrediction = function() {
         if (!isPredicting) {
             isPredicting = true;
@@ -180,10 +231,14 @@
             resultName.innerText = "⏸️ AI停止中";
             resultName.style.color = "#333";
             resultProb.innerText = "確率: --%";
+            
+            // 停止時はバーを0に戻す
+            for (let i = 0; i < NUM_FEATURES_TO_SHOW; i++) {
+                featureBars[i].style.width = `0%`;
+            }
         }
     }
 
-    // --- 5. リセット処理 ---
     function resetModel() {
         classifier.clearAllClasses();
         isPredicting = false;
