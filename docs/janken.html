@@ -80,6 +80,12 @@
         
         <div class="result-message" id="result-message">全ての形を学習させたらスタート！</div>
         <button id="start-btn" onclick="startJanken()" disabled>🎮 ゲームスタート！</button>
+
+        <div style="margin-top: 15px;">
+            <label style="font-size: 18px; cursor: pointer;">
+                <input type="checkbox" id="sound-checkbox" checked> 音声を再生する
+            </label>
+        </div>
     </div>
 </div>
 
@@ -215,8 +221,11 @@
         isPlaying = true;
         startBtn.disabled = true;
         // ↓↓↓ここを追加（iPadでの音声ブロック回避用ダミー発話）↓↓↓
-        const dummy = new SpeechSynthesisUtterance('');
-        window.speechSynthesis.speak(dummy);
+        const soundCheckbox = document.getElementById('sound-checkbox');
+        if(soundCheckbox.checked){
+            const dummy = new SpeechSynthesisUtterance('');
+            window.speechSynthesis.speak(dummy);
+        }
         // ↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑
         document.getElementById("player-hand").innerText = "✊";
         document.getElementById("cpu-hand").innerText = "✊";
@@ -271,6 +280,14 @@
 
     // --- 追加: 音声を喋らせる専用の関数 ---
     function speakResult(text) {
+        // チェックボックスの要素を取得
+        const soundCheckbox = document.getElementById('sound-checkbox');
+        
+        // チェックが入っていなければ（falseなら）、ここで処理を終了（＝喋らない）
+        if (!soundCheckbox.checked) {
+            return;
+        }
+
         // すでに喋っている音声があればキャンセル（音が重なるのを防ぐ）
         window.speechSynthesis.cancel();
         
