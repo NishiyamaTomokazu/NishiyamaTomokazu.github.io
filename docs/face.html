@@ -1,0 +1,291 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI顔認証システムを体験しよう</title>
+    <style>
+        /* 全体のレイアウト設定 */
+        body {
+            margin: 0;
+            padding: 0;
+            font-family: 'Helvetica Neue', Arial, sans-serif;
+            background-color: #f0f2f5;
+            display: flex;
+            height: 100vh;
+            color: #333;
+        }
+
+        /* 画面を左右に50%ずつ分割 */
+        .container {
+            width: 50%;
+            height: 100%;
+            box-sizing: border-box;
+            padding: 30px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+        }
+
+        /* 左側のスタイル（カメラエリア） */
+        #left-side {
+            background-color: #ffffff;
+            border-right: 2px solid #e0e0e0;
+        }
+
+        /* 右側のスタイル（ログインエリア） */
+        #right-side {
+            background-color: #f9fbfd;
+        }
+
+        h2 {
+            margin-bottom: 20px;
+            color: #4a5568;
+            font-size: 24px;
+        }
+
+        /* カメラと登録済み画像のコンテナ */
+        .video-box {
+            position: relative;
+            width: 400px;
+            height: 300px;
+            background-color: #000;
+            border-radius: 12px;
+            overflow: hidden;
+            box-shadow: 0 8px 16px rgba(0,0,0,0.1);
+            margin-bottom: 20px;
+        }
+
+        video, canvas {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+
+        /* ボタンの共通スタイル */
+        .btn {
+            padding: 12px 30px;
+            font-size: 18px;
+            font-weight: bold;
+            color: white;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.2s;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        }
+
+        .btn:active {
+            transform: translateY(2px);
+        }
+
+        #btn-register { background-color: #3182ce; }
+        #btn-register:hover { background-color: #2b6cb0; }
+        
+        #btn-login { background-color: #38a169; width: 200px; }
+        #btn-login:hover { background-color: #2f855a; }
+
+        /* 扉の画像エリア（SVG） */
+        .door-container {
+            width: 200px;
+            height: 250px;
+            margin-bottom: 30px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        /* メッセージ表示エリア */
+        #message {
+            margin-top: 20px;
+            font-size: 22px;
+            font-weight: bold;
+            height: 30px;
+        }
+        .success { color: #38a169; }
+        .error { color: #e53e3e; }
+
+        /* 登録状態のインジケーター */
+        #status-tag {
+            font-size: 14px;
+            color: #718096;
+            margin-top: 5px;
+        }
+
+        /* データの裏側を見せるためのスコア表示 */
+        #score-display {
+            margin-top: 10px;
+            font-size: 14px;
+            color: #4a5568;
+            background: #edf2f7;
+            padding: 5px 10px;
+            border-radius: 4px;
+        }
+    </style>
+</head>
+<body>
+
+    <div id="left-side" class="container">
+        <h2>【ステップ1】顔の登録</h2>
+        <div class="video-box">
+            <video id="webcam" autoplay playsinline muted></video>
+        </div>
+        <button id="btn-register" class="btn">この顔を登録する</button>
+        <div id="status-tag">顔データ：未登録</div>
+    </div>
+
+    <div id="right-side" class="container">
+        <h2>【ステップ2】顔認証ログイン</h2>
+        
+        <div class="door-container" id="door-graphic">
+            <svg id="door-locked" width="100%" height="100%" viewBox="0 0 100 120">
+                <rect x="10" y="5" width="80" height="110" fill="#7a431d" stroke="#4a2306" stroke-width="3"/>
+                <rect x="20" y="15" width="25" height="40" fill="#613313"/>
+                <rect x="55" y="15" width="25" height="40" fill="#613313"/>
+                <rect x="20" y="65" width="25" height="40" fill="#613313"/>
+                <rect x="55" y="65" width="25" height="40" fill="#613313"/>
+                <circle cx="20" cy="60" r="4" fill="#ecc94b"/>
+                <rect x="35" y="45" width="30" height="25" rx="5" fill="#718096" stroke="#4a5568" stroke-width="2"/>
+                <path d="M 42 45 L 42 35 A 8 8 0 0 1 58 35 L 58 45" fill="none" stroke="#718096" stroke-width="3"/>
+                <circle cx="50" cy="55" r="3" fill="#2d3748"/>
+                <path d="M 50 55 L 50 65" stroke="#2d3748" stroke-width="2"/>
+            </svg>
+        </div>
+
+        <button id="btn-login" class="btn">顔認証でログイン</button>
+        <div id="message"></div>
+        <div id="score-display" style="display: none;">データの一致度: - %</div>
+    </div>
+
+    <canvas id="hidden-canvas" width="40" height="30" style="display: none;"></canvas>
+
+    <script>
+        const video = document.getElementById('webcam');
+        const hiddenCanvas = document.getElementById('hidden-canvas');
+        const ctx = hiddenCanvas.getContext('2d');
+        
+        const btnRegister = document.getElementById('btn-register');
+        const btnLogin = document.getElementById('btn-login');
+        const statusTag = document.getElementById('status-tag');
+        const message = document.getElementById('message');
+        const scoreDisplay = document.getElementById('score-display');
+        const doorContainer = document.getElementById('door-graphic');
+
+        let registeredFeatures = null; // 登録された顔のデータ（画素情報）
+
+        // 1. Webカメラの起動
+        navigator.mediaDevices.getUserMedia({ video: { width: 400, height: 300 } })
+            .then(stream => {
+                video.srcObject = stream;
+            })
+            .catch(err => {
+                alert("カメラの起動に失敗しました。ブラウザのカメラ許可を確認してください。");
+                console.error(err);
+            });
+
+        // カメラの現在の映像から、特徴データ（低解像度の色配列）を抽出する関数
+        function getFaceFeatures() {
+            // 処理を高速化＆ノイズを減らすため、40x30ピクセルの小さな画像に縮小してキャプチャ
+            ctx.drawImage(video, 0, 0, hiddenCanvas.width, hiddenCanvas.height);
+            const imgData = ctx.getImageData(0, 0, hiddenCanvas.width, hiddenCanvas.height);
+            return imgData.data; // RGBAの値が並んだ配列を返す
+        }
+
+        // 2. 【登録ボタン】が押されたときの処理
+        btnRegister.addEventListener('click', () => {
+            registeredFeatures = getFaceFeatures();
+            statusTag.innerText = "顔データ：登録済み（" + new Date().toLocaleTimeString() + "）";
+            statusTag.style.color = "#38a169";
+            message.innerText = "顔データを登録しました！";
+            message.className = "success";
+            
+            // 扉の状態をリセット
+            resetDoor();
+        });
+
+        // 3. 【ログインボタン】が押されたときの処理
+        btnLogin.addEventListener('click', () => {
+            if (!registeredFeatures) {
+                message.innerText = "先に左側で顔を登録してください。";
+                message.className = "error";
+                return;
+            }
+
+            message.innerText = "認証中...";
+            message.className = "";
+
+            // 現在のカメラ映像から特徴を取得
+            const currentFeatures = getFaceFeatures();
+
+            // 登録された画像と現在の画像の「差」を計算する
+            let totalDifference = 0;
+            for (let i = 0; i < registeredFeatures.length; i += 4) {
+                // 赤(R)・緑(G)・青(B)のそれぞれの差の絶対値を足していく
+                const rDiff = Math.abs(registeredFeatures[i] - currentFeatures[i]);
+                const gDiff = Math.abs(registeredFeatures[i+1] - currentFeatures[i+1]);
+                const bDiff = Math.abs(registeredFeatures[i+2] - currentFeatures[i+2]);
+                totalDifference += (rDiff + gDiff + bDiff);
+            }
+
+            // 最大の想定される差から「一致度（%）」を計算
+            const maxDiff = hiddenCanvas.width * hiddenCanvas.height * 255 * 3;
+            const similarity = Math.max(0, 100 - (totalDifference / maxDiff * 100));
+            
+            // 生徒に見せるための一致度表示
+            scoreDisplay.style.display = "block";
+            scoreDisplay.innerText = `データの一致度: ${similarity.toFixed(1)} %`;
+
+            // 【判定のしきい値】
+            // 75%以上同じであれば「本人」とみなす（あえて少し甘めに設定しています）
+            const THRESHOLD = 75.0;
+            //const THRESHOLD = 95.0;
+
+            if (similarity >= THRESHOLD) {
+                // 認証成功：扉を開ける
+                message.innerText = "認証成功！ログインしました。";
+                message.className = "success";
+                openDoor();
+            } else {
+                // 認証失敗
+                message.innerText = "認証失敗（だれですか？）";
+                message.className = "error";
+                resetDoor();
+            }
+        });
+
+        // 扉を開けるグラフィックに切り替える関数
+        function openDoor() {
+            doorContainer.innerHTML = `
+                <svg id="door-opened" width="100%" height="100%" viewBox="0 0 100 120">
+                    <rect x="10" y="5" width="80" height="110" fill="#feebc8" stroke="#4a2306" stroke-width="3"/>
+                    <circle cx="50" cy="55" r="25" fill="#fbd38d" opacity="0.6"/>
+                    <text x="50" y="60" font-size="10" font-weight="bold" fill="#dd6b20" text-anchor="middle">WELCOME</text>
+                    <polygon points="10,5 50,15 50,105 10,115" fill="#5f3011" stroke="#4a2306" stroke-width="2"/>
+                    <polygon points="15,18 30,21 30,55 15,52" fill="#4a2306"/>
+                    <polygon points="15,62 30,65 30,98 15,95" fill="#4a2306"/>
+                    <circle cx="43" cy="62" r="3" fill="#ecc94b"/>
+                </svg>
+            `;
+        }
+
+        // 扉を閉じた状態に戻す関数
+        function resetDoor() {
+            doorContainer.innerHTML = `
+                <svg id="door-locked" width="100%" height="100%" viewBox="0 0 100 120">
+                    <rect x="10" y="5" width="80" height="110" fill="#7a431d" stroke="#4a2306" stroke-width="3"/>
+                    <rect x="20" y="15" width="25" height="40" fill="#613313"/>
+                    <rect x="55" y="15" width="25" height="40" fill="#613313"/>
+                    <rect x="20" y="65" width="25" height="40" fill="#613313"/>
+                    <rect x="55" y="65" width="25" height="40" fill="#613313"/>
+                    <circle cx="20" cy="60" r="4" fill="#ecc94b"/>
+                    <rect x="35" y="45" width="30" height="25" rx="5" fill="#718096" stroke="#4a5568" stroke-width="2"/>
+                    <path d="M 42 45 L 42 35 A 8 8 0 0 1 58 35 L 58 45" fill="none" stroke="#718096" stroke-width="3"/>
+                    <circle cx="50" cy="55" r="3" fill="#2d3748"/>
+                    <path d="M 50 55 L 50 65" stroke="#2d3748" stroke-width="2"/>
+                </svg>
+            `;
+        }
+    </script>
+</body>
+</html>
