@@ -1,0 +1,267 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>手話認識＆発声アプリ</title>
+    <script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@tensorflow-models/mobilenet"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@tensorflow-models/knn-classifier"></script>
+    <style>
+        body { font-family: sans-serif; text-align: center; background-color: #f4f7f6; margin: 0; padding: 20px; }
+        .app-container { display: flex; flex-wrap: wrap; justify-content: center; gap: 20px; max-width: 1000px; margin: 0 auto; }
+        .panel { background-color: white; border-radius: 10px; padding: 20px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); flex: 1; min-width: 320px; }
+        
+        .video-container { margin: 10px auto; width: 100%; max-width: 300px; border-radius: 8px; overflow: hidden; background-color: #000; }
+        video { width: 100%; display: block; transform: scaleX(-1); }
+        
+        .training-panel { background: #e9ecef; border-radius: 8px; padding: 15px; margin-top: 15px; text-align: left; }
+        .train-row { display: flex; align-items: center; justify-content: space-between; margin-bottom: 10px; }
+        .name-input { font-size: 16px; padding: 8px; width: 40%; border: 1px solid #ccc; border-radius: 4px; text-align: center; }
+        .train-btn { font-size: 14px; padding: 10px; cursor: pointer; border: none; border-radius: 5px; color: white; width: 50%; font-weight: bold; }
+        
+        #btn-0 { background-color: #e74c3c; } 
+        #btn-1 { background-color: #2ecc71; } 
+        #btn-2 { background-color: #3498db; } 
+        #btn-3 { background-color: #f39c12; } 
+        .train-btn:active { opacity: 0.8; }
+
+        .result-box { background-color: #fff8e1; border: 2px dashed #ffc107; border-radius: 10px; padding: 30px; margin: 20px 0; min-height: 80px;}
+        .result-name { font-size: 32px; font-weight: bold; color: #333; margin: 0; transition: color 0.3s; }
+        .result-prob { font-size: 20px; color: #666; margin-top: 10px; }
+        
+        .action-btns { display: flex; gap: 10px; margin-top: 15px; }
+        .action-btn { flex: 1; font-size: 18px; font-weight: bold; padding: 15px; cursor: pointer; border: none; border-radius: 8px; color: white; transition: background-color 0.3s; }
+        .action-btn:disabled { background-color: #ccc; cursor: not-allowed; }
+        #start-btn { background-color: #28a745; }
+        #start-btn:hover:not(:disabled) { background-color: #218838; }
+        #stop-btn { background-color: #dc3545; }
+        #stop-btn:hover:not(:disabled) { background-color: #c82333; }
+
+        .reset-btn { padding: 8px 15px; background: #6c757d; color: white; border: none; border-radius: 5px; cursor: pointer; margin-top: 10px;}
+    </style>
+</head>
+<body>
+
+<h1>手話認識＆発声アプリ</h1>
+<div id="ai-status" style="font-weight: bold; color: #007bff; margin-bottom: 15px;">AI: 起動準備中... (少々お待ちください)</div>
+
+<div class="app-container">
+    <div class="panel">
+        <h2>1. 手話を学習させる</h2>
+        <div class="video-container">
+            <video id="webcam" autoplay playsinline width="224" height="224"></video>
+        </div>
+
+        <div class="training-panel">
+            <p style="margin-top:0; font-size:14px; text-align:center;">文字を入力し、ボタンを長押しして学習</p>
+            
+            <div class="train-row">
+                <input type="text" id="name-0" class="name-input" value="お" placeholder="文字1" maxlength="1">
+                <button id="btn-0" class="train-btn" onmousedown="startTraining(0)" onmouseup="stopTraining()" onmouseleave="stopTraining()">学習追加 (0)</button>
+            </div>
+            <div class="train-row">
+                <input type="text" id="name-1" class="name-input" value="は" placeholder="文字2" maxlength="1">
+                <button id="btn-1" class="train-btn" onmousedown="startTraining(1)" onmouseup="stopTraining()" onmouseleave="stopTraining()">学習追加 (0)</button>
+            </div>
+            <div class="train-row">
+                <input type="text" id="name-2" class="name-input" value="よ" placeholder="文字3" maxlength="1">
+                <button id="btn-2" class="train-btn" onmousedown="startTraining(2)" onmouseup="stopTraining()" onmouseleave="stopTraining()">学習追加 (0)</button>
+            </div>
+            <div class="train-row">
+                <input type="text" id="name-3" class="name-input" value="う" placeholder="文字4" maxlength="1">
+                <button id="btn-3" class="train-btn" onmousedown="startTraining(3)" onmouseup="stopTraining()" onmouseleave="stopTraining()">学習追加 (0)</button>
+            </div>
+        </div>
+        <button class="reset-btn" onclick="resetModel()">学習データをリセット</button>
+    </div>
+
+    <div class="panel">
+        <h2>2. AIに認識・発声させる</h2>
+        
+        <div class="action-btns">
+            <button id="start-btn" class="action-btn" onclick="startPredicting()" disabled>▶️ スタート</button>
+            <button id="stop-btn" class="action-btn" onclick="stopPredicting()" disabled>⏹️ ストップ</button>
+        </div>
+
+        <div class="result-box">
+            <p style="margin:0; font-size:14px; color:#666;">AIの認識結果</p>
+            <div class="result-name" id="result-name">❓❓❓</div>
+            <div class="result-prob" id="result-prob">確率: --%</div>
+        </div>
+    </div>
+</div>
+
+<script>
+    const videoElement = document.getElementById('webcam');
+    const statusElement = document.getElementById('ai-status');
+    const startBtn = document.getElementById('start-btn');
+    const stopBtn = document.getElementById('stop-btn');
+    const resultName = document.getElementById('result-name');
+    const resultProb = document.getElementById('result-prob');
+    
+    let classifier, mobilenetModel, trainingTimer;
+    const exampleCounts = [0, 0, 0, 0];
+    let isPredicting = false; 
+    
+    // 連続発声防止のための変数
+    let lastSpokenWord = ""; 
+    let isSpeaking = false; 
+    let clearWordTimer = null; 
+
+    async function init() {
+        classifier = knnClassifier.create();
+        mobilenetModel = await mobilenet.load();
+        
+        try {
+            const stream = await navigator.mediaDevices.getUserMedia({ video: { width: 224, height: 224 }, audio: false });
+            videoElement.srcObject = stream;
+            videoElement.addEventListener('playing', () => {
+                statusElement.innerText = "AI: 準備完了！文字を決めて手話を学習させてください。";
+            });
+        } catch (err) {
+            statusElement.innerText = "カメラの起動に失敗しました。";
+        }
+    }
+
+    function addExample(classId) {
+        const img = tf.browser.fromPixels(videoElement);
+        const features = mobilenetModel.infer(img, true);
+        classifier.addExample(features, classId);
+        img.dispose(); 
+        
+        exampleCounts[classId]++;
+        document.getElementById(`btn-${classId}`).innerText = `学習追加 (${exampleCounts[classId]})`;
+
+        if (exampleCounts[0] > 0 && exampleCounts[1] > 0 && exampleCounts[2] > 0 && exampleCounts[3] > 0) {
+            if (!isPredicting) {
+                startBtn.disabled = false;
+            }
+        }
+    }
+
+    function startTraining(classId) { 
+        addExample(classId); 
+        trainingTimer = setInterval(() => addExample(classId), 100); 
+    }
+    function stopTraining() { clearInterval(trainingTimer); }
+
+    function speakWord(text) {
+        if (isSpeaking) return; // すでに喋っている最中なら何もしない
+        
+        window.speechSynthesis.cancel(); 
+        const utterance = new SpeechSynthesisUtterance(text);
+        utterance.lang = 'ja-JP';
+        
+        // 発声の状態を管理
+        utterance.onstart = () => { isSpeaking = true; };
+        utterance.onend = () => { isSpeaking = false; };
+        utterance.onerror = () => { isSpeaking = false; };
+
+        window.speechSynthesis.speak(utterance);
+    }
+
+    window.startPredicting = function() {
+        if (!isPredicting) {
+            isPredicting = true;
+            startBtn.disabled = true;  
+            stopBtn.disabled = false;  
+            lastSpokenWord = ""; 
+            if(clearWordTimer) clearTimeout(clearWordTimer);
+            predictLoop(); 
+        }
+    }
+
+    window.stopPredicting = function() {
+        if (isPredicting) {
+            isPredicting = false;
+            startBtn.disabled = false; 
+            stopBtn.disabled = true;   
+            
+            resultName.innerText = "⏸️ AI停止中";
+            resultName.style.color = "#333";
+            resultProb.innerText = "確率: --%";
+        }
+    }
+
+    async function predictLoop() {
+        if (!isPredicting) return;
+
+        if (classifier.getNumClasses() > 0) {
+            const img = tf.browser.fromPixels(videoElement);
+            const features = mobilenetModel.infer(img, 'conv_preds');
+            const result = await classifier.predictClass(features);
+            
+            const classId = result.label; 
+            const probability = result.confidences[classId] || 0;
+            const percent = Math.round(probability * 100);
+            
+            const objectName = document.getElementById(`name-${classId}`).value || `文字 ${parseInt(classId) + 1}`;
+            
+            if (percent >= 80) { 
+                resultName.innerText = `✨ ${objectName}`;
+                resultName.style.color = "#28a745";
+
+                // 高確率で判定できている間は、リセットタイマーをキャンセルする
+                if (clearWordTimer) {
+                    clearTimeout(clearWordTimer);
+                    clearWordTimer = null;
+                }
+
+                // 前と違う文字で、かつ現在発声中でなければ喋る
+                if (objectName !== lastSpokenWord && !isSpeaking) {
+                    speakWord(objectName);
+                    lastSpokenWord = objectName;
+                }
+            } else {
+                // 確率が低い場合（迷っている・見えない）
+                if (percent >= 40) {
+                    resultName.innerText = "🤔 AIが迷っています...";
+                    resultName.style.color = "#6c757d";
+                } else {
+                    resultName.innerText = "👀 もっとよく見せてください";
+                    resultName.style.color = "#dc3545";
+                }
+                
+                // 判定が低い状態が「2秒間」続いたら、前回の言葉の記憶をリセットする
+                if (!clearWordTimer && lastSpokenWord !== "") {
+                    clearWordTimer = setTimeout(() => {
+                        lastSpokenWord = "";
+                        clearWordTimer = null;
+                    }, 2000); // 2000ミリ秒 = 2秒
+                }
+            }
+            
+            resultProb.innerText = `確率: ${percent}%`;
+            img.dispose();
+        }
+        
+        await tf.nextFrame(); 
+        predictLoop(); 
+    }
+
+    function resetModel() {
+        classifier.clearAllClasses();
+        isPredicting = false;
+        lastSpokenWord = "";
+        if(clearWordTimer) clearTimeout(clearWordTimer);
+        
+        for(let i=0; i<4; i++) {
+            exampleCounts[i] = 0;
+            document.getElementById(`btn-${i}`).innerText = `学習追加 (0)`;
+        }
+        
+        startBtn.disabled = true;
+        stopBtn.disabled = true;
+        
+        resultName.innerText = "❓❓❓";
+        resultName.style.color = "#333";
+        resultProb.innerText = "確率: --%";
+        statusElement.innerText = "学習データをリセットしました。再度学習させてください。";
+    }
+
+    window.onload = init;
+</script>
+
+</body>
+</html>
