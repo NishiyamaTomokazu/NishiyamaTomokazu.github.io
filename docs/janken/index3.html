@@ -1,0 +1,68 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AIじゃんけん ステップ3</title>
+    <script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@tensorflow-models/mobilenet"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@tensorflow-models/knn-classifier"></script>
+    <script src="https://unpkg.com/blockly/blockly.min.js"></script>
+    <link rel="stylesheet" href="./css/style.css">
+</head>
+<body>
+    <h1>AIカメラじゃんけん ステップ3</h1>
+
+    <div class="header-controls">
+        <button id="toggle-ai-btn" onclick="toggleAI()" disabled>⏸ AIを一時停止 (発熱対策)</button>
+        <div id="ai-status" style="font-weight: bold; color: #007bff; margin-top: 10px;">AI: 起動準備中... (少々お待ちください)</div>
+    </div>
+
+    <div class="app-container">
+        <div class="panel">
+            <h2>1. AIに手を教える</h2>
+            <div class="video-container"><video id="webcam" autoplay playsinline width="224" height="224"></video></div>
+            <div class="prob-display">
+                <div class="prob-item" id="prob-0">✊ 0%</div>
+                <div class="prob-item" id="prob-1">✌️ 0%</div>
+                <div class="prob-item" id="prob-2">✋ 0%</div>
+            </div>
+            <div class="training-panel">
+                <p style="margin-top:0; font-size:14px;" id="training-msg">ボタンを長押しして学習させてください</p>
+                <button id="btn-rock" class="train-btn" onmousedown="startTraining(0)" onmouseup="stopTraining()" onmouseleave="stopTraining()" ontouchstart="startTraining(0); event.preventDefault();" ontouchend="stopTraining()" ontouchcancel="stopTraining()" disabled>✊ グー追加 (0)</button>
+                <button id="btn-scissors" class="train-btn" onmousedown="startTraining(1)" onmouseup="stopTraining()" onmouseleave="stopTraining()" ontouchstart="startTraining(1); event.preventDefault();" ontouchend="stopTraining()" ontouchcancel="stopTraining()" disabled>✌️ チョキ追加 (0)</button>
+                <button id="btn-paper" class="train-btn" onmousedown="startTraining(2)" onmouseup="stopTraining()" onmouseleave="stopTraining()" ontouchstart="startTraining(2); event.preventDefault();" ontouchend="stopTraining()" ontouchcancel="stopTraining()" disabled>✋ パー追加 (0)</button>
+            </div>
+            <div style="display: flex; gap: 10px; margin-top: 10px;">
+                <button onclick="resetModel()" style="padding: 8px; background: #6c757d; color: white; border: none; border-radius: 5px; cursor: pointer; flex: 1;">学習をリセット</button>
+            </div>
+        </div>
+
+        <div class="panel">
+            <h2>2. AIと対戦する</h2>
+            <div class="hands">
+                <div><p>あなた</p><div id="player-hand" class="hand-emoji">❓</div></div>
+                <div><p>CPU</p><div id="cpu-hand" class="hand-emoji">❓</div></div>
+            </div>
+            <div class="result-message" id="result-message">全ての形を学習させたらスタート！</div>
+            <button id="start-btn" onclick="startJanken()" disabled>ゲームスタート！</button>
+            <p>しゃべる文章を変更できます。</p>
+            <div id="blocklyDiv"></div>
+        </div>
+    </div>
+
+    <script src="./js/blockly_config.js"></script>
+    <script src="./js/ai_janken.js"></script>
+    <script>
+        window.onload = function() {
+            init(); // カメラとAIの初期化
+            // ページ3固有: 編集モードでBlocklyを配置
+            workspace = Blockly.inject('blocklyDiv', {
+                readOnly: false, // 編集可能
+                move: { scrollbars: true, drag: true, wheel: true }
+            });
+            Blockly.serialization.workspaces.load(defaultBlocksJson, workspace);
+        };
+    </script>
+</body>
+</html>
