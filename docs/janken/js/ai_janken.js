@@ -171,10 +171,13 @@ async function predictLoop() {
             }
         }
         
+        // ==========================================
         // ページ1のテスト用手の絵文字表示
+        // ==========================================
         const testAiHandEl = document.getElementById('test-ai-hand');
         if (testAiHandEl) {
             testAiHandEl.innerText = handSymbols[result.label];
+            testAiHandEl.style.fontSize = ""; // ★追加: リセット時に小さくした文字サイズを元(64px)に戻す
         }
 
         img.dispose();
@@ -248,15 +251,44 @@ function judgeGame() {
 
 window.resetModel = function() {
     classifier.clearAllClasses();
+    
+    // ==========================================
+    // ★追加: ブラウザに保存されている学習データも完全に削除する
+    // ==========================================
+    localStorage.removeItem("jankenKNNData");
+    sessionStorage.removeItem("hasAskedLoadData");
+    console.log("保存されている学習データも削除しました");
+    // ==========================================
+
     for (let i = 0; i < 3; i++) {
         exampleCounts[i] = 0;
-        document.getElementById(`prob-${i}`).innerText = `${handSymbols[i]} 0%`;
-        document.getElementById(`prob-${i}`).style.backgroundColor = '#f8f9fa';
+        
+        // 左パネルの確率表示をリセット
+        const probEl = document.getElementById(`prob-${i}`);
+        if (probEl) {
+            probEl.innerText = `${handSymbols[i]} 0%`;
+            probEl.style.backgroundColor = '#f8f9fa';
+        }
+
+        // ページ1の右パネルのテスト用確率表示をリセット
+        const testProbEl = document.getElementById(`test-prob-${i}`);
+        if (testProbEl) {
+            const labels = ["✊ グー", "✌️ チョキ", "✋ パー"];
+            testProbEl.innerText = `${labels[i]}: 0%`;
+        }
     }
+    
+    // ページ1の右パネルの判定結果を「判定できません」にする
+    const testAiHandEl = document.getElementById('test-ai-hand');
+    if (testAiHandEl) {
+        testAiHandEl.innerText = "判定できません";
+        testAiHandEl.style.fontSize = "24px"; 
+    }
+
     document.getElementById('btn-rock').innerText = "✊ グー追加 (0)";
     document.getElementById('btn-scissors').innerText = "✌️ チョキ追加 (0)";
     document.getElementById('btn-paper').innerText = "✋ パー追加 (0)";
-    // ★修正: 要素が存在するか確認
+    
     if (startBtn) startBtn.disabled = true;
     if (resultMessage) resultMessage.innerText = "全ての形を学習させたらスタート！";
 }
@@ -284,6 +316,22 @@ window.executeBlocklyReaction = function(result) {
 
 window.stopAI = function() {
     if (!isAiActive && (!videoElement || !videoElement.srcObject)) return;
+    
+    // ==========================================================
+    // ★追加: 別のページに移動する直前に、学習データを自動保存する
+    // ==========================================================
+    if (classifier && classifier.getNumClasses() > 0) {
+        const dataset = classifier.getClassifierDataset();
+        const datasetObj = {};
+        Object.keys(dataset).forEach((key) => {
+            const tensor = dataset[key];
+            datasetObj[key] = { data: Array.from(tensor.dataSync()), shape: tensor.shape };
+        });
+        localStorage.setItem("jankenKNNData", JSON.stringify(datasetObj));
+        console.log("ページ移動前に学習データを自動保存しました");
+    }
+    // ==========================================================
+
     isAiActive = false;
     if (videoElement && videoElement.srcObject) {
         const tracks = videoElement.srcObject.getTracks();
