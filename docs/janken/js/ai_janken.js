@@ -68,8 +68,9 @@ async function init() {
             
             if (exampleCounts[0] > 0 && exampleCounts[1] > 0 && exampleCounts[2] > 0) {
                 statusElement.innerText = "AI: 稼働中！(データ読込済み✨)";
-                resultMessage.innerText = "準備OK！スタートボタンを押してね";
-                startBtn.disabled = false;
+                // ★修正: 要素が存在するか（ページ2や3か）を確認してから操作する
+                if (resultMessage) resultMessage.innerText = "準備OK！スタートボタンを押してね";
+                if (startBtn) startBtn.disabled = false;
             } else {
                 statusElement.innerText = "AI: 稼働中！まずは手を学習させてください。";
             }
@@ -97,7 +98,8 @@ window.toggleAI = function () {
         statusElement.innerText = "AI: 一時停止中 (端末を冷却しています ❄️)";
         statusElement.style.color = "#6c757d";
         enableTrainingButtons(false);
-        startBtn.disabled = true;
+        // ★修正: 要素が存在するか確認
+        if (startBtn) startBtn.disabled = true;
     }
 }
 
@@ -106,7 +108,8 @@ function enableTrainingButtons(enable) {
     document.getElementById('btn-scissors').disabled = !enable;
     document.getElementById('btn-paper').disabled = !enable;
     if (enable && exampleCounts[0] > 0 && exampleCounts[1] > 0 && exampleCounts[2] > 0) {
-        startBtn.disabled = false;
+        // ★修正: 要素が存在するか確認
+        if (startBtn) startBtn.disabled = false;
     }
 }
 
@@ -122,8 +125,9 @@ window.addExample = function(classId) {
     document.getElementById(btnIds[classId]).innerText = `${btnLabels[classId]} (${exampleCounts[classId]})`;
 
     if (exampleCounts[0] > 0 && exampleCounts[1] > 0 && exampleCounts[2] > 0 && isAiActive) {
-        startBtn.disabled = false;
-        if (resultMessage.innerText === "全ての形を学習させたらスタート！") {
+        // ★修正: 要素が存在するか確認
+        if (startBtn) startBtn.disabled = false;
+        if (resultMessage && resultMessage.innerText === "全ての形を学習させたらスタート！") {
             resultMessage.innerText = "準備OK！スタートボタンを押してね";
         }
     }
@@ -145,16 +149,34 @@ async function predictLoop() {
         for (let i = 0; i < 3; i++) {
             const probability = result.confidences[i] || 0;
             const percent = Math.round(probability * 100);
-            document.getElementById(`prob-${i}`).innerText = `${handSymbols[i]} ${percent}%`;
+            
+            // 左パネルの確率表示（既存）
+            const probEl = document.getElementById(`prob-${i}`);
+            if (probEl) {
+                probEl.innerText = `${handSymbols[i]} ${percent}%`;
+                if (result.label == i && percent > 50) {
+                    probEl.style.backgroundColor = '#ffeaa7';
+                    probEl.style.borderColor = '#fdcb6e';
+                } else {
+                    probEl.style.backgroundColor = '#f8f9fa';
+                    probEl.style.borderColor = '#ddd';
+                }
+            }
 
-            if (result.label == i && percent > 50) {
-                document.getElementById(`prob-${i}`).style.backgroundColor = '#ffeaa7';
-                document.getElementById(`prob-${i}`).style.borderColor = '#fdcb6e';
-            } else {
-                document.getElementById(`prob-${i}`).style.backgroundColor = '#f8f9fa';
-                document.getElementById(`prob-${i}`).style.borderColor = '#ddd';
+            // ページ1のテスト用確率表示（右パネル）
+            const testProbEl = document.getElementById(`test-prob-${i}`);
+            if (testProbEl) {
+                const labels = ["✊ グー", "✌️ チョキ", "✋ パー"];
+                testProbEl.innerText = `${labels[i]}: ${percent}%`;
             }
         }
+        
+        // ページ1のテスト用手の絵文字表示
+        const testAiHandEl = document.getElementById('test-ai-hand');
+        if (testAiHandEl) {
+            testAiHandEl.innerText = handSymbols[result.label];
+        }
+
         img.dispose();
     }
     if (isAiActive) {
@@ -175,19 +197,20 @@ window.startJanken = function () {
     }
 
     isPlaying = true;
-    startBtn.disabled = true;
+    // ★修正: 要素が存在するか確認（ページ2以降でのみ実行される想定ですが念のため）
+    if (startBtn) startBtn.disabled = true;
     
     const dummy = new SpeechSynthesisUtterance('');
     window.speechSynthesis.speak(dummy);
     
     document.getElementById("player-hand").innerText = "✊";
     document.getElementById("cpu-hand").innerText = "✊";
-    resultMessage.style.color = "#333";
-
-    resultMessage.innerText = "最初はグー！";
-    setTimeout(() => { resultMessage.innerText = "じゃんけん..."; }, 1200);
+    
+    if (resultMessage) resultMessage.style.color = "#333";
+    if (resultMessage) resultMessage.innerText = "最初はグー！";
+    setTimeout(() => { if (resultMessage) resultMessage.innerText = "じゃんけん..."; }, 1200);
     setTimeout(() => {
-        resultMessage.innerText = "ポン！";
+        if (resultMessage) resultMessage.innerText = "ポン！";
         judgeGame();
     }, 2400);
 }
@@ -200,20 +223,26 @@ function judgeGame() {
     const result = (currentPrediction - cpuChoice + 3) % 3;
 
     if (result === 0) {
-        resultMessage.innerText = "あいこ！";
-        resultMessage.style.color = "#333";
+        if (resultMessage) {
+            resultMessage.innerText = "あいこ！";
+            resultMessage.style.color = "#333";
+        }
         speakResult("あいこです"); 
     } else if (result === 1) {
-        resultMessage.innerText = "あなたの負け...";
-        resultMessage.style.color = "#007bff";
+        if (resultMessage) {
+            resultMessage.innerText = "あなたの負け...";
+            resultMessage.style.color = "#007bff";
+        }
         executeBlocklyReaction("lose"); 
     } else if (result === 2) {
-        resultMessage.innerText = "あなたの勝ち！🎉";
-        resultMessage.style.color = "#ff4500";
+        if (resultMessage) {
+            resultMessage.innerText = "あなたの勝ち！🎉";
+            resultMessage.style.color = "#ff4500";
+        }
         executeBlocklyReaction("win"); 
     }
 
-    if (isAiActive) startBtn.disabled = false;
+    if (isAiActive && startBtn) startBtn.disabled = false;
     setTimeout(() => { isPlaying = false; }, 2000);
 }
 
@@ -227,14 +256,16 @@ window.resetModel = function() {
     document.getElementById('btn-rock').innerText = "✊ グー追加 (0)";
     document.getElementById('btn-scissors').innerText = "✌️ チョキ追加 (0)";
     document.getElementById('btn-paper').innerText = "✋ パー追加 (0)";
-    startBtn.disabled = true;
-    resultMessage.innerText = "全ての形を学習させたらスタート！";
+    // ★修正: 要素が存在するか確認
+    if (startBtn) startBtn.disabled = true;
+    if (resultMessage) resultMessage.innerText = "全ての形を学習させたらスタート！";
 }
 
 function speakResult(text) {
     window.speechSynthesis.cancel();
     const utterance = new SpeechSynthesisUtterance(text);
-    utterance.lang = 'ja-JP'; 
+    utterance.lang = 'ja-JP';
+    utterance.rate = 1.2;
     window.speechSynthesis.speak(utterance);
 }
 
