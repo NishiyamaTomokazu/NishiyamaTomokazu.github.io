@@ -265,7 +265,7 @@ function speakResult(text) {
     window.speechSynthesis.cancel();
     const utterance = new SpeechSynthesisUtterance(text);
     utterance.lang = 'ja-JP';
-    utterance.rate = 1.2;
+    utterance.rate = 1.1;
     window.speechSynthesis.speak(utterance);
 }
 
