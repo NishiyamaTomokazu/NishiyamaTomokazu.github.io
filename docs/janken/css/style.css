@@ -52,6 +52,9 @@ body {
 
 video {
     width: 100%;
+    height: auto;          /* 追加: HTMLの height="224" を上書きして自動調整 */
+    aspect-ratio: 4 / 3;   /* 追加: iPadなどのカメラに合わせた自然な比率 */
+    object-fit: cover;     /* 追加: 黒い余白を消して、枠いっぱいに映像を広げる */
     display: block;
     transform: scaleX(-1);
 }
