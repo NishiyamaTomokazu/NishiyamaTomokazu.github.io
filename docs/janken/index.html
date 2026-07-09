@@ -51,16 +51,26 @@
 <body>
 
     <div class="tabs">
-        <button class="tab-btn active" onclick="loadTab('index1.html', this)">ステップ1</button>
-        <button class="tab-btn" onclick="loadTab('index2.html', this)">ステップ2</button>
-        <button class="tab-btn" onclick="loadTab('index3.html', this)">ステップ3</button>
+        <button class="tab-btn active" onclick="loadTab('index1.html', this,'AIにグー、チョキ、パーを学習させよう')">ステップ1</button>
+        <button class="tab-btn" onclick="loadTab('index2.html', this,'AIとじゃんけんをしてみよう')">ステップ2</button>
+        <button class="tab-btn" onclick="loadTab('index3.html', this,'プログラムで言葉を変えてみよう')">ステップ3</button>
+
+        <!-- <div id="step-description">AIにグー、チョキ、パーを学習させよう</div> -->
     </div>
+    
 
     <iframe id="content-frame" src="index1.html"></iframe>
 
     <script>
+        //function loadTab(url, btnElement, description) {
         function loadTab(url, btnElement) {
             const frame = document.getElementById('content-frame');
+
+            // ==================================================
+            // ★追加: タブが押されたら、文章を書き換える
+            // ==================================================
+            //document.getElementById('step-description').innerText = description;
+            // ==================================================
 
             // ==================================================
             // ★追加: ページを切り替える直前に、現在のページのカメラを止める
