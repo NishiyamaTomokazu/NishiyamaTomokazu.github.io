@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>AIじゃんけん ステップ3</title>
+    <title>ステップ3 プログラムで言葉を変えてみよう</title>
     <script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs"></script>
     <script src="https://cdn.jsdelivr.net/npm/@tensorflow-models/mobilenet"></script>
     <script src="https://cdn.jsdelivr.net/npm/@tensorflow-models/knn-classifier"></script>
@@ -11,7 +11,7 @@
     <link rel="stylesheet" href="./css/style.css">
 </head>
 <body>
-    <h1>AIカメラじゃんけん ステップ3</h1>
+    <h1>ステップ3 プログラムで言葉を変えてみよう</h1>
 
     <div class="header-controls">
         <button id="toggle-ai-btn" onclick="toggleAI()" disabled>⏸ AIを一時停止 (発熱対策)</button>
@@ -62,6 +62,15 @@
                 move: { scrollbars: true, drag: true, wheel: true }
             });
             Blockly.serialization.workspaces.load(defaultBlocksJson, workspace);
+            // ==================================================
+            // ★追加: 画面にあるすべてのブロックをガッチリ固定する
+            // ==================================================
+            const allBlocks = workspace.getAllBlocks(); // 画面の全ブロックを取得
+            allBlocks.forEach(block => {
+                block.setMovable(false);   // ドラッグして移動するのを禁止
+                block.setDeletable(false); // ブロックを消去するのを禁止
+            });
+            // ==================================================
         };
     </script>
 </body>
