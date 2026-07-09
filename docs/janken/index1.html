@@ -1,17 +1,19 @@
 <!DOCTYPE html>
 <html lang="ja">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>AIじゃんけん ステップ1</title>
+    <title>ステップ1 AIにグー、チョキ、パーを学習させよう</title>
     <script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs"></script>
     <script src="https://cdn.jsdelivr.net/npm/@tensorflow-models/mobilenet"></script>
     <script src="https://cdn.jsdelivr.net/npm/@tensorflow-models/knn-classifier"></script>
     <script src="https://unpkg.com/blockly/blockly.min.js"></script>
     <link rel="stylesheet" href="./css/style.css">
 </head>
+
 <body>
-    <h1>AIカメラじゃんけん ステップ1</h1>
+    <h1>ステップ1 AIにグー、チョキ、パーを学習させよう</h1>
 
     <div class="header-controls">
         <button id="toggle-ai-btn" onclick="toggleAI()" disabled>⏸ AIを一時停止 (発熱対策)</button>
@@ -29,23 +31,38 @@
             </div>
             <div class="training-panel">
                 <p style="margin-top:0; font-size:14px;" id="training-msg">ボタンを長押しして学習させてください</p>
-                <button id="btn-rock" class="train-btn" onmousedown="startTraining(0)" onmouseup="stopTraining()" onmouseleave="stopTraining()" ontouchstart="startTraining(0); event.preventDefault();" ontouchend="stopTraining()" ontouchcancel="stopTraining()" disabled>✊ グー追加 (0)</button>
-                <button id="btn-scissors" class="train-btn" onmousedown="startTraining(1)" onmouseup="stopTraining()" onmouseleave="stopTraining()" ontouchstart="startTraining(1); event.preventDefault();" ontouchend="stopTraining()" ontouchcancel="stopTraining()" disabled>✌️ チョキ追加 (0)</button>
-                <button id="btn-paper" class="train-btn" onmousedown="startTraining(2)" onmouseup="stopTraining()" onmouseleave="stopTraining()" ontouchstart="startTraining(2); event.preventDefault();" ontouchend="stopTraining()" ontouchcancel="stopTraining()" disabled>✋ パー追加 (0)</button>
+                <button id="btn-rock" class="train-btn" onmousedown="startTraining(0)" onmouseup="stopTraining()"
+                    onmouseleave="stopTraining()" ontouchstart="startTraining(0); event.preventDefault();"
+                    ontouchend="stopTraining()" ontouchcancel="stopTraining()" disabled>✊ グー追加 (0)</button>
+                <button id="btn-scissors" class="train-btn" onmousedown="startTraining(1)" onmouseup="stopTraining()"
+                    onmouseleave="stopTraining()" ontouchstart="startTraining(1); event.preventDefault();"
+                    ontouchend="stopTraining()" ontouchcancel="stopTraining()" disabled>✌️ チョキ追加 (0)</button>
+                <button id="btn-paper" class="train-btn" onmousedown="startTraining(2)" onmouseup="stopTraining()"
+                    onmouseleave="stopTraining()" ontouchstart="startTraining(2); event.preventDefault();"
+                    ontouchend="stopTraining()" ontouchcancel="stopTraining()" disabled>✋ パー追加 (0)</button>
             </div>
             <div style="display: flex; gap: 10px; margin-top: 10px;">
-                <button onclick="resetModel()" style="padding: 8px; background: #6c757d; color: white; border: none; border-radius: 5px; cursor: pointer; flex: 1;">学習をリセット</button>
+                <button onclick="resetModel()"
+                    style="padding: 8px; background: #6c757d; color: white; border: none; border-radius: 5px; cursor: pointer; flex: 1;">学習をリセット</button>
             </div>
         </div>
 
         <div class="panel">
-            <h2>2. AIと対戦する</h2>
+            <h2>2. AIの判定テスト</h2>
+            <p style="color: #666; font-weight: bold;">カメラに手を映して、確率を確認してみよう！</p>
+
             <div class="hands">
-                <div><p>あなた</p><div id="player-hand" class="hand-emoji">❓</div></div>
-                <div><p>CPU</p><div id="cpu-hand" class="hand-emoji">❓</div></div>
+                <div>
+                    <p style="font-weight: bold; margin-bottom: 0;">AIの判定結果</p>
+                    <div id="test-ai-hand" class="hand-emoji">❓</div>
+                </div>
             </div>
-            <div class="result-message" id="result-message">全ての形を学習させたらスタート！</div>
-            <button id="start-btn" onclick="startJanken()" disabled>ゲームスタート！</button>
+
+            <div style="font-size: 24px; font-weight: bold; text-align: left; padding: 20px 40px;">
+                <div id="test-prob-0" style="margin-bottom: 15px; color: #e74c3c;">✊ グー: 0%</div>
+                <div id="test-prob-1" style="margin-bottom: 15px; color: #2ecc71;">✌️ チョキ: 0%</div>
+                <div id="test-prob-2" style="margin-bottom: 15px; color: #3498db;">✋ パー: 0%</div>
+            </div>
         </div>
     </div>
 
@@ -53,9 +70,10 @@
     <script src="./js/ai_janken.js"></script>
     <script>
         // ページ1固有の処理（AIの起動のみ）
-        window.onload = function() {
-            init(); 
+        window.onload = function () {
+            init();
         };
     </script>
 </body>
+
 </html>
