@@ -1,1 +1,60 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Aurora Clock プログラミング - ステップ5</title>
+    
+    <link rel="stylesheet" href="./css/style.css">
+    
+    <script src="https://unpkg.com/blockly/blockly.min.js"></script>
+</head>
+<body>
+    <header>
+        <nav class="step-tabs">
+            <a href="step1.html" class="tab" id="tab-step1">ステップ1</a>
+            <a href="step2.html" class="tab" id="tab-step2">ステップ2</a>
+            <a href="step3.html" class="tab" id="tab-step3">ステップ3</a>
+            <a href="step4.html" class="tab" id="tab-step4">ステップ4</a>
+            <a href="step5.html" class="tab" id="tab-step5">ステップ5</a>
+            <a href="step6.html" class="tab" id="tab-step6">ステップ6</a>
+        </nav>
+    </header>
 
+    <main class="app-container">
+        <section class="instruction-area">
+            <h2>ステップ5：AIの準備をしよう</h2>
+            <p>ここには、中学生向けの課題文や説明を書きます。</p>
+            <p>（例：カメラに右手を映して、ブロックを繋げてみよう！）</p>
+            
+            <div class="toolbar">
+                <button id="saveBtn" class="btn">プログラムをほぞん</button>
+                <button id="loadBtn" class="btn btn-outline">プログラムをひらく</button>
+                <input type="file" id="fileInput" accept=".json" style="display: none;">
+            </div>
+        </section>
+
+        <section class="blockly-area">
+            <div id="blocklyDiv"></div>
+        </section>
+    </main>
+
+    <xml id="toolbox" style="display: none">
+        <category name="論理" colour="%{BKY_LOGIC_HUE}">
+            <block type="controls_if"></block>
+            <block type="logic_compare"></block>
+            <block type="logic_operation"></block>
+        </category>
+        <category name="ループ" colour="%{BKY_LOOPS_HUE}">
+            <block type="controls_repeat_ext"></block>
+            <block type="controls_whileUntil"></block>
+        </category>
+        <category name="テキスト" colour="%{BKY_TEXTS_HUE}">
+            <block type="text"></block>
+            <block type="text_print"></block>
+        </category>
+    </xml>
+
+    <script src="./js/app.js"></script>
+</body>
+</html>
