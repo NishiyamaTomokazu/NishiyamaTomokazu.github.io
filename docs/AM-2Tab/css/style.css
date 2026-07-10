@@ -1,1 +1,119 @@
+/* 全体の基本的なリセット */
+* {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+}
 
+body {
+    font-family: "Hiragino Sans", "Meiryo", sans-serif;
+    background-color: #f4f6f8;
+    color: #333;
+    display: flex;
+    flex-direction: column;
+    height: 100vh; /* 画面いっぱいの高さにする */
+    overflow: hidden;
+}
+
+/* 上部のタブナビゲーション */
+.step-tabs {
+    display: flex;
+    background-color: #ffffff;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
+
+.tab {
+    flex: 1;
+    text-align: center;
+    padding: 15px 0;
+    text-decoration: none;
+    color: #555;
+    font-weight: bold;
+    border-bottom: 4px solid transparent;
+    transition: all 0.2s;
+}
+
+.tab:hover {
+    background-color: #f0f8ff;
+}
+
+/* 現在開いているステップのタブ色 */
+.tab.active {
+    color: #0066cc;
+    border-bottom: 4px solid #0066cc;
+    background-color: #e6f2ff;
+}
+
+/* メインコンテンツ（左右に分ける） */
+.app-container {
+    display: flex;
+    flex: 1;
+    padding: 15px;
+    gap: 15px;
+}
+
+/* 左側の説明エリア */
+.instruction-area {
+    width: 300px;
+    background-color: #fff;
+    padding: 20px;
+    border-radius: 8px;
+    box-shadow: 0 2px 5px rgba(0,0,0,0.05);
+    display: flex;
+    flex-direction: column;
+}
+
+.instruction-area h2 {
+    font-size: 1.2rem;
+    color: #0066cc;
+    margin-bottom: 15px;
+}
+
+.instruction-area p {
+    font-size: 0.95rem;
+    line-height: 1.6;
+    margin-bottom: 20px;
+}
+
+/* ボタンのデザイン */
+.toolbar {
+    margin-top: auto; /* ボタンを一番下に押しやる */
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.btn {
+    padding: 12px;
+    border: none;
+    border-radius: 6px;
+    background-color: #0066cc;
+    color: white;
+    font-weight: bold;
+    cursor: pointer;
+    font-size: 1rem;
+}
+
+.btn-outline {
+    background-color: transparent;
+    border: 2px solid #0066cc;
+    color: #0066cc;
+}
+
+/* 右側のBlocklyエリア */
+.blockly-area {
+    flex: 1;
+    border-radius: 8px;
+    overflow: hidden;
+    box-shadow: 0 2px 5px rgba(0,0,0,0.05);
+    position: relative;
+}
+
+/* Blocklyを親要素いっぱいに広げる */
+#blocklyDiv {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+}
