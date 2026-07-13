@@ -1,0 +1,109 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>顔認識 動作確認テスト</title>
+  <style>
+    body {
+      margin: 0;
+      padding: 20px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      background-color: #f0f0f0;
+      font-family: sans-serif;
+    }
+    #status {
+      margin-bottom: 10px;
+      font-weight: bold;
+      color: #333;
+    }
+    .video-container {
+      position: relative;
+    }
+    /* 映像と描画用キャンバスをぴったり重ねる */
+    video, canvas {
+      position: absolute;
+      top: 0;
+      left: 0;
+      border: 2px solid #ccc;
+      border-radius: 8px;
+      background-color: #000;
+    }
+  </style>
+</head>
+<body>
+
+  <div id="status">1. モデルを読み込んでいます...</div>
+  
+  <div class="video-container" style="width: 640px; height: 480px;">
+    <!-- カメラ映像を表示する要素 -->
+    <video id="video" width="640" height="480" autoplay muted playsinline></video>
+    <!-- 顔の枠線を描画する要素 -->
+    <canvas id="overlay" width="640" height="480"></canvas>
+  </div>
+
+  <!-- face-api.js の読み込み (vladmandic版) -->
+  <script src="https://cdn.jsdelivr.net/npm/@vladmandic/face-api/dist/face-api.js"></script>
+  
+  <script>
+    const video = document.getElementById('video');
+    const canvas = document.getElementById('overlay');
+    const statusText = document.getElementById('status');
+
+    async function init() {
+      try {
+        // モデルファイルが置かれているフォルダのパス
+        const MODEL_URL = './models';
+
+        // 1. モデルの読み込み
+        await Promise.all([
+          faceapi.nets.ssdMobilenetv1.loadFromUri(MODEL_URL),
+          faceapi.nets.faceLandmark68Net.loadFromUri(MODEL_URL)
+        ]);
+        
+        statusText.innerText = "2. カメラの起動許可を待っています...";
+
+        // 2. カメラの起動
+        const stream = await navigator.mediaDevices.getUserMedia({
+          video: { facingMode: "user" },
+          audio: false
+        });
+        video.srcObject = stream;
+
+      } catch (error) {
+        console.error(error);
+        statusText.innerText = "エラーが発生しました。コンソールを確認してください。";
+      }
+    }
+
+    // 3. 映像が再生されたら認識ループを開始
+    video.addEventListener('play', () => {
+      statusText.innerText = "3. 認識中... 顔をカメラに向けてください。";
+      
+      // キャンバスの描画コンテキストを取得
+      const displaySize = { width: video.width, height: video.height };
+      faceapi.matchDimensions(canvas, displaySize);
+
+      // 100ミリ秒ごとに顔を検知して枠を描く
+      setInterval(async () => {
+        // 顔の検出（座標とランドマークを取得）
+        const detections = await faceapi.detectAllFaces(video)
+                                        .withFaceLandmarks();
+        
+        // 検出結果をキャンバスのサイズに合わせる
+        const resizedDetections = faceapi.resizeResults(detections, displaySize);
+        
+        // 描画をクリアして、新しい枠を描く
+        canvas.getContext('2d').clearRect(0, 0, canvas.width, canvas.height);
+        faceapi.draw.drawDetections(canvas, resizedDetections);
+        faceapi.draw.drawFaceLandmarks(canvas, resizedDetections);
+      }, 100);
+    });
+
+    // 処理開始
+    init();
+  </script>
+</body>
+</html>
