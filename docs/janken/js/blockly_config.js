@@ -56,7 +56,38 @@ const customBlocks = [
         "previousStatement": null,
         "nextStatement": null,
         "colour": 180
-    }
+    },
+        {
+        "type": "cmd_led",
+        "message0": "%1 色のLEDを %2 秒点灯する",
+        "args0": [
+            {
+                "type": "field_dropdown",
+                "name": "COLOR",
+                "options": [
+                    ["赤", "red"],
+                    ["緑", "green"],
+                    ["青", "blue"],
+                    ["黄色", "yellow"],
+                    ["紫", "purple"],
+                    ["水色", "cyan"],
+                    ["白", "white"]
+                ]
+            },
+            {
+                "type": "field_number",
+                "name": "TIME",
+                "value": 1,
+                "min": 1,
+                "max": 63,
+                "precision": 1
+            }
+        ],
+        "previousStatement": null,
+        "nextStatement": null,
+        "colour": 230
+    },
+
 ];
 
 // ブロックの登録
@@ -76,6 +107,53 @@ const defaultBlocksJson = {
                             "if_jeken": { "block": { "type": "if_block_win" } },
                             "yes": { "block": { "type": "cmd_speak_win" } },
                             "no": { "block": { "type": "cmd_speak_lose" } }
+                        }
+                    }
+                }
+            }
+        ]
+    }
+};
+
+
+
+// ----------------------------------------------------
+// blockly_config.js の一番下に追加
+// ステップ4用の初期ブロック配置（LEDブロックが繋がった状態）
+// ----------------------------------------------------
+const defaultBlocksJsonStep4 = {
+    "blocks": {
+        "blocks": [
+            {
+                "type": "cmd_start",
+                "x": 40, "y": 40,
+                "next": {
+                    "block": {
+                        "type": "cmd_if_else",
+                        "inputs": {
+                            "if_jeken": { "block": { "type": "if_block_win" } },
+                            "yes": { 
+                                "block": { 
+                                    "type": "cmd_speak_win",
+                                    "next": {
+                                        "block": {
+                                            "type": "cmd_led",
+                                            "fields": { "COLOR": "blue", "TIME": 1 }
+                                        }
+                                    }
+                                } 
+                            },
+                            "no": { 
+                                "block": { 
+                                    "type": "cmd_speak_lose",
+                                    "next": {
+                                        "block": {
+                                            "type": "cmd_led",
+                                            "fields": { "COLOR": "red", "TIME": 1 }
+                                        }
+                                    }
+                                } 
+                            }
                         }
                     }
                 }
