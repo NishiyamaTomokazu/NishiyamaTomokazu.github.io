@@ -16,6 +16,28 @@ let isPlaying = false;
 let isAiActive = false;
 let workspace; // 各ページで設定されるBlocklyのワークスペース用
 
+let hidDevice = null;
+
+// ==========================================
+// ★追加: マイコンの切断（電源オフやケーブル抜け）を検知する
+// ==========================================
+navigator.hid.addEventListener('disconnect', (event) => {
+    // 切断されたデバイスが、現在接続しているマイコンと同じ場合
+    if (hidDevice && event.device === hidDevice) {
+        console.log("マイコンの電源オフまたは切断を検知しました");
+        
+        // 接続状態をリセット
+        hidDevice = null; 
+        
+        // 画面の文字を「未接続」に変更して赤色にする
+        const statusEl = document.getElementById("hid-status");
+        if (statusEl) {
+            statusEl.innerText = "未接続";
+            statusEl.style.color = "red";
+        }
+    }
+});
+
 async function init() {
     const isIPad = /iPad/i.test(navigator.userAgent) || 
                   (/Macintosh/i.test(navigator.userAgent) && navigator.maxTouchPoints && navigator.maxTouchPoints > 1);
@@ -301,16 +323,47 @@ function speakResult(text) {
     window.speechSynthesis.speak(utterance);
 }
 
-window.executeBlocklyReaction = function(result) {
+// window.executeBlocklyReaction = function(result) {
+//     if (!workspace) return; 
+
+//     const allBlocks = workspace.getAllBlocks(false);
+//     if (result === "win") {
+//         const speakWinBlock = allBlocks.find(block => block.type === 'cmd_speak_win');
+//         speakResult(speakWinBlock ? speakWinBlock.getFieldValue('TEXT') : "あなたの勝ちです"); 
+//     } else if (result === "lose") {
+//         const speakLoseBlock = allBlocks.find(block => block.type === 'cmd_speak_lose');
+//         speakResult(speakLoseBlock ? speakLoseBlock.getFieldValue('TEXT') : "私の勝ちです"); 
+//     }
+// }
+// ==========================================
+// ★修正: 既存の executeBlocklyReaction 関数の中にLED制御を追加
+// 非同期(async)にして、ブロックを下へ順番に辿れるようにします
+// ==========================================
+window.executeBlocklyReaction = async function(result) {
     if (!workspace) return; 
 
     const allBlocks = workspace.getAllBlocks(false);
+    let speakBlock = null;
+
     if (result === "win") {
-        const speakWinBlock = allBlocks.find(block => block.type === 'cmd_speak_win');
-        speakResult(speakWinBlock ? speakWinBlock.getFieldValue('TEXT') : "あなたの勝ちです"); 
+        speakBlock = allBlocks.find(block => block.type === 'cmd_speak_win');
     } else if (result === "lose") {
-        const speakLoseBlock = allBlocks.find(block => block.type === 'cmd_speak_lose');
-        speakResult(speakLoseBlock ? speakLoseBlock.getFieldValue('TEXT') : "私の勝ちです"); 
+        speakBlock = allBlocks.find(block => block.type === 'cmd_speak_lose');
+    }
+
+    if (speakBlock) {
+        // 1. 「〜としゃべる」ブロックの実行
+        speakResult(speakBlock.getFieldValue('TEXT')); 
+        
+        // 2. 次に繋がっているブロック（LEDブロック）を探す
+        const nextBlock = speakBlock.getNextBlock();
+        if (nextBlock && nextBlock.type === 'cmd_led') {
+            const color = nextBlock.getFieldValue('COLOR');
+            const time = Number(nextBlock.getFieldValue('TIME')); // 秒数を取得
+            
+            // LEDの制御を実行
+            await controlLedFromBlock(color, time);
+        }
     }
 }
 
@@ -341,3 +394,149 @@ window.stopAI = function() {
 };
 
 window.addEventListener('pagehide', window.stopAI);
+
+// ==========================================
+// ★追加: WebHID経由でじゃんけんをスタートする関数
+// ==========================================
+// ==========================================
+// WebHID経由でじゃんけんをスタートする関数 (修正版)
+// ==========================================
+window.startJankenWithHID = async function () {
+    const statusEl = document.getElementById("hid-status");
+
+    if (!hidDevice || !hidDevice.opened) {
+        try {
+            // 1. まず「すでに許可済みのデバイス」のリストを取得する
+            const devices = await navigator.hid.getDevices();
+            
+            // 2. リストの中に、目的のマイコン(VID: 0x21CF, PID: 0x0002)があるか探す
+            let targetDevice = devices.find(d => d.vendorId === 0x21CF && d.productId === 0x0002);
+
+            // 3. 見つからなかった場合のみ、新しく許可を求めるダイアログを出す
+            if (!targetDevice) {
+                const filters = [
+                    { vendorId: 0x21CF, productId: 0x0002 } 
+                ];
+                
+                const requestedDevices = await navigator.hid.requestDevice({ filters });
+                if (requestedDevices.length > 0) {
+                    targetDevice = requestedDevices[0];
+                } else {
+                    return; // キャンセルされた場合はそのまま終了
+                }
+            }
+
+            // 4. デバイスを開いて接続する
+            hidDevice = targetDevice;
+            await hidDevice.open();
+            
+            if (statusEl) {
+                statusEl.innerText = "接続完了";
+                statusEl.style.color = "#28a745";
+            }
+        } catch (error) {
+            console.error("HID接続エラー:", error);
+            if (statusEl) {
+                statusEl.innerText = "接続に失敗しました";
+                statusEl.style.color = "red";
+            }
+            return;
+        }
+    }
+    
+    startJanken();
+}
+// ==========================================
+// データを1バイトずつ転送する関数と待機用関数
+// ==========================================
+// 指定ミリ秒待機するプロミス（ウェイト用）
+const wait = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
+
+async function transferHID(outData) {
+    if (!hidDevice) return;
+
+    const outputReportId = 0x00;
+    const outputReport = new Uint8Array([0]); // 1バイト送信用のバッファ
+
+    console.log("転送開始:", outData);
+
+    for (let i = 0; i < outData.length; i++) {
+        outputReport[0] = outData[i];
+        // マイコンへレポートを送信
+        await hidDevice.sendReport(outputReportId, outputReport);
+        
+        console.log(`送信中 (${i + 1}/${outData.length}): ${outData[i]}`);
+        
+        // 90ミリ秒のウェイトを入れてデータの取りこぼしを防ぐ
+        await wait(90); 
+    }
+}
+
+// ==========================================
+// マイコンへLEDの命令を送る関数
+// ==========================================
+async function sendLedCommand(color) {
+    if (!hidDevice || !hidDevice.opened) return;
+
+    // 参考ファイルの例を元にした、転送プログラムの配列
+    // ※LEDの色を指定する数値部分は、実際のマイコン側の仕様に合わせて適宜変更してください
+    let command;
+    if (color === "blue") {
+        // 例: 青色 (R:0, G:0, B:255) のプログラム
+        command = [251,240, 230, 2, 130, 0, 0, 255, 4, 8, 231, 250]; 
+    } else if (color === "red") {
+        // 例: 赤色 (R:255, G:0, B:0) のプログラム
+        command = [251,240, 230, 2, 130, 255, 0, 0, 4, 8, 231, 250];
+    }
+
+    if (command) {
+        try {
+            // 1. プログラムの転送
+            await transferHID(command);
+            
+            // 2. プログラムの実行命令（241）を送信
+            //await transferHID([241]);
+        } catch (error) {
+            console.error("コマンド送信エラー:", error);
+        }
+    }
+}
+
+// ==========================================
+// ブロックの指示通りにLEDを制御する関数
+// ==========================================
+async function controlLedFromBlock(colorName, timeSeconds) {
+    if (!hidDevice || !hidDevice.opened) return;
+
+    let r = 0, g = 0, b = 0;
+    
+    // 選ばれた色に応じてRGBの数値を設定
+    switch (colorName) {
+        case "red":    r = 255; g = 0;   b = 0;   break;
+        case "green":  r = 0;   g = 255; b = 0;   break;
+        case "blue":   r = 0;   g = 0;   b = 255; break;
+        case "yellow": r = 255; g = 255; b = 0;   break;
+        case "purple": r = 255; g = 0;   b = 255; break; // マゼンタ寄りが見栄えが良いです
+        case "cyan":   r = 0;   g = 255; b = 255; break;
+        case "white":  r = 255; g = 255; b = 255; break;
+    }
+
+    let sec = 4 * Number(timeSeconds);
+
+    try {
+        // 1. 点灯コマンドを送信
+        const onCommand = [251,240, 230, 2, 130, r, g, b, sec, 8, 231, 250];
+        await transferHID(onCommand);
+        //await transferHID([241]); // 実行命令
+
+        // 2. 指定された秒数待機する (秒数 × 1000 でミリ秒に変換)
+        await wait(timeSeconds * 1000);
+
+        // 3. 消灯コマンド(すべて0)を送信
+        //const offCommand = [251,240, 230, 2, 130, 0, 0, 0, 4, 8, 231, 250];
+        //await transferHID(offCommand);
+        //await transferHID([241]); // 実行命令
+    } catch (error) {
+        console.error("LED制御エラー:", error);
+    }
+}
