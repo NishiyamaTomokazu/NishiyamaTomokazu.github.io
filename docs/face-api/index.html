@@ -73,7 +73,7 @@
     }
 
     video.addEventListener('play', () => {
-      statusText.innerText = "3. 認識中... (軽量モード・500ms間隔)";
+      statusText.innerText = "3. 認識中... (軽量モード・100ms間隔)";
       
       const displaySize = { width: video.width, height: video.height };
       faceapi.matchDimensions(canvas, displaySize);
@@ -83,7 +83,7 @@
         
         // 【変更点3】 検出時に TinyFaceDetectorOptions を明示的に指定する
         // ※ inputSize (デフォルト416) を小さくするほど軽く、大きくするほど遠くの顔を検知できます
-        const options = new faceapi.TinyFaceDetectorOptions({ inputSize: 224, scoreThreshold: 0.3 });
+        const options = new faceapi.TinyFaceDetectorOptions({ inputSize: 160, scoreThreshold: 0.1 });
         
         const detections = await faceapi.detectAllFaces(video, options)
                                         .withFaceLandmarks();
