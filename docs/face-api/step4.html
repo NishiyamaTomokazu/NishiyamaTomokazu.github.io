@@ -1,0 +1,119 @@
+<!DOCTYPE html>
+<html lang="ja">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>ステップ4: プログラム</title>
+  <!-- Blocklyの読み込み[cite: 4] -->
+  <script src="https://unpkg.com/blockly/blockly.min.js"></script>
+  <link rel="stylesheet" href="./css/style.css">
+  <script src="https://cdn.jsdelivr.net/npm/@vladmandic/face-api/dist/face-api.js"></script>
+</head>
+
+<body>
+  <h2>ステップ4: 認証結果のプログラムを変えてみよう</h2>
+  <!-- ▼ 追加：ヘルプボタン ▼ -->
+  <div style="text-align: right; width: 100%; max-width: 1200px; margin: 0 auto;">
+    <button id="helpBtn" class="help-btn" data-help-file="step4_help.html">❓ ヘルプを見る</button>
+  </div>
+  
+  <!-- ▼ 追加：ダイアログ本体（普段は隠れています） ▼ -->
+  <dialog id="helpDialog">
+    <div class="dialog-header">
+      <h2>ヘルプ・使い方</h2>
+      <button id="closeHelpBtn" class="close-btn">閉じる</button>
+    </div>
+    <!-- ここに help.html の中身が読み込まれます -->
+    <div id="helpContent">読み込み中...</div>
+  </dialog>
+  <div id="status">AIモデルを読み込んでいます...</div>
+
+  <button id="startCameraBtn" disabled>カメラを起動する</button>
+  <p>オーロラクロックを接続するとLEDを点灯させることができます。</p>
+  <div class="app-container" id="mainContent" style="display: none;">
+    <!-- 左側：カメラ -->
+    <div class="panel">
+      <h2>カメラ</h2>
+      <div class="video-container small-video" id="videoContainer">
+        <video id="video" width="320" height="240" autoplay muted playsinline></video>
+        <canvas id="overlay" width="320" height="240"></canvas>
+      </div>
+      <div class="controls" id="controls" style="display: none;">
+        <!-- 特徴点の表示・非表示を切り替えるチェックボックス -->
+        <label
+          style="font-size: 18px; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 10px;">
+          <input type="checkbox" id="showLandmarks" style="transform: scale(1.5); margin: 0;" check>
+          特徴点（顔のライン）を表示する
+        </label>
+      </div>
+    </div>
+
+    <!-- 右側：金庫、ボタン、そしてBlockly -->
+    <div class="panel">
+      <h2>金庫とプログラム</h2>
+      <div class="safe-box" id="safeBox" style="padding: 15px; margin-bottom: 10px;">
+        <div id="safeIcon" class="safe-icon" style="font-size: 60px;">🔒</div>
+        <div id="safeText">金庫はロックされています</div>
+      </div>
+
+      <div class="controls" id="controls">
+        <input type="text" id="userName" placeholder="登録名を入力">
+        <!-- マイコンと接続して判定するためのボタン -->
+        <button id="actionBtn">金庫の鍵を開ける</button>
+        <!-- ★ マイコンの接続状態を表示 -->
+        <p id="hid-status" style="font-weight: bold; color: red; margin-top: 5px;">未接続</p>
+      </div>
+
+      <div style="text-align: left; width: 100%; margin-top: 10px;">
+        <p style="margin: 5px 0; font-weight: bold; font-size: 14px;">しゃべる文章、LEDの色と時間を変更できます</p>
+        <div id="blocklyDiv" style="height: 550px; width: 100%; border: 1px solid #ccc;"></div>
+      </div>
+    </div>
+  </div>
+
+
+
+  <script src="./js/blockly_config.js"></script>
+  <script src="./js/app.js"></script>
+  <script>
+    window.onload = function () {
+      // 1. カメラと顔認証の初期化
+      initApp('blockly_safe');
+
+      // 2. Blocklyの初期化
+      window.workspace = Blockly.inject('blocklyDiv', {
+        readOnly: false,
+        move: { scrollbars: false, drag: true, wheel: true }
+      });
+
+      // 3. ブロックデータの読み込み
+      Blockly.serialization.workspaces.load(defaultBlocksJsonStep4, window.workspace);
+
+      // ブロックの削除や移動を制限する
+      const allBlocks = window.workspace.getAllBlocks();
+      allBlocks.forEach(block => {
+        block.setMovable(false);
+        block.setDeletable(false);
+      });
+
+      // =========================================================
+      // ★ 追加：枠のサイズに合わせてBlocklyを自動リサイズする処理
+      // =========================================================
+      const blocklyDiv = document.getElementById('blocklyDiv');
+
+      // ResizeObserverを使って、blocklyDiv の大きさが変化したかを監視します
+      const resizeObserver = new ResizeObserver(() => {
+        // カメラ起動などで画面が表示され、枠のサイズが確定した瞬間に
+        // Blocklyの描画エリアを枠いっぱいに広げます
+        Blockly.svgResize(window.workspace);
+      });
+
+      // 監視を開始
+      resizeObserver.observe(blocklyDiv);
+      // =========================================================
+    };
+  </script>
+</body>
+
+</html>

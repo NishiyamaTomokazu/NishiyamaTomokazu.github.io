@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>ステップ1: 登録</title>
+  <link rel="stylesheet" href="./css/style.css">
+  <script src="https://cdn.jsdelivr.net/npm/@vladmandic/face-api/dist/face-api.js"></script>
+</head>
+<body>
+  <h2>ステップ1: 顔の登録</h2>
+  <!-- ▼ 追加：ヘルプボタン ▼ -->
+  <div style="text-align: right; width: 100%; max-width: 1200px; margin: 0 auto;">
+    <button id="helpBtn" class="help-btn" data-help-file="step1_help.html">❓ ヘルプを見る</button>
+  </div>
+  
+  <!-- ▼ 追加：ダイアログ本体（普段は隠れています） ▼ -->
+  <dialog id="helpDialog">
+    <div class="dialog-header">
+      <h2>ヘルプ・使い方</h2>
+      <button id="closeHelpBtn" class="close-btn">閉じる</button>
+    </div>
+    <!-- ここに help.html の中身が読み込まれます -->
+    <div id="helpContent">読み込み中...</div>
+  </dialog>
+  <div id="status">AIモデルを読み込んでいます...</div>
+
+  <button id="startCameraBtn" disabled>カメラを起動する</button>
+
+  <!-- ★ video-container の後ろに半角スペースを空けて small-video を追加します -->
+  <div class="video-container small-video" id="videoContainer" style="display: none;">
+    <video id="video" width="320" height="240" autoplay muted playsinline></video>
+    <canvas id="overlay" width="320" height="240"></canvas>
+  </div>
+
+  <div class="controls" id="controls" style="display: none;">
+    <input type="text" id="userName" placeholder="登録する名前を入力">
+    <button id="actionBtn">この顔を登録する</button>
+  </div>
+
+  <script src="./js/app.js"></script>
+  <script>
+    // app.jsが読み込まれた後、ステップ1用の初期化を行う
+    window.onload = () => initApp('register');
+  </script>
+</body>
+</html>
