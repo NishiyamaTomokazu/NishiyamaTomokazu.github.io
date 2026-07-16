@@ -456,7 +456,7 @@ actionBtn.addEventListener('click', async () => {
 }
 
 // ==========================================
-// ★ ヘルプウィンドウ（ダイアログ）の制御（iPad対応版）
+// ★ ヘルプウィンドウの制御（すべてのiPad対応版）
 // ==========================================
 document.addEventListener('DOMContentLoaded', () => {
   const helpBtn = document.getElementById('helpBtn');
@@ -466,31 +466,72 @@ document.addEventListener('DOMContentLoaded', () => {
 
   if (helpBtn && helpDialog && helpContent) {
     helpBtn.addEventListener('click', () => {
-      // ボタンの data-help-file 属性からファイル名を取得
       const targetFile = helpBtn.getAttribute('data-help-file');
       
       if (targetFile) {
-        // fetch通信を使わず、iframe（ウェブページを埋め込む窓）を使って直接表示する
+        // GitHub Pages上でも動くように iframe で読み込みます
         helpContent.innerHTML = `<iframe src="./help/${targetFile}" style="width: 100%; height: 400px; border: none;"></iframe>`;
       } else {
         helpContent.innerHTML = "<p style='color: red;'>ヘルプファイルが指定されていません。</p>";
       }
       
-      helpDialog.showModal();
+      // ★変更: showModal() ではなく、CSSの display を flex にして画面に表示させる
+      helpDialog.style.display = 'flex';
     });
 
     closeHelpBtn.addEventListener('click', () => {
-      helpDialog.close();
-      // 閉じた時に中身をリセットする（次に開く時のため）
+      // ★変更: close() ではなく、CSSの display を none にして隠す
+      helpDialog.style.display = 'none';
       helpContent.innerHTML = "";
     });
 
     // 暗い背景部分をクリックした時も閉じる
     helpDialog.addEventListener('click', (event) => {
+      // 背景部分（modal-overlay）が直接クリックされた場合のみ閉じる
       if (event.target === helpDialog) {
-        helpDialog.close();
+        helpDialog.style.display = 'none';
         helpContent.innerHTML = "";
       }
     });
   }
 });
+
+// ==========================================
+// ★ ヘルプウィンドウ（ダイアログ）の制御（iPad対応版）
+// ==========================================
+// document.addEventListener('DOMContentLoaded', () => {
+//   const helpBtn = document.getElementById('helpBtn');
+//   const helpDialog = document.getElementById('helpDialog');
+//   const closeHelpBtn = document.getElementById('closeHelpBtn');
+//   const helpContent = document.getElementById('helpContent');
+
+//   if (helpBtn && helpDialog && helpContent) {
+//     helpBtn.addEventListener('click', () => {
+//       // ボタンの data-help-file 属性からファイル名を取得
+//       const targetFile = helpBtn.getAttribute('data-help-file');
+      
+//       if (targetFile) {
+//         // fetch通信を使わず、iframe（ウェブページを埋め込む窓）を使って直接表示する
+//         helpContent.innerHTML = `<iframe src="./help/${targetFile}" style="width: 100%; height: 400px; border: none;"></iframe>`;
+//       } else {
+//         helpContent.innerHTML = "<p style='color: red;'>ヘルプファイルが指定されていません。</p>";
+//       }
+      
+//       helpDialog.showModal();
+//     });
+
+//     closeHelpBtn.addEventListener('click', () => {
+//       helpDialog.close();
+//       // 閉じた時に中身をリセットする（次に開く時のため）
+//       helpContent.innerHTML = "";
+//     });
+
+//     // 暗い背景部分をクリックした時も閉じる
+//     helpDialog.addEventListener('click', (event) => {
+//       if (event.target === helpDialog) {
+//         helpDialog.close();
+//         helpContent.innerHTML = "";
+//       }
+//     });
+//   }
+// });
