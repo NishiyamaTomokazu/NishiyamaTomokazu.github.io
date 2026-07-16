@@ -456,7 +456,7 @@ actionBtn.addEventListener('click', async () => {
 }
 
 // ==========================================
-// ★ ヘルプウィンドウ（ダイアログ）の制御
+// ★ ヘルプウィンドウ（ダイアログ）の制御（iPad対応版）
 // ==========================================
 document.addEventListener('DOMContentLoaded', () => {
   const helpBtn = document.getElementById('helpBtn');
@@ -465,38 +465,31 @@ document.addEventListener('DOMContentLoaded', () => {
   const helpContent = document.getElementById('helpContent');
 
   if (helpBtn && helpDialog && helpContent) {
-    // ヘルプボタンを押した時の処理
-    helpBtn.addEventListener('click', async () => {
-      // まず「読み込み中...」の状態でウィンドウを開く
-      helpContent.innerHTML = "<p>読み込み中...</p>";
-      helpDialog.showModal();
-
-      try {
-        // ボタンに設定された data-help-file の値（ファイル名）を取得する
-        const targetFile = helpBtn.getAttribute('data-help-file');
-        
-        // 取得したファイル名のHTMLを読み込む
-        const response = await fetch('./help/' + targetFile);
-        if (!response.ok) throw new Error('ファイルの取得に失敗しました');
-        
-        // 取得したHTMLを流し込む
-        const html = await response.text();
-        helpContent.innerHTML = html;
-      } catch (error) {
-        console.error(error);
-        helpContent.innerHTML = "<p style='color: red;'>ヘルプの読み込みに失敗しました。</p>";
+    helpBtn.addEventListener('click', () => {
+      // ボタンの data-help-file 属性からファイル名を取得
+      const targetFile = helpBtn.getAttribute('data-help-file');
+      
+      if (targetFile) {
+        // fetch通信を使わず、iframe（ウェブページを埋め込む窓）を使って直接表示する
+        helpContent.innerHTML = `<iframe src="./help/${targetFile}" style="width: 100%; height: 400px; border: none;"></iframe>`;
+      } else {
+        helpContent.innerHTML = "<p style='color: red;'>ヘルプファイルが指定されていません。</p>";
       }
+      
+      helpDialog.showModal();
     });
 
-    // 閉じるボタンを押した時の処理
     closeHelpBtn.addEventListener('click', () => {
       helpDialog.close();
+      // 閉じた時に中身をリセットする（次に開く時のため）
+      helpContent.innerHTML = "";
     });
 
-    // （おまけ）暗い背景部分をクリックした時も閉じるようにする
+    // 暗い背景部分をクリックした時も閉じる
     helpDialog.addEventListener('click', (event) => {
       if (event.target === helpDialog) {
         helpDialog.close();
+        helpContent.innerHTML = "";
       }
     });
   }
