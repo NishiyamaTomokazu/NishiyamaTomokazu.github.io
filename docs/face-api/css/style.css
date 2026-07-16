@@ -1,0 +1,226 @@
+body {
+    margin: 0;
+    padding: 20px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    font-family: sans-serif;
+    background-color: #f0f0f0;
+}
+
+#status {
+    margin-bottom: 10px;
+    font-weight: bold;
+    color: #333;
+}
+
+.video-container {
+    position: relative;
+    width: 640px;
+    height: 480px;
+    margin-bottom: 20px;
+}
+
+video,
+canvas {
+    position: absolute;
+    top: 0;
+    left: 0;
+    border: 2px solid #ccc;
+    border-radius: 8px;
+}
+
+video {
+    background-color: #000;
+}
+
+canvas {
+    background-color: transparent;
+}
+
+.controls {
+    text-align: center;
+    margin-top: 10px;
+}
+
+button {
+    padding: 10px 20px;
+    font-size: 16px;
+    margin: 5px;
+    border: none;
+    border-radius: 5px;
+    background-color: #007bff;
+    color: white;
+    cursor: pointer;
+}
+
+button:disabled {
+    background-color: #ccc;
+    cursor: not-allowed;
+}
+
+input {
+    padding: 10px;
+    font-size: 16px;
+    margin-bottom: 10px;
+}
+
+/* --- これより下を style.css の末尾に追加してください --- */
+
+/* ステップ3用 スプリットレイアウト */
+.split-layout {
+  display: flex;
+  width: 100%;
+  max-width: 1000px;
+  gap: 30px;
+  margin-top: 20px;
+  align-items: flex-start;
+  justify-content: center;
+}
+.left-panel, .right-panel {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+/* 小さなカメラ用のオーバーライド */
+.video-container.small-video {
+  width: 320px;
+  height: 240px;
+}
+.video-container.small-video video,
+.video-container.small-video canvas {
+  width: 320px;
+  height: 240px;
+}
+
+/* 金庫のデザイン */
+.safe-box {
+  border: 6px solid #555;
+  border-radius: 15px;
+  padding: 30px;
+  background-color: #ddd;
+  text-align: center;
+  margin-bottom: 20px;
+  width: 100%;
+  box-sizing: border-box;
+  transition: all 0.3s ease;
+}
+/* 金庫が開いた時の状態 */
+.safe-box.open {
+  background-color: #d4edda;
+  border-color: #28a745;
+}
+.safe-icon {
+  font-size: 100px;
+  margin-bottom: 10px;
+}
+#safeText {
+  font-weight: bold;
+  font-size: 18px;
+}
+
+/* --- style.css の一番下に追加 --- */
+
+/* Blocklyのスクロールバーを画面から隠す */
+.blocklyScrollbarVertical,
+.blocklyScrollbarHorizontal {
+  display: none !important;
+}
+
+/* --- css/style.css の一番下に追加 --- */
+
+/* 添付ファイル風の左右分割コンテナ */
+.app-container {
+    display: flex;
+    width: 100%;
+    max-width: 1200px;
+    gap: 30px;
+    margin-top: 20px;
+    align-items: flex-start;
+    justify-content: center;
+}
+
+/* 左右それぞれのパネル（白背景で影をつける） */
+.panel {
+    flex: 1;
+    background-color: #ffffff;
+    border-radius: 10px;
+    padding: 20px;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1); /* 浮き出るような影 */
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    width: 100%;
+    box-sizing: border-box;
+}
+
+/* パネルの中の小見出し用 */
+.panel h2 {
+    margin-top: 0;
+    font-size: 18px;
+    color: #333;
+    border-bottom: 2px solid #007bff;
+    padding-bottom: 5px;
+    width: 100%;
+    text-align: center;
+}
+
+/* --- style.css の一番下を以下のように書き換えてください --- */
+
+/* 左側のパネル（1つ目のパネル）の幅を固定する */
+.app-container .panel:first-child {
+    flex: 0 0 380px; /* 伸び縮みさせず、380pxに固定 */
+    width: 380px;
+}
+
+/* 右側のパネル（2つ目のパネル）の幅を固定する */
+.app-container .panel:last-child {
+    flex: 0 0 500px; /* 伸び縮みさせず、700pxに固定 */
+    width: 500px;
+}
+
+/* --- style.css の一番下に追加 --- */
+
+/* ヘルプボタンのデザイン */
+.help-btn {
+  background-color: #6c757d;
+  font-size: 14px;
+  padding: 8px 15px;
+}
+
+/* ダイアログ（ウィンドウ）のデザイン */
+dialog {
+  border: none;
+  border-radius: 10px;
+  padding: 20px;
+  width: 90%;
+  max-width: 600px;
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+  line-height: 1.6;
+}
+
+/* ダイアログが開いている時の暗い背景 */
+dialog::backdrop {
+  background-color: rgba(0, 0, 0, 0.5);
+}
+
+.dialog-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  border-bottom: 2px solid #007bff;
+  padding-bottom: 10px;
+  margin-bottom: 15px;
+}
+
+.dialog-header h2 {
+  margin: 0;
+  border: none; /* パネルのh2の線を打ち消す */
+}
+
+.close-btn {
+  background-color: #dc3545;
+  padding: 5px 15px;
+}
