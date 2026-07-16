@@ -18,14 +18,18 @@
   </div>
 
   <!-- ▼ 追加：ダイアログ本体（普段は隠れています） ▼ -->
-  <dialog id="helpDialog">
-    <div class="dialog-header">
-      <h2>ヘルプ・使い方</h2>
-      <button id="closeHelpBtn" class="close-btn">閉じる</button>
+  <div id="helpDialog" class="modal-overlay">
+    <!-- ★ classの書き間違いを修正しました -->
+    <div class="modal-content">
+      <!-- ★ 2重になっていた部分を1つにスッキリさせました -->
+      <div class="dialog-header">
+        <h2>ヘルプ・使い方</h2>
+        <button id="closeHelpBtn" class="close-btn">閉じる</button>
+      </div>
+      <div id="helpContent">読み込み中...</div>
     </div>
-    <!-- ここに help.html の中身が読み込まれます -->
-    <div id="helpContent">読み込み中...</div>
-  </dialog>
+  </div>
+  
   <div id="status">AIモデルを読み込んでいます...</div>
 
   <button id="startCameraBtn" disabled>カメラを起動する</button>

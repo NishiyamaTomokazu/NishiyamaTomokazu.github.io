@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="ja">
+
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -7,22 +8,27 @@
   <link rel="stylesheet" href="./css/style.css">
   <script src="https://cdn.jsdelivr.net/npm/@vladmandic/face-api/dist/face-api.js"></script>
 </head>
+
 <body>
   <h2>ステップ1: 顔の登録</h2>
   <!-- ▼ 追加：ヘルプボタン ▼ -->
   <div style="text-align: right; width: 100%; max-width: 1200px; margin: 0 auto;">
     <button id="helpBtn" class="help-btn" data-help-file="step1_help.html">❓ ヘルプを見る</button>
   </div>
-  
+
   <!-- ▼ 追加：ダイアログ本体（普段は隠れています） ▼ -->
-  <dialog id="helpDialog">
-    <div class="dialog-header">
-      <h2>ヘルプ・使い方</h2>
-      <button id="closeHelpBtn" class="close-btn">閉じる</button>
+  <div id="helpDialog" class="modal-overlay">
+    <!-- ★ classの書き間違いを修正しました -->
+    <div class="modal-content">
+      <!-- ★ 2重になっていた部分を1つにスッキリさせました -->
+      <div class="dialog-header">
+        <h2>ヘルプ・使い方</h2>
+        <button id="closeHelpBtn" class="close-btn">閉じる</button>
+      </div>
+      <div id="helpContent">読み込み中...</div>
     </div>
-    <!-- ここに help.html の中身が読み込まれます -->
-    <div id="helpContent">読み込み中...</div>
-  </dialog>
+  </div>
+
   <div id="status">AIモデルを読み込んでいます...</div>
 
   <button id="startCameraBtn" disabled>カメラを起動する</button>
@@ -44,4 +50,5 @@
     window.onload = () => initApp('register');
   </script>
 </body>
+
 </html>
