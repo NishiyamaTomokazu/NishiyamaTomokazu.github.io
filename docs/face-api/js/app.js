@@ -163,22 +163,29 @@ function executeBlocklyLogic(isSuccess) {
 
 let hidDevice = null;
 
-// 切断検知[cite: 8]
-navigator.hid.addEventListener('disconnect', (event) => {
-    if (hidDevice && event.device === hidDevice) {
-        console.log("マイコンの電源オフまたは切断を検知しました");
-        hidDevice = null; 
-        const statusEl = document.getElementById("hid-status");
-        if (statusEl) {
-            statusEl.innerText = "未接続";
-            statusEl.style.color = "red";
+// ★修正: iPadなど非対応ブラウザでエラー停止するのを防ぐ
+if (navigator.hid) {
+    navigator.hid.addEventListener('disconnect', (event) => {
+        if (hidDevice && event.device === hidDevice) {
+            console.log("マイコンの電源オフまたは切断を検知しました");
+            hidDevice = null; 
+            const statusEl = document.getElementById("hid-status");
+            if (statusEl) {
+                statusEl.innerText = "未接続";
+                statusEl.style.color = "red";
+            }
         }
-    }
-});
+    });
+}
 
 // マイコンと接続する関数[cite: 8]
 async function connectHID() {
     const statusEl = document.getElementById("hid-status");
+    // ★修正: iPad等の場合は接続処理をキャンセルして進める
+    if (!navigator.hid) {
+        console.warn("このブラウザはWebHIDに対応していません。");
+        return false; 
+    }
 
     if (!hidDevice || !hidDevice.opened) {
         try {
@@ -456,7 +463,7 @@ actionBtn.addEventListener('click', async () => {
 }
 
 // ==========================================
-// ★ ヘルプウィンドウの制御（すべてのiPad対応版）
+// ★ ヘルプウィンドウ（ダイアログ）の制御
 // ==========================================
 document.addEventListener('DOMContentLoaded', () => {
   const helpBtn = document.getElementById('helpBtn');
@@ -469,69 +476,25 @@ document.addEventListener('DOMContentLoaded', () => {
       const targetFile = helpBtn.getAttribute('data-help-file');
       
       if (targetFile) {
-        // GitHub Pages上でも動くように iframe で読み込みます
+        // GitHub Pages上なら fetch も iframe も動きます（今回はiframeで表示）
         helpContent.innerHTML = `<iframe src="./help/${targetFile}" style="width: 100%; height: 400px; border: none;"></iframe>`;
       } else {
         helpContent.innerHTML = "<p style='color: red;'>ヘルプファイルが指定されていません。</p>";
       }
       
-      // ★変更: showModal() ではなく、CSSの display を flex にして画面に表示させる
-      helpDialog.style.display = 'flex';
+      helpDialog.showModal(); // ★ <dialog> の純正機能で開く
     });
 
     closeHelpBtn.addEventListener('click', () => {
-      // ★変更: close() ではなく、CSSの display を none にして隠す
-      helpDialog.style.display = 'none';
+      helpDialog.close(); // ★ <dialog> の純正機能で閉じる
       helpContent.innerHTML = "";
     });
 
-    // 暗い背景部分をクリックした時も閉じる
     helpDialog.addEventListener('click', (event) => {
-      // 背景部分（modal-overlay）が直接クリックされた場合のみ閉じる
       if (event.target === helpDialog) {
-        helpDialog.style.display = 'none';
+        helpDialog.close();
         helpContent.innerHTML = "";
       }
     });
   }
 });
-
-// ==========================================
-// ★ ヘルプウィンドウ（ダイアログ）の制御（iPad対応版）
-// ==========================================
-// document.addEventListener('DOMContentLoaded', () => {
-//   const helpBtn = document.getElementById('helpBtn');
-//   const helpDialog = document.getElementById('helpDialog');
-//   const closeHelpBtn = document.getElementById('closeHelpBtn');
-//   const helpContent = document.getElementById('helpContent');
-
-//   if (helpBtn && helpDialog && helpContent) {
-//     helpBtn.addEventListener('click', () => {
-//       // ボタンの data-help-file 属性からファイル名を取得
-//       const targetFile = helpBtn.getAttribute('data-help-file');
-      
-//       if (targetFile) {
-//         // fetch通信を使わず、iframe（ウェブページを埋め込む窓）を使って直接表示する
-//         helpContent.innerHTML = `<iframe src="./help/${targetFile}" style="width: 100%; height: 400px; border: none;"></iframe>`;
-//       } else {
-//         helpContent.innerHTML = "<p style='color: red;'>ヘルプファイルが指定されていません。</p>";
-//       }
-      
-//       helpDialog.showModal();
-//     });
-
-//     closeHelpBtn.addEventListener('click', () => {
-//       helpDialog.close();
-//       // 閉じた時に中身をリセットする（次に開く時のため）
-//       helpContent.innerHTML = "";
-//     });
-
-//     // 暗い背景部分をクリックした時も閉じる
-//     helpDialog.addEventListener('click', (event) => {
-//       if (event.target === helpDialog) {
-//         helpDialog.close();
-//         helpContent.innerHTML = "";
-//       }
-//     });
-//   }
-// });
