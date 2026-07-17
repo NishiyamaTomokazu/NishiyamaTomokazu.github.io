@@ -11,9 +11,17 @@ const userNameInput = document.getElementById('userName');
 const actionBtn = document.getElementById('actionBtn');
 
 function speak(text) {
-    const utterance = new SpeechSynthesisUtterance(text);
-    utterance.lang = 'ja-JP';
-    speechSynthesis.speak(utterance);
+    // ★ 読み上げが終わるまで完了の合図（resolve）を待つように変更
+    return new Promise((resolve) => {
+        const utterance = new SpeechSynthesisUtterance(text);
+        utterance.lang = 'ja-JP';
+        
+        // しゃべり終わった時、またはエラーになった時に待機を解除する
+        utterance.onend = resolve;
+        utterance.onerror = resolve;
+        
+        speechSynthesis.speak(utterance);
+    });
 }
 
 function saveFaceData(name, descriptor) {
@@ -365,7 +373,7 @@ async function executeBlocklyLogic(isSuccess) {
         if (currentBlock.type === 'face_auth_speak') {
             // しゃべるブロックはブラウザで実行するため、HIDデータには含めない
             const text = currentBlock.getFieldValue('TEXT');
-            speak(text);
+            await speak(text);  //変更: 喋り終わるまで、プログラムをここで一時停止（待機）する
 
         } else if (currentBlock.type === 'cmd_sound') {
             // 音を鳴らすブロックの変換 (2バイト長)
