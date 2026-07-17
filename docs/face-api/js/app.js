@@ -245,13 +245,13 @@ async function transferHID(outData) {
 // ==========================================
 // ★ デバッグ用スイッチ： true にするとWindowsでも強制的にiPad（音声通信）モードになります
 // （※本番として公開する時は false に戻してください）
-const DEBUG_IPAD_MODE = true;
+//const DEBUG_IPAD_MODE = false;
 
 // WebHID対応ならUSB通信、非対応（iPad等）ならWeb Audio通信で接続する
 async function connectDevice() {
     const statusEl = document.getElementById("hid-status");
 
-    if (navigator.hid && !DEBUG_IPAD_MODE) {
+    if (navigator.hid) {
         // Windows / Mac / Chromebook など
         return await connectHID();
     } else {
@@ -269,7 +269,7 @@ async function connectDevice() {
 // 共通のブロックデータを受け取り、端末に合わせて送信する
 // 共通のブロックデータを受け取り、端末に合わせて送信する
 async function transferDevice(dataBytes) {
-    if (navigator.hid && !DEBUG_IPAD_MODE) {
+    if (navigator.hid) {
         // WebHID用
         await transferHID(dataBytes);
     } else {
@@ -301,7 +301,7 @@ async function transferDevice(dataBytes) {
         allPackets.push(runArray);
 
         if (typeof screenLog !== 'undefined') {
-            screenLog(`【iPad送信】全${allPackets.length}個のパケットを連結して一括送信します`, allPackets);
+            console.log(`【iPad送信】全${allPackets.length}個のパケットを連結して一括送信します`, allPackets);
         }
         
         // 3. キューに溜めた全パケットを、1本の音声データとしてまとめて一括送信！
@@ -693,24 +693,24 @@ function outputSoundData(binaryDataArray) {
 // ==========================================
 // ★ 画面直接出力用のデバッグ関数（iPad確認用）
 // ==========================================
-function screenLog(text, data) {
-    let logArea = document.getElementById('debugLogArea');
+// function screenLog(text, data) {
+//     let logArea = document.getElementById('debugLogArea');
     
-    // まだウィンドウがなければ、右下に黒い半透明の箱を作る
-    if (!logArea) {
-        logArea = document.createElement('div');
-        logArea.id = 'debugLogArea';
-        logArea.style.cssText = 'position: fixed; bottom: 10px; right: 10px; width: 320px; height: 250px; background: rgba(0,0,0,0.8); color: #0f0; font-family: monospace; font-size: 14px; overflow-y: auto; z-index: 9999; padding: 10px; border-radius: 8px;';
-        document.body.appendChild(logArea);
-    }
+//     // まだウィンドウがなければ、右下に黒い半透明の箱を作る
+//     if (!logArea) {
+//         logArea = document.createElement('div');
+//         logArea.id = 'debugLogArea';
+//         logArea.style.cssText = 'position: fixed; bottom: 10px; right: 10px; width: 320px; height: 250px; background: rgba(0,0,0,0.8); color: #0f0; font-family: monospace; font-size: 14px; overflow-y: auto; z-index: 9999; padding: 10px; border-radius: 8px;';
+//         document.body.appendChild(logArea);
+//     }
     
-    // データを文字に変換して画面に追加
-    const dataStr = data ? JSON.stringify(data) : '';
-    logArea.innerHTML += `<div style="margin-bottom:5px; border-bottom:1px solid #333; padding-bottom:5px;">${text}<br>${dataStr}</div>`;
+//     // データを文字に変換して画面に追加
+//     const dataStr = data ? JSON.stringify(data) : '';
+//     logArea.innerHTML += `<div style="margin-bottom:5px; border-bottom:1px solid #333; padding-bottom:5px;">${text}<br>${dataStr}</div>`;
     
-    // 常に最新の文字が見えるように一番下へスクロール
-    logArea.scrollTop = logArea.scrollHeight;
-}
+//     // 常に最新の文字が見えるように一番下へスクロール
+//     logArea.scrollTop = logArea.scrollHeight;
+// }
 
 // ==========================================
 // ★ 連結データの一括送信（iPadのミュート回避版）
