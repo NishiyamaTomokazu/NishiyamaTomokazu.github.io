@@ -245,7 +245,7 @@ async function transferHID(outData) {
 // ==========================================
 // ★ デバッグ用スイッチ： true にするとWindowsでも強制的にiPad（音声通信）モードになります
 // （※本番として公開する時は false に戻してください）
-const DEBUG_IPAD_MODE = true;
+const DEBUG_IPAD_MODE = false;
 
 // WebHID対応ならUSB通信、非対応（iPad等）ならWeb Audio通信で接続する
 async function connectDevice() {
