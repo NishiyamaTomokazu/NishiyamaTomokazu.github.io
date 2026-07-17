@@ -593,6 +593,7 @@ function soundRun() {
 
 // データを受け取って音データに変換して送信する
 function sendDataBySound(arrayData) {
+    console.log("【iPad送信データ】:", arrayData);
     let binaryDataArray = arrayData.map(getBinary);
     outputSoundData(binaryDataArray);
 }
