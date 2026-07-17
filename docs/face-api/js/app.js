@@ -243,12 +243,15 @@ async function transferHID(outData) {
 // ==========================================
 // ★ 端末自動判定による通信の振り分け
 // ==========================================
+// ★ デバッグ用スイッチ： true にするとWindowsでも強制的にiPad（音声通信）モードになります
+// （※本番として公開する時は false に戻してください）
+const DEBUG_IPAD_MODE = true;
 
 // WebHID対応ならUSB通信、非対応（iPad等）ならWeb Audio通信で接続する
 async function connectDevice() {
     const statusEl = document.getElementById("hid-status");
 
-    if (navigator.hid) {
+    if (navigator.hid && !DEBUG_IPAD_MODE) {
         // Windows / Mac / Chromebook など
         return await connectHID();
     } else {
@@ -265,32 +268,44 @@ async function connectDevice() {
 
 // 共通のブロックデータを受け取り、端末に合わせて送信する
 async function transferDevice(dataBytes) {
-    if (navigator.hid) {
+    if (navigator.hid && !DEBUG_IPAD_MODE) {
         // WebHID用（そのまま転送）
         await transferHID(dataBytes);
     } else {
-        // iPad用（Web Audio用）
-        // dataBytes は [251, 240, 230, 2, ..., 231, 250] という構成なので
-        // 先頭の 251, 240 を除外し、iPad用のヘッダ「253(iPadモード), 1(データ転送), 1(1ブロック目)」に置き換える
-        let sendArray = Array(35).fill(0);
-        sendArray[0] = 253; // iPadモード
-        sendArray[1] = 1;   // データ転送開始
-        sendArray[2] = 1;   // 1ブロック目
-
-        for (let i = 2; i < dataBytes.length; i++) {
-            if (i - 2 + 3 < sendArray.length) {
-                sendArray[i - 2 + 3] = dataBytes[i];
+        // iPad用（Web Audio用、またはデバッグモード）
+        
+        // 1. USB用のヘッダ（先頭の251, 240）を除外したデータだけを取り出す
+        const payload = dataBytes.slice(2);
+        
+        // 2. 16バイトずつ分割して送信するループ処理
+        let blockNum = 1;
+        for (let i = 0; i < payload.length; i += 16) {
+            // 19バイトの配列を用意して0で初期化（ヘッダ3 + データ16 = 19）
+            let sendArray = Array(19).fill(0);
+            
+            // iPad用のヘッダをセット
+            sendArray[0] = 253;       // iPadモード
+            sendArray[1] = 1;         // データ転送開始
+            sendArray[2] = blockNum;  // ブロック番号
+            
+            // 16バイト分のデータを切り出してセット
+            let chunk = payload.slice(i, i + 16);
+            for (let j = 0; j < chunk.length; j++) {
+                sendArray[3 + j] = chunk[j];
             }
+            
+            // 音声変換へ渡す
+            ensureAudioContext();
+            console.log(`【iPad送信データ ${blockNum}ブロック目】:`, sendArray);
+            sendDataBySound(sendArray);
+            
+            // マイコン側の書き込み完了を待つ（ブロックごとに500ms待機）
+            await wait(500);
+            
+            blockNum++;
         }
-
-        ensureAudioContext();
-        console.log("iPad用データ転送:", sendArray);
-        sendDataBySound(sendArray);
-
-        // データ書き込み時間（500ms）待機する
-        await wait(500);
-
-        // 実行コマンドの送信
+        
+        // 3. すべての転送が終わったら、実行コマンドを送信
         console.log("iPad用実行コマンド送信");
         soundRun();
     }
@@ -577,7 +592,8 @@ function ensureAudioContext() {
 
 // 接続処理のダミーデータ送信
 function connect_iPad() {
-    let sendDataArray = Array(35).fill(0);
+    //let sendDataArray = Array(35).fill(0);
+    let sendDataArray = Array(19).fill(0);
     sendDataArray[0] = 253;
     sendDataArray[1] = 5;
     sendDataBySound(sendDataArray);
@@ -585,7 +601,8 @@ function connect_iPad() {
 
 // 実行コマンドの送信
 function soundRun() {
-    let sendDataArray = Array(35).fill(0);
+    //let sendDataArray = Array(35).fill(0);
+    let sendDataArray = Array(19).fill(0);
     sendDataArray[0] = 253; // iPadモード
     sendDataArray[1] = 2;   // 実行
     sendDataBySound(sendDataArray);
