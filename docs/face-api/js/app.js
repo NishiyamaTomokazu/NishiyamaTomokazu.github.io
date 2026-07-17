@@ -254,7 +254,7 @@ async function connectDevice() {
     } else {
         // iPad など
         ensureAudioContext();
-        connect_iPad();
+        //connect_iPad();
         if (statusEl) {
             statusEl.innerText = "音声通信 準備完了";
             statusEl.style.color = "#007bff"; // 青色で表示
