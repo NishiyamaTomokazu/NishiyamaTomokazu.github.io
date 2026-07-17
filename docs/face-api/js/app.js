@@ -245,7 +245,7 @@ async function transferHID(outData) {
 // ==========================================
 // ★ デバッグ用スイッチ： true にするとWindowsでも強制的にiPad（音声通信）モードになります
 // （※本番として公開する時は false に戻してください）
-const DEBUG_IPAD_MODE = false;
+const DEBUG_IPAD_MODE = true;
 
 // WebHID対応ならUSB通信、非対応（iPad等）ならWeb Audio通信で接続する
 async function connectDevice() {
@@ -267,47 +267,45 @@ async function connectDevice() {
 }
 
 // 共通のブロックデータを受け取り、端末に合わせて送信する
+// 共通のブロックデータを受け取り、端末に合わせて送信する
 async function transferDevice(dataBytes) {
     if (navigator.hid && !DEBUG_IPAD_MODE) {
-        // WebHID用（そのまま転送）
+        // WebHID用
         await transferHID(dataBytes);
     } else {
-        // iPad用（Web Audio用、またはデバッグモード）
-        
-        // 1. USB用のヘッダ（先頭の251, 240）を除外したデータだけを取り出す
+        // iPad用（Web Audio用）
         const payload = dataBytes.slice(2);
         
-        // 2. 16バイトずつ分割して送信するループ処理
+        let allPackets = []; // 転送するすべてのデータを溜める配列
+        
+        // 1. 16バイトずつ分割してキューに追加
         let blockNum = 1;
         for (let i = 0; i < payload.length; i += 16) {
-            // 19バイトの配列を用意して0で初期化（ヘッダ3 + データ16 = 19）
             let sendArray = Array(19).fill(0);
+            sendArray[0] = 253;       
+            sendArray[1] = 1;         
+            sendArray[2] = blockNum;  
             
-            // iPad用のヘッダをセット
-            sendArray[0] = 253;       // iPadモード
-            sendArray[1] = 1;         // データ転送開始
-            sendArray[2] = blockNum;  // ブロック番号
-            
-            // 16バイト分のデータを切り出してセット
             let chunk = payload.slice(i, i + 16);
             for (let j = 0; j < chunk.length; j++) {
                 sendArray[3 + j] = chunk[j];
             }
-            
-            // 音声変換へ渡す
-            ensureAudioContext();
-            console.log(`【iPad送信データ ${blockNum}ブロック目】:`, sendArray);
-            sendDataBySound(sendArray);
-            
-            // マイコン側の書き込み完了を待つ（ブロックごとに500ms待機）
-            await wait(500);
-            
+            allPackets.push(sendArray);
             blockNum++;
         }
         
-        // 3. すべての転送が終わったら、実行コマンドを送信
-        console.log("iPad用実行コマンド送信");
-        soundRun();
+        // 2. 最後に「実行コマンド」もキューに追加
+        let runArray = Array(19).fill(0);
+        runArray[0] = 253; 
+        runArray[1] = 2;   
+        allPackets.push(runArray);
+
+        if (typeof screenLog !== 'undefined') {
+            screenLog(`【iPad送信】全${allPackets.length}個のパケットを連結して一括送信します`, allPackets);
+        }
+        
+        // 3. キューに溜めた全パケットを、1本の音声データとしてまとめて一括送信！
+        sendCombinedDataBySound(allPackets);
     }
 }
 
@@ -686,6 +684,114 @@ function outputSoundData(binaryDataArray) {
         })
     });
 
+    var source = audioCtxLocal.createBufferSource();
+    source.buffer = myArrayBuffer;
+    source.connect(audioCtxLocal.destination);
+    source.start();
+}
+
+// ==========================================
+// ★ 画面直接出力用のデバッグ関数（iPad確認用）
+// ==========================================
+function screenLog(text, data) {
+    let logArea = document.getElementById('debugLogArea');
+    
+    // まだウィンドウがなければ、右下に黒い半透明の箱を作る
+    if (!logArea) {
+        logArea = document.createElement('div');
+        logArea.id = 'debugLogArea';
+        logArea.style.cssText = 'position: fixed; bottom: 10px; right: 10px; width: 320px; height: 250px; background: rgba(0,0,0,0.8); color: #0f0; font-family: monospace; font-size: 14px; overflow-y: auto; z-index: 9999; padding: 10px; border-radius: 8px;';
+        document.body.appendChild(logArea);
+    }
+    
+    // データを文字に変換して画面に追加
+    const dataStr = data ? JSON.stringify(data) : '';
+    logArea.innerHTML += `<div style="margin-bottom:5px; border-bottom:1px solid #333; padding-bottom:5px;">${text}<br>${dataStr}</div>`;
+    
+    // 常に最新の文字が見えるように一番下へスクロール
+    logArea.scrollTop = logArea.scrollHeight;
+}
+
+// ==========================================
+// ★ 連結データの一括送信（iPadのミュート回避版）
+// ==========================================
+function sendCombinedDataBySound(packets) {
+    var audioCtxLocal = ensureAudioContext();
+    if (!audioCtxLocal) return;
+
+    var channels = 2;
+    var sampleRate = audioCtxLocal.sampleRate || 44100;
+    
+    // 各パケットをバイナリ変換
+    const binaryPackets = packets.map(packet => packet.map(getBinary));
+    
+    // 全体の必要なサンプル数を計算
+    let totalSamples = 0;
+    const waitSamples = Math.floor(sampleRate * 0.5); // マイコン書き込み用の待機時間 (0.5秒)
+
+    binaryPackets.forEach((binaryDataArray) => {
+        let est = 0;
+        let counterEst = 0;
+        binaryDataArray.forEach(element => {
+            element.forEach(x => {
+                if ((counterEst % 8) == 0) est += 50; // スタートビット (20+30)
+                if (x == 0) est += 10;
+                else est += 20;
+                counterEst++;
+                if ((counterEst % 8) == 0) est += 20; // ストップビット
+            })
+        });
+        // 波形データ + パディング + 無音待機時間
+        totalSamples += est + 1024 + waitSamples;
+    });
+
+    var myArrayBuffer = audioCtxLocal.createBuffer(channels, totalSamples, sampleRate);
+    var newArray = myArrayBuffer.getChannelData(0);
+    
+    let i = 0; 
+    var tmp = 0;
+    
+    binaryPackets.forEach((binaryDataArray) => {
+        let counter = 0;
+        binaryDataArray.forEach(element => {
+            element.forEach(x => {
+                 // スタートビット
+                 if((counter % 8) == 0) {
+                    tmp = i + 20;
+                    while(i < tmp) newArray[i++] = 0;
+                    tmp = i + 30;
+                    while(i < tmp) newArray[i++] = 1;
+                }
+                
+                // データビット
+                if(x == 0){
+                    tmp = i + 5;
+                    while(i < tmp) newArray[i++] = 0;
+                    tmp = i + 5;
+                    while(i < tmp) newArray[i++] = 1;
+                } else {
+                    tmp = i + 5;
+                    while(i < tmp) newArray[i++] = 0;
+                    tmp = i + 15;
+                    while(i < tmp) newArray[i++] = 1;
+                }
+                counter++;
+                
+                // ストップビット
+                if((counter % 8) == 0) {
+                    tmp = i + 20;
+                    while(i < tmp) newArray[i++] = 0;
+                }
+            })
+        });
+        
+        // パケットの終わりにパディング(1024)と500msの無音区間を物理的に書き込む
+        i += 1024;
+        tmp = i + waitSamples;
+        while(i < tmp) newArray[i++] = 0;
+    });
+    
+    // 1回の再生ですべてのパケットと待機時間を処理する
     var source = audioCtxLocal.createBufferSource();
     source.buffer = myArrayBuffer;
     source.connect(audioCtxLocal.destination);
