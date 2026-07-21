@@ -80,7 +80,7 @@ const defaultBlocksJsonStep4 = {
                                         "block": {
                                             "type": "face_auth_led",
                                             "deletable": false,
-                                            "fields": { "COLOR": "blue", "TIME": 1 }
+                                            "fields": { "COLOR": "green", "TIME": 1 }
                                         }
                                     }
                                 }
