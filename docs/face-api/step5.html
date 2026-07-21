@@ -98,7 +98,7 @@
   <script>
     // iPad（またはiPhone等）かどうかを確実に判定する
     const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
-
+    
     if (isIOS) {
       // iPad等の場合はiPad用プログラムを読み込む
       document.write('<script src="./js/app_ipad.js"><\/script>');
