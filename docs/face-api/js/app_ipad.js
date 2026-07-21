@@ -128,7 +128,7 @@ window.stopCamera = function () { };
 async function connectDevice() {
     const statusEl = document.getElementById("hid-status");
     ensureAudioContext();
-    connect_iPad(); // ダミーデータを送信してiPad側の音声再生準備を整える
+    //connect_iPad(); // ダミーデータを送信してiPad側の音声再生準備を整える
 
     if (statusEl) {
         statusEl.innerText = "音声通信 準備完了";
