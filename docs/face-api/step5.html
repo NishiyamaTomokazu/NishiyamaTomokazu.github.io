@@ -94,7 +94,20 @@
   </div>
 
   <script src="./js/blockly_config.js"></script>
-  <script src="./js/app.js?ver=2"></script>
+  <!-- ★ 修正：端末（OS）の種類を直接判定してファイルを切り替える -->
+  <script>
+    // iPad（またはiPhone等）かどうかを確実に判定する
+    const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
+
+    if (isIOS) {
+      // iPad等の場合はiPad用プログラムを読み込む
+      document.write('<script src="./js/app_ipad.js"><\/script>');
+    } else {
+      // Windows、Mac、ChromeOS等の場合はWindows用プログラムを読み込む
+      document.write('<script src="./js/app_win.js"><\/script>');
+    }
+  </script>
+
   <script>
     window.onload = function () {
       // freeモードとして起動
