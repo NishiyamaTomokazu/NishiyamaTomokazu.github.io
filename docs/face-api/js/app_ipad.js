@@ -130,6 +130,9 @@ async function connectDevice() {
     ensureAudioContext();
     //connect_iPad(); // ダミーデータを送信してiPad側の音声再生準備を整える
 
+    // ★追加: ダミー音声が鳴り終わるまで少し待つ（音声データの重なりによる転送失敗を防ぐ）
+    await new Promise(resolve => setTimeout(resolve, 300));
+
     if (statusEl) {
         statusEl.innerText = "音声通信 準備完了";
         statusEl.style.color = "#007bff"; 
@@ -341,23 +344,17 @@ function sendCombinedDataBySound(packets) {
     source.start();
 }
 
-
 // ==========================================
 // ★ Blocklyの命令を解釈してマイコン用データを生成する関数（iPad専用）
 // ==========================================
 async function executeBlocklyLogic(isSuccess) {
     if (!window.workspace) return;
 
+    // スタートブロックを探す
     const startBlock = window.workspace.getBlocksByType('face_auth_start')[0];
     if (!startBlock) return;
 
     let currentBlock = startBlock.getNextBlock();
-    if (!currentBlock) return; 
-
-    if (currentBlock.type === 'face_auth_check') {
-        currentBlock = currentBlock.getInputTargetBlock(isSuccess ? 'YES' : 'NO');
-    }
-
     let hidBytes = [251, 240, 230, 2];
     let addr = 2; 
     let hasHardwareCommand = false;
@@ -367,22 +364,25 @@ async function executeBlocklyLogic(isSuccess) {
     const isConnected = connectedCheckbox && connectedCheckbox.checked;
 
     while (currentBlock) {
-        if (currentBlock.type === 'face_auth_speak') {
+        // ★修正: 条件ブロック（もし〜なら）が途中にあっても対応できるようにする
+        if (currentBlock.type === 'face_auth_check') {
+            let target = currentBlock.getInputTargetBlock(isSuccess ? 'YES' : 'NO');
+            if (target) {
+                currentBlock = target;
+                continue; // 中のブロックの解析へ進む
+            }
+        } else if (currentBlock.type === 'face_auth_speak') {
             const text = currentBlock.getFieldValue('TEXT');
-            
-            // ★チェックが入っている場合は「しゃべらない」、入っていない場合は「しゃべる」
             if (isConnected) {
                 console.log("オーロラクロック接続中: しゃべる命令をスキップしました");
             } else {
                 await speak(text);
             }
-
         } else if (currentBlock.type === 'cmd_sound') {
             const soundByte = Number(currentBlock.getFieldValue('SOUND'));
             addr += 2; 
             hidBytes.push(soundByte, addr);
             hasHardwareCommand = true;
-
         } else if (currentBlock.type === 'face_auth_led') {
             const colorName = currentBlock.getFieldValue('COLOR');
             let sec = 4 * Number(currentBlock.getFieldValue('TIME'));
@@ -403,18 +403,17 @@ async function executeBlocklyLogic(isSuccess) {
             hasHardwareCommand = true;
         }
 
+        // 次のブロックへ
         currentBlock = currentBlock.getNextBlock();
     }
 
     // ハードウェアへの命令がある場合の処理
     if (hasHardwareCommand) {
-        // ★チェックが入っていない場合（未接続）は、データ転送をキャンセルする
         if (!isConnected) {
             console.log("チェックがないため、データ転送の通信音をスキップします");
             return; 
         }
 
-        // チェックが入っている場合はデータ送信
         hidBytes.push(231, 250); 
         console.log("マイコンへ転送するバイトデータ:", hidBytes);
         await transferDevice(hidBytes); 
