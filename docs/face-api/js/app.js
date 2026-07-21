@@ -310,12 +310,6 @@ async function controlLedFromBlock(colorName, timeSeconds) {
 }
 
 // ==========================================
-// ★ Blocklyの命令を解釈してマイコンを動かす関数（非同期）
-// ==========================================
-// ==========================================
-// ★ Blocklyの命令を解釈してマイコン用バイトデータを生成・転送する関数
-// ==========================================
-// ==========================================
 // ★ Blocklyの命令を解釈してマイコン用バイトデータを生成・転送する関数
 // ==========================================
 async function executeBlocklyLogic(isSuccess) {
@@ -327,13 +321,12 @@ async function executeBlocklyLogic(isSuccess) {
     let currentBlock = startBlock.getNextBlock();
     if (!currentBlock) return; // 次のブロックがなければ終了
 
-    // ★ 修正：もし「条件ブロック（顔認証チェック）」があれば、YES/NOの分岐に進む
-    // なければ（自由制作など）、そのまま直結されているブロックを順番に読み込む
+    // もし「条件ブロック（顔認証チェック）」があれば、YES/NOの分岐に進む
     if (currentBlock.type === 'face_auth_check') {
         currentBlock = currentBlock.getInputTargetBlock(isSuccess ? 'YES' : 'NO');
     }
 
-    // HID転送用のベース配列（251, 240はマイコンへの書き込み開始ヘッダ、230, 2はプログラム開始番地）
+    // HID転送用のベース配列
     let hidBytes = [251, 240, 230, 2];
     let addr = 2; // 現在のアドレス
     let hasHardwareCommand = false;
@@ -341,27 +334,24 @@ async function executeBlocklyLogic(isSuccess) {
     // 繋がっているブロックを上から順番に解析する
     while (currentBlock) {
         if (currentBlock.type === 'face_auth_speak') {
-            // しゃべるブロックはブラウザで実行するため、HIDデータには含めない
             const text = currentBlock.getFieldValue('TEXT');
-
-            // チェックボックスの状態を確認する
             const connectedCheckbox = document.getElementById('auroraConnected');
 
-            if (connectedCheckbox && connectedCheckbox.checked) {
+            // ★iPad等(WebHID非対応) かつ チェックが入っている場合は「しゃべらない」
+            if (!navigator.hid && connectedCheckbox && connectedCheckbox.checked) {
                 console.log("オーロラクロック接続中: しゃべる命令をスキップしました");
             } else {
+                // チェックがない場合（またはWindows等の場合）は通常通りしゃべる
                 await speak(text);
             }
 
         } else if (currentBlock.type === 'cmd_sound') {
-            // 音を鳴らすブロックの変換 (2バイト長)
             const soundByte = Number(currentBlock.getFieldValue('SOUND'));
             addr += 2; 
             hidBytes.push(soundByte, addr);
             hasHardwareCommand = true;
 
         } else if (currentBlock.type === 'face_auth_led') {
-            // LEDブロックの変換 (6バイト長)
             const colorName = currentBlock.getFieldValue('COLOR');
             let sec = 4 * Number(currentBlock.getFieldValue('TIME'));
 
@@ -385,390 +375,23 @@ async function executeBlocklyLogic(isSuccess) {
         currentBlock = currentBlock.getNextBlock();
     }
 
-    // ハードウェアへの命令が1つでもあれば、終了コードを追加してマイコンへ転送する
+    // ハードウェアへの命令が1つでもあれば、マイコンへ転送する
     if (hasHardwareCommand) {
+        
+        // =========================================================
+        // ★ 追加: iPad等の場合、チェックボックスが「OFF（未接続）」なら転送をキャンセル
+        // =========================================================
+        if (!navigator.hid) {
+            const connectedCheckbox = document.getElementById('auroraConnected');
+            if (connectedCheckbox && !connectedCheckbox.checked) {
+                console.log("チェックがないため、データ転送の通信音をスキップします");
+                return; // ここで処理を終了し、転送を行わない
+            }
+        }
+
+        // チェックがある（またはWindows等の）場合は転送する
         hidBytes.push(231, 250); 
         console.log("マイコンへ転送するバイトデータ:", hidBytes);
         await transferDevice(hidBytes); 
     }
 }
-
-// ==========================================
-// ★ actionBtn クリック処理の書き換え（接続処理を挟む）
-// 既存の actionBtn.addEventListener('click', ...) の全体をこれに差し替えます
-// ==========================================
-if (actionBtn) {
-    // --- js/app.js のボタン処理をこれに丸ごと差し替えてください ---
-
-    actionBtn.addEventListener('click', async () => {
-        const name = userNameInput.value.trim();
-        if (!name) return alert("名前を入力してください。");
-
-        // =========================================================
-        // ★ 追加: ボタンを押した時に現在のプログラムを保存する
-        // =========================================================
-        if ((currentMode === 'blockly_safe' || currentMode === 'blockly_free') && window.workspace) {
-            const state = Blockly.serialization.workspaces.save(window.workspace);
-            // モードごと（ステップ4用 / ステップ5用）に名前を分けて保存
-            localStorage.setItem('savedBlockly_' + currentMode, JSON.stringify(state));
-        }
-
-        // ★ステップ4(blockly_safe) と ステップ5(blockly_free) の場合、マイコン接続を確認する
-        if (currentMode === 'blockly_safe' || currentMode === 'blockly_free') {
-            //       const connected = await connectHID();
-            const connected = await connectDevice();    // ★修正: iPadなど非対応ブラウザでも接続をキャンセルして進める
-            if (!connected) return; // 接続をキャンセルした場合は処理を中断
-        }
-
-        statusText.innerText = "処理中...";
-
-        // 金庫の見た目を一旦「ロック状態・認証中」にする
-        if (currentMode === 'safe' || currentMode === 'blockly_safe' || currentMode === 'blockly_free') {
-            const safeBox = document.getElementById('safeBox');
-            const safeIcon = document.getElementById('safeIcon');
-            const safeText = document.getElementById('safeText');
-            if (safeBox && safeIcon && safeText) {
-                safeBox.classList.remove('open');
-                safeIcon.innerText = '🔒';
-                safeText.innerText = '認証しています...';
-            }
-        }
-
-        // 顔の検出
-        const options = new faceapi.TinyFaceDetectorOptions({ inputSize: 224, scoreThreshold: 0.5 });
-        const detection = await faceapi.detectSingleFace(video, options).withFaceLandmarks().withFaceDescriptor();
-
-        if (!detection) {
-            statusText.innerText = "顔が検出できませんでした。";
-
-            if (currentMode === 'safe') {
-                speak("顔が検出できませんでした。");
-                document.getElementById('safeText').innerText = '金庫はロックされています';
-            } else if (currentMode === 'blockly_safe' || currentMode === 'blockly_free') {
-                document.getElementById('safeText').innerText = '金庫はロックされています';
-                // 顔がない場合も「認証失敗(false)」としてブロックの命令(NO側)を実行する
-                await executeBlocklyLogic(false);
-            }
-            return;
-        }
-
-        // ーーー ここから各モードの処理 ーーー
-        if (currentMode === 'register') {
-            saveFaceData(name, detection.descriptor);
-            statusText.innerText = `${name}さんを登録しました。`;
-            speak(`${name}さんを登録しました。`);
-            userNameInput.value = "";
-
-        } else if (currentMode === 'authenticate') {
-            const targetUser = getFaceData(name);
-            if (!targetUser) {
-                statusText.innerText = `${name}は登録されていません。`;
-                speak(`${name}は登録されていません。`);
-                return;
-            }
-            const registeredDescriptor = new Float32Array(targetUser.descriptor);
-            const distance = faceapi.euclideanDistance(registeredDescriptor, detection.descriptor);
-            if (distance < 0.5) {
-                statusText.innerText = `認証成功: ${name}さん`;
-                speak(`${name}を認証しました。`);
-            } else {
-                statusText.innerText = `認証失敗`;
-                speak(`${name}を認証できませんでした。`);
-            }
-
-        } else if (currentMode === 'safe' || currentMode === 'blockly_safe' || currentMode === 'blockly_free') {
-            // ステップ3、4、5 の金庫・ブロック処理
-            const targetUser = getFaceData(name);
-            const safeBox = document.getElementById('safeBox');
-            const safeIcon = document.getElementById('safeIcon');
-            const safeText = document.getElementById('safeText');
-            let isSuccess = false;
-
-            if (!targetUser) {
-                statusText.innerText = `${name}は登録されていません。`;
-                if (currentMode === 'safe') speak(`${name}は登録されていません。`);
-                safeBox.classList.remove('open');
-                safeIcon.innerText = '🔒';
-                safeText.innerText = '金庫はロックされています';
-            } else {
-                const registeredDescriptor = new Float32Array(targetUser.descriptor);
-                const distance = faceapi.euclideanDistance(registeredDescriptor, detection.descriptor);
-
-                if (distance < 0.5) {
-                    isSuccess = true;
-                    statusText.innerText = `認証成功: ${name}さん`;
-                    safeBox.classList.add('open');
-                    safeIcon.innerText = '🔓';
-                    safeText.innerText = '金庫が開きました！';
-                    if (currentMode === 'safe') speak(`${name}を認証しました。金庫が開きます。`);
-                } else {
-                    statusText.innerText = `認証失敗`;
-                    safeBox.classList.remove('open');
-                    safeIcon.innerText = '🔒';
-                    safeText.innerText = '金庫はロックされています';
-                    if (currentMode === 'safe') speak(`${name}を認証できませんでした。`);
-                }
-            }
-
-            // ★ ステップ4と5 の場合のみ、画面のブロックを読み取ってマイコンへ転送する
-            if (currentMode === 'blockly_safe' || currentMode === 'blockly_free') {
-                await executeBlocklyLogic(isSuccess);
-            }
-        }
-    });
-}
-
-// ==========================================
-// ★ ヘルプウィンドウ（ダイアログ）の制御
-// ==========================================
-document.addEventListener('DOMContentLoaded', () => {
-    const helpBtn = document.getElementById('helpBtn');
-    const helpDialog = document.getElementById('helpDialog');
-    const closeHelpBtn = document.getElementById('closeHelpBtn');
-    const helpContent = document.getElementById('helpContent');
-
-    if (helpBtn && helpDialog && helpContent) {
-        helpBtn.addEventListener('click', () => {
-            const targetFile = helpBtn.getAttribute('data-help-file');
-
-            if (targetFile) {
-                // GitHub Pages上なら fetch も iframe も動きます（今回はiframeで表示）
-                helpContent.innerHTML = `<iframe src="./help/${targetFile}" style="width: 100%; height: 400px; border: none;"></iframe>`;
-            } else {
-                helpContent.innerHTML = "<p style='color: red;'>ヘルプファイルが指定されていません。</p>";
-            }
-
-            helpDialog.showModal(); // ★ <dialog> の純正機能で開く
-        });
-
-        closeHelpBtn.addEventListener('click', () => {
-            helpDialog.close(); // ★ <dialog> の純正機能で閉じる
-            helpContent.innerHTML = "";
-        });
-
-        helpDialog.addEventListener('click', (event) => {
-            if (event.target === helpDialog) {
-                helpDialog.close();
-                helpContent.innerHTML = "";
-            }
-        });
-    }
-});
-
-// ==========================================
-// ★ Web Audio API (iPad用通信) の処理
-// ==========================================
-
-var AudioContextClass = window.AudioContext || window.webkitAudioContext;
-var audioCtx = null;
-
-function ensureAudioContext() {
-    if (!AudioContextClass) return null;
-    if (!audioCtx) {
-        audioCtx = new AudioContextClass();
-    }
-    if (audioCtx.state === 'suspended') {
-        audioCtx.resume().catch(function (e) { console.warn('AudioContext resume failed:', e); });
-    }
-    return audioCtx;
-}
-
-// 接続処理のダミーデータ送信
-function connect_iPad() {
-    //let sendDataArray = Array(35).fill(0);
-    let sendDataArray = Array(19).fill(0);
-    sendDataArray[0] = 253;
-    sendDataArray[1] = 5;
-    sendDataBySound(sendDataArray);
-}
-
-// 実行コマンドの送信
-function soundRun() {
-    //let sendDataArray = Array(35).fill(0);
-    let sendDataArray = Array(19).fill(0);
-    sendDataArray[0] = 253; // iPadモード
-    sendDataArray[1] = 2;   // 実行
-    sendDataBySound(sendDataArray);
-}
-
-// データを受け取って音データに変換して送信する
-function sendDataBySound(arrayData) {
-    console.log("【iPad送信データ】:", arrayData);
-    let binaryDataArray = arrayData.map(getBinary);
-    outputSoundData(binaryDataArray);
-}
-
-// 1バイトのデータを8ビット(0/1)の配列に変換する
-function getBinary(arrayData) {
-    var tmp = arrayData;
-    let returnData = Array(8);
-    for (let i = 0; i < 8; i++) {
-        tmp = tmp & 0b10000000;
-        if (tmp == 0) {
-            returnData[i] = 0;
-        } else {
-            returnData[i] = 1;
-        }
-        arrayData = arrayData << 1;
-        tmp = arrayData;
-    }
-    return returnData;
-}
-
-// ビットのデータを波形に変換し、イヤホンジャックから出力する
-function outputSoundData(binaryDataArray) {
-    var audioCtxLocal = ensureAudioContext();
-    if (!audioCtxLocal) return;
-
-    var channels = 2;
-    var sampleRate = audioCtxLocal.sampleRate || 44100;
-    let estimatedSamples = 0;
-    let counterEst = 0;
-
-    binaryDataArray.forEach(element => {
-        element.forEach(x => {
-            if ((counterEst % 8) == 0) estimatedSamples += 20 + 30; // スタートビット
-            if (x == 0) estimatedSamples += 5 + 5;
-            else estimatedSamples += 5 + 15;
-            counterEst++;
-            if ((counterEst % 8) == 0) estimatedSamples += 20; // ストップビット
-        })
-    });
-    estimatedSamples += 1024;
-
-    var myArrayBuffer = audioCtxLocal.createBuffer(channels, estimatedSamples, sampleRate);
-    var newArray = myArrayBuffer.getChannelData(0);
-    let counter = 0;
-    let i = 0;
-    var tmp = 0;
-
-    binaryDataArray.forEach(element => {
-        element.map(x => {
-            if ((counter % 8) == 0) {
-                tmp = 20;
-                while (i++ < tmp) newArray[i] = 0;
-                tmp = i + 30;
-                while (i++ < tmp) newArray[i] = 1;
-            }
-            if (x == 0) {
-                tmp = i + 5;
-                while (i++ < tmp) newArray[i] = 0;
-                tmp = i + 5;
-                while (i++ < tmp) newArray[i] = 1;
-            } else {
-                tmp = i + 5;
-                while (i++ < tmp) newArray[i] = 0;
-                tmp = i + 15;
-                while (i++ < tmp) newArray[i] = 1;
-            }
-            counter++;
-            if ((counter % 8) == 0) {
-                tmp = i + 20;
-                while (i++ < tmp) newArray[i] = 0;
-            }
-        })
-    });
-
-    var source = audioCtxLocal.createBufferSource();
-    source.buffer = myArrayBuffer;
-    source.connect(audioCtxLocal.destination);
-    source.start();
-}
-
-// ==========================================
-// ★ 連結データの一括送信（iPadのミュート回避版）
-// ==========================================
-function sendCombinedDataBySound(packets) {
-    var audioCtxLocal = ensureAudioContext();
-    if (!audioCtxLocal) return;
-
-    var channels = 2;
-    var sampleRate = audioCtxLocal.sampleRate || 44100;
-
-    // 各パケットをバイナリ変換
-    const binaryPackets = packets.map(packet => packet.map(getBinary));
-
-    // 全体の必要なサンプル数を計算
-    let totalSamples = 0;
-    const waitSamples = Math.floor(sampleRate * 0.5); // マイコン書き込み用の待機時間 (0.5秒)
-
-    binaryPackets.forEach((binaryDataArray) => {
-        let est = 0;
-        let counterEst = 0;
-        binaryDataArray.forEach(element => {
-            element.forEach(x => {
-                if ((counterEst % 8) == 0) est += 50; // スタートビット (20+30)
-                if (x == 0) est += 10;
-                else est += 20;
-                counterEst++;
-                if ((counterEst % 8) == 0) est += 20; // ストップビット
-            })
-        });
-        // 波形データ + パディング + 無音待機時間
-        totalSamples += est + 1024 + waitSamples;
-    });
-
-    var myArrayBuffer = audioCtxLocal.createBuffer(channels, totalSamples, sampleRate);
-    var newArray = myArrayBuffer.getChannelData(0);
-
-    let i = 0;
-    var tmp = 0;
-
-    binaryPackets.forEach((binaryDataArray) => {
-        let counter = 0;
-        binaryDataArray.forEach(element => {
-            element.forEach(x => {
-                // スタートビット
-                if ((counter % 8) == 0) {
-                    tmp = i + 20;
-                    while (i < tmp) newArray[i++] = 0;
-                    tmp = i + 30;
-                    while (i < tmp) newArray[i++] = 1;
-                }
-
-                // データビット
-                if (x == 0) {
-                    tmp = i + 5;
-                    while (i < tmp) newArray[i++] = 0;
-                    tmp = i + 5;
-                    while (i < tmp) newArray[i++] = 1;
-                } else {
-                    tmp = i + 5;
-                    while (i < tmp) newArray[i++] = 0;
-                    tmp = i + 15;
-                    while (i < tmp) newArray[i++] = 1;
-                }
-                counter++;
-
-                // ストップビット
-                if ((counter % 8) == 0) {
-                    tmp = i + 20;
-                    while (i < tmp) newArray[i++] = 0;
-                }
-            })
-        });
-
-        // パケットの終わりにパディング(1024)と500msの無音区間を物理的に書き込む
-        i += 1024;
-        tmp = i + waitSamples;
-        while (i < tmp) newArray[i++] = 0;
-    });
-
-    // 1回の再生ですべてのパケットと待機時間を処理する
-    var source = audioCtxLocal.createBufferSource();
-    source.buffer = myArrayBuffer;
-    source.connect(audioCtxLocal.destination);
-    source.start();
-}
-
-// ==========================================
-// ★ 端末に応じたUI（チェックボックス）の切り替え
-// ==========================================
-document.addEventListener('DOMContentLoaded', () => {
-    const connectedWrapper = document.getElementById('auroraConnectedWrapper');
-    
-    // WebHIDに非対応（iPadなど）の端末の場合のみ、チェックボックスを画面に表示する
-    if (connectedWrapper && !navigator.hid) {
-        connectedWrapper.style.display = 'block';
-    }
-});
