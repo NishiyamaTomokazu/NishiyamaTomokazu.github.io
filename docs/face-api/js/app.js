@@ -315,16 +315,23 @@ async function controlLedFromBlock(colorName, timeSeconds) {
 // ==========================================
 // ★ Blocklyの命令を解釈してマイコン用バイトデータを生成・転送する関数
 // ==========================================
+// ==========================================
+// ★ Blocklyの命令を解釈してマイコン用バイトデータを生成・転送する関数
+// ==========================================
 async function executeBlocklyLogic(isSuccess) {
     if (!window.workspace) return;
 
     const startBlock = window.workspace.getBlocksByType('face_auth_start')[0];
     if (!startBlock) return;
-    const checkBlock = startBlock.getNextBlock();
-    if (!checkBlock || checkBlock.type !== 'face_auth_check') return;
 
-    // 認証結果に応じてYESかNOのブロックの塊を取得
-    let currentBlock = checkBlock.getInputTargetBlock(isSuccess ? 'YES' : 'NO');
+    let currentBlock = startBlock.getNextBlock();
+    if (!currentBlock) return; // 次のブロックがなければ終了
+
+    // ★ 修正：もし「条件ブロック（顔認証チェック）」があれば、YES/NOの分岐に進む
+    // なければ（自由制作など）、そのまま直結されているブロックを順番に読み込む
+    if (currentBlock.type === 'face_auth_check') {
+        currentBlock = currentBlock.getInputTargetBlock(isSuccess ? 'YES' : 'NO');
+    }
 
     // HID転送用のベース配列（251, 240はマイコンへの書き込み開始ヘッダ、230, 2はプログラム開始番地）
     let hidBytes = [251, 240, 230, 2];
@@ -337,21 +344,19 @@ async function executeBlocklyLogic(isSuccess) {
             // しゃべるブロックはブラウザで実行するため、HIDデータには含めない
             const text = currentBlock.getFieldValue('TEXT');
 
-            // ★ 追加: チェックボックスの状態を確認する
+            // チェックボックスの状態を確認する
             const connectedCheckbox = document.getElementById('auroraConnected');
 
             if (connectedCheckbox && connectedCheckbox.checked) {
-                // チェックが入っている場合は、しゃべらずにスキップする
                 console.log("オーロラクロック接続中: しゃべる命令をスキップしました");
             } else {
-                // チェックがない場合は、通常通りしゃべる
                 await speak(text);
             }
 
         } else if (currentBlock.type === 'cmd_sound') {
             // 音を鳴らすブロックの変換 (2バイト長)
             const soundByte = Number(currentBlock.getFieldValue('SOUND'));
-            addr += 2; // 自身(1) + 次のアドレス(1) = 2バイト使用
+            addr += 2; 
             hidBytes.push(soundByte, addr);
             hasHardwareCommand = true;
 
@@ -366,12 +371,12 @@ async function executeBlocklyLogic(isSuccess) {
                 case "green": r = 0; g = 255; b = 0; break;
                 case "blue": r = 0; g = 0; b = 255; break;
                 case "yellow": r = 255; g = 255; b = 0; break;
-                case "purple": r = 255; g = 0; b = 255; break; // マゼンタ寄りが見栄えが良いです
+                case "purple": r = 255; g = 0; b = 255; break; 
                 case "cyan": r = 0; g = 255; b = 255; break;
                 case "white": r = 255; g = 255; b = 255; break;
             }
 
-            addr += 6; // 自身(1) + R(1) + G(1) + B(1) + 秒(1) + 次のアドレス(1) = 6バイト使用
+            addr += 6; 
             hidBytes.push(130, r, g, b, sec, addr);
             hasHardwareCommand = true;
         }
@@ -382,10 +387,9 @@ async function executeBlocklyLogic(isSuccess) {
 
     // ハードウェアへの命令が1つでもあれば、終了コードを追加してマイコンへ転送する
     if (hasHardwareCommand) {
-        hidBytes.push(231, 250); // プログラム終了を表すコード
+        hidBytes.push(231, 250); 
         console.log("マイコンへ転送するバイトデータ:", hidBytes);
-        //await transferHID(hidBytes);
-        await transferDevice(hidBytes); // ★修正: iPadなど非対応ブラウザでも接続をキャンセルして進める
+        await transferDevice(hidBytes); 
     }
 }
 
