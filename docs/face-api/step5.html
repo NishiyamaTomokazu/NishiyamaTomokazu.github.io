@@ -42,6 +42,7 @@
         <canvas id="overlay" width="320" height="240"></canvas>
       </div>
       <div class="controls" id="controls" style="display: none;">
+
         <!-- 特徴点の表示・非表示を切り替えるチェックボックス -->
         <label
           style="font-size: 18px; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 10px;">
@@ -68,6 +69,11 @@
         <p id="hid-status" style="font-weight: bold; color: red; margin-top: 5px;">未接続</p>
       </div>
 
+      <!-- ★ 追加: 接続確認用のチェックボックス -->
+      <div id="auroraConnectedWrapper" style="display: none; margin: 10px 0; font-size: 14px; text-align: left;">
+        <input type="checkbox" id="auroraConnected" style="transform: scale(1.2); margin-right: 5px;">
+        <label for="auroraConnected">オーロラクロックと接続中（音声をオフ）</label>
+      </div>
       <!-- ※ステップ4, 5の場合はここにBlocklyのエリアが入ります -->
       <div style="text-align: left; width: 100%; margin-top: 10px;">
         <p style="margin: 5px 0; font-weight: bold; font-size: 14px;">左のメニューからブロックを引っ張ってつなげよう</p>
