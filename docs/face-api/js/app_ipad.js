@@ -135,7 +135,7 @@ async function connectDevice() {
 
     if (statusEl) {
         statusEl.innerText = "音声通信 準備完了";
-        statusEl.style.color = "#007bff"; 
+        statusEl.style.color = "#007bff";
     }
     return true;
 }
@@ -143,7 +143,7 @@ async function connectDevice() {
 // データのチャンク化と送信
 async function transferDevice(dataBytes) {
     const payload = dataBytes.slice(2);
-    let allPackets = []; 
+    let allPackets = [];
 
     let blockNum = 1;
     for (let i = 0; i < payload.length; i += 16) {
@@ -223,11 +223,11 @@ function outputSoundData(binaryDataArray) {
 
     binaryDataArray.forEach(element => {
         element.forEach(x => {
-            if ((counterEst % 8) == 0) estimatedSamples += 20 + 30; 
+            if ((counterEst % 8) == 0) estimatedSamples += 20 + 30;
             if (x == 0) estimatedSamples += 5 + 5;
             else estimatedSamples += 5 + 15;
             counterEst++;
-            if ((counterEst % 8) == 0) estimatedSamples += 20; 
+            if ((counterEst % 8) == 0) estimatedSamples += 20;
         })
     });
     estimatedSamples += 1024;
@@ -281,18 +281,18 @@ function sendCombinedDataBySound(packets) {
     const binaryPackets = packets.map(packet => packet.map(getBinary));
 
     let totalSamples = 0;
-    const waitSamples = Math.floor(sampleRate * 0.5); 
+    const waitSamples = Math.floor(sampleRate * 0.5);
 
     binaryPackets.forEach((binaryDataArray) => {
         let est = 0;
         let counterEst = 0;
         binaryDataArray.forEach(element => {
             element.forEach(x => {
-                if ((counterEst % 8) == 0) est += 50; 
+                if ((counterEst % 8) == 0) est += 50;
                 if (x == 0) est += 10;
                 else est += 20;
                 counterEst++;
-                if ((counterEst % 8) == 0) est += 20; 
+                if ((counterEst % 8) == 0) est += 20;
             })
         });
         totalSamples += est + 1024 + waitSamples;
@@ -356,7 +356,7 @@ async function executeBlocklyLogic(isSuccess) {
 
     let currentBlock = startBlock.getNextBlock();
     let hidBytes = [251, 240, 230, 2];
-    let addr = 2; 
+    let addr = 2;
     let hasHardwareCommand = false;
 
     // iPad用：チェックボックスの状態を取得
@@ -380,7 +380,7 @@ async function executeBlocklyLogic(isSuccess) {
             }
         } else if (currentBlock.type === 'cmd_sound') {
             const soundByte = Number(currentBlock.getFieldValue('SOUND'));
-            addr += 2; 
+            addr += 2;
             hidBytes.push(soundByte, addr);
             hasHardwareCommand = true;
         } else if (currentBlock.type === 'face_auth_led') {
@@ -393,12 +393,12 @@ async function executeBlocklyLogic(isSuccess) {
                 case "green": r = 0; g = 255; b = 0; break;
                 case "blue": r = 0; g = 0; b = 255; break;
                 case "yellow": r = 255; g = 255; b = 0; break;
-                case "purple": r = 255; g = 0; b = 255; break; 
+                case "purple": r = 255; g = 0; b = 255; break;
                 case "cyan": r = 0; g = 255; b = 255; break;
                 case "white": r = 255; g = 255; b = 255; break;
             }
 
-            addr += 6; 
+            addr += 6;
             hidBytes.push(130, r, g, b, sec, addr);
             hasHardwareCommand = true;
         }
@@ -411,12 +411,12 @@ async function executeBlocklyLogic(isSuccess) {
     if (hasHardwareCommand) {
         if (!isConnected) {
             console.log("チェックがないため、データ転送の通信音をスキップします");
-            return; 
+            return;
         }
 
-        hidBytes.push(231, 250); 
+        hidBytes.push(231, 250);
         console.log("マイコンへ転送するバイトデータ:", hidBytes);
-        await transferDevice(hidBytes); 
+        await transferDevice(hidBytes);
     }
 }
 
@@ -435,7 +435,7 @@ if (actionBtn) {
 
         // iPad用通信準備
         if (currentMode === 'blockly_safe' || currentMode === 'blockly_free') {
-            await connectDevice();    
+            await connectDevice();
         }
 
         statusText.innerText = "処理中...";
@@ -550,11 +550,11 @@ document.addEventListener('DOMContentLoaded', () => {
             } else {
                 helpContent.innerHTML = "<p style='color: red;'>ヘルプファイルが指定されていません。</p>";
             }
-            helpDialog.showModal(); 
+            helpDialog.showModal();
         });
 
         closeHelpBtn.addEventListener('click', () => {
-            helpDialog.close(); 
+            helpDialog.close();
             helpContent.innerHTML = "";
         });
 
