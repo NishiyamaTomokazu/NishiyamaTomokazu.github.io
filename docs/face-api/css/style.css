@@ -250,3 +250,10 @@ dialog::backdrop {
   max-width: 600px;
   box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
 }
+
+/* ヘルプ内の行間と段落の余白を広げる */
+#helpContent p,
+#helpContent li {
+    line-height: 1.8;      /* 1行ごとの高さを広げる (数字を大きくするとさらに広がります) */
+    margin-bottom: 12px;   /* 段落や箇条書きの「下」の隙間を広げる */
+}
