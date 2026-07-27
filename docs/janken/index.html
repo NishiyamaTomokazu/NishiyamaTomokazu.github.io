@@ -4,100 +4,78 @@
 <head>
     <meta charset="UTF-8">
     <title>じゃんけんアプリ</title>
-    <style>
-        /* ページ全体の余白をなくす */
-        body {
-            margin: 0;
-            font-family: sans-serif;
-            height: 100vh;
-            /* 画面全体の高さを指定 */
-            display: flex;
-            flex-direction: column;
-            /* 縦並びにする */
-        }
+    <link rel="stylesheet" href="./css/style.css">
 
-        /* タブの基本的なデザインと固定化 */
-        .tabs {
-            display: flex;
-            gap: 10px;
-            padding: 10px 20px;
-            margin: 0;
-            background-color: #ffffff;
-            border-bottom: 2px solid #ccc;
-            /* iframeを使う場合はstickyでなくても一番上に固定されます */
-        }
-
-        .tab-btn {
-            padding: 10px 20px;
-            cursor: pointer;
-            border: 1px solid #ccc;
-            background: #f9f9f9;
-        }
-
-        /* 選択されているタブの色を変える */
-        .tab-btn.active {
-            background: #007bff;
-            color: white;
-            border-color: #007bff;
-        }
-
-        /* コンテンツを表示するiframeのデザイン */
-        #content-frame {
-            flex-grow: 1;
-            /* タブ以外の残りの高さをすべて埋める */
-            width: 100%;
-            border: none;
-            /* 枠線を消す */
-        }
-    </style>
 </head>
 
-<body>
+<body class="index-body">
 
     <div class="tabs">
-        <button class="tab-btn active" onclick="loadTab('index1.html', this,'AIにグー、チョキ、パーを学習させよう')">ステップ1</button>
-        <button class="tab-btn" onclick="loadTab('index2.html', this,'AIとじゃんけんをしてみよう')">ステップ2</button>
-        <button class="tab-btn" onclick="loadTab('index3.html', this,'プログラムで言葉を変えてみよう')">ステップ3</button>
-        <button class="tab-btn" onclick="loadTab('index4.html', this,'マイコンとつないでみよう')">ステップ4</button>
-        <button class="tab-btn" onclick="loadTab('index5.html', this,'オーロラクロックの色を変えてみよう')">ステップ5</button>
+        <button class="tab-btn active" onclick="loadTab('index1.html', this)">ステップ1</button>
+        <button class="tab-btn" onclick="loadTab('index2.html', this)">ステップ2</button>
+        <button class="tab-btn" onclick="loadTab('index3.html', this)">ステップ3</button>
+        <button class="tab-btn" onclick="loadTab('index4.html', this)">ステップ4</button>
+        <button class="tab-btn" onclick="loadTab('index5.html', this)">ステップ5</button>
 
-        <!-- <div id="step-description">AIにグー、チョキ、パーを学習させよう</div> -->
+        <!-- ★追加: ヘルプボタン -->
+        <button class="tab-btn" id="help-btn" onclick="openHelp()">❓ ヘルプを開く</button>
     </div>
 
-
-    <!-- index.html を以下のように書き換えます -->
     <iframe id="content-frame" src="index1.html" allow="camera; hid"></iframe>
 
+    <!-- ==================================================
+         ★追加: ヘルプ表示用のダイアログ
+         ================================================== -->
+    <dialog id="help-dialog">
+        <div class="dialog-header">
+            <h3>ヘルプ</h3>
+            <button class="close-btn" onclick="closeHelp()">閉じる</button>
+        </div>
+        <!-- ヘルプ用のHTMLを読み込むiframe -->
+        <iframe id="help-frame" style="width: 100%; height: calc(100% - 50px); border: none;"></iframe>
+    </dialog>
+
     <script>
-        //function loadTab(url, btnElement, description) {
+        // 現在開いているタブに対応するヘルプのファイル名（初期値はステップ1）
+        let currentHelpUrl = 'help/index1_help.html';
+
         function loadTab(url, btnElement) {
             const frame = document.getElementById('content-frame');
 
             // ==================================================
-            // ★追加: タブが押されたら、文章を書き換える
+            // ★追加: 読み込むページに合わせてヘルプファイルのURLを作る
+            // (例: 'index2.html' -> 'index2_help.html')
             // ==================================================
-            //document.getElementById('step-description').innerText = description;
-            // ==================================================
+            currentHelpUrl ='help/' + url.replace('.html', '_help.html');
 
-            // ==================================================
-            // ★追加: ページを切り替える直前に、現在のページのカメラを止める
-            // ==================================================
             try {
-                // iframeの中に stopAI という関数があれば実行する
                 if (frame.contentWindow && typeof frame.contentWindow.stopAI === 'function') {
                     frame.contentWindow.stopAI();
                 }
             } catch (error) {
                 console.warn("停止処理スキップ: ", error);
             }
-            // ==================================================
 
-            // iframeのsrcを変更して次のページを読み込む
             frame.src = url;
 
-            // すべてのタブから 'active' クラスを外し、クリックされたタブだけに付ける
             document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
             btnElement.classList.add('active');
+        }
+
+        // ==================================================
+        // ★追加: ヘルプを開閉する関数
+        // ==================================================
+        function openHelp() {
+            const dialog = document.getElementById('help-dialog');
+            const helpFrame = document.getElementById('help-frame');
+            // 表示する直前にiframeにヘルプのURLをセットする
+            helpFrame.src = currentHelpUrl;
+            dialog.showModal();
+        }
+
+        function closeHelp() {
+            const dialog = document.getElementById('help-dialog');
+            dialog.close();
         }
     </script>
 </body>
