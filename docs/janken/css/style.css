@@ -52,9 +52,12 @@ body {
 
 video {
     width: 100%;
-    height: auto;          /* 追加: HTMLの height="224" を上書きして自動調整 */
-    aspect-ratio: 4 / 3;   /* 追加: iPadなどのカメラに合わせた自然な比率 */
-    object-fit: cover;     /* 追加: 黒い余白を消して、枠いっぱいに映像を広げる */
+    height: auto;
+    /* 追加: HTMLの height="224" を上書きして自動調整 */
+    aspect-ratio: 4 / 3;
+    /* 追加: iPadなどのカメラに合わせた自然な比率 */
+    object-fit: cover;
+    /* 追加: 黒い余白を消して、枠いっぱいに映像を広げる */
     display: block;
     transform: scaleX(-1);
 }
@@ -185,15 +188,117 @@ h1 {
     border: none;
     border-radius: 5px;
     cursor: pointer;
-    flex: 1; /* 横並びにした時に均等に広がるようにする設定 */
-    font-size: 16px; /* 文字の大きさも少し調整しておきます（お好みで） */
-    transition: opacity 0.3s; /* 押したときのアニメーション用 */
+    flex: 1;
+    /* 横並びにした時に均等に広がるようにする設定 */
+    font-size: 16px;
+    /* 文字の大きさも少し調整しておきます（お好みで） */
+    transition: opacity 0.3s;
+    /* 押したときのアニメーション用 */
 }
 
 /* ボタンを押したとき（またはホバーしたとき）に少し暗くする効果 */
 .reset-btn:hover {
     opacity: 0.8;
 }
+
 .reset-btn:active {
     opacity: 0.6;
+}
+
+
+/* ページ全体の余白をなくす */
+body.index-body {
+    margin: 0;
+    font-family: sans-serif;
+    height: 100vh;
+    display: flex;
+    flex-direction: column;
+}
+
+/* タブの基本的なデザイン */
+.tabs {
+    display: flex;
+    gap: 10px;
+    padding: 10px 20px;
+    margin: 0;
+    background-color: #ffffff;
+    border-bottom: 2px solid #ccc;
+    align-items: center;
+    /* 追加: ボタンを縦の中央に揃える */
+}
+
+.tab-btn {
+    padding: 10px 20px;
+    cursor: pointer;
+    border: 1px solid #ccc;
+    background: #f9f9f9;
+}
+
+.tab-btn.active {
+    background: #007bff;
+    color: white;
+    border-color: #007bff;
+}
+
+/* ==================================================
+★追加: ヘルプボタンのデザイン
+================================================== */
+#help-btn {
+    margin-left: auto;
+    /* 右端に寄せる */
+    background-color: #fff017;
+    color: rgb(0, 0, 0);
+    border: none;
+    border-radius: 5px;
+    font-weight: bold;
+}
+
+#help-btn:hover {
+    background-color: #ebdd17;
+}
+
+/* ==================================================
+★追加: ダイアログ（ヘルプ画面）のデザイン
+================================================== */
+dialog {
+    width: 90%;
+    max-width: 600px;
+    height: 80%;
+    border: none;
+    border-radius: 10px;
+    box-shadow: 0 10px 20px rgba(0, 0, 0, 0.3);
+    padding: 0;
+}
+
+/* ダイアログが開いている時の背景を暗くする */
+dialog::backdrop {
+    background: rgba(0, 0, 0, 0.5);
+}
+
+.dialog-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 10px 20px;
+    background-color: #f1f1f1;
+    border-bottom: 1px solid #ccc;
+}
+
+.dialog-header h3 {
+    margin: 0;
+}
+
+.close-btn {
+    cursor: pointer;
+    padding: 5px 15px;
+    background-color: #333;
+    color: white;
+    border: none;
+    border-radius: 5px;
+}
+
+#content-frame {
+    flex-grow: 1;
+    width: 100%;
+    border: none;
 }
