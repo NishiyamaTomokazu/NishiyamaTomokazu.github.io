@@ -158,7 +158,12 @@ async function connectHID() {
                 if (requestedDevices.length > 0) {
                     targetDevice = requestedDevices[0];
                 } else {
-                    return false; // キャンセルされた
+                    // ★修正: キャンセルされても、エラーを出さずに「未接続状態」として続行する
+                    if (statusEl) {
+                        statusEl.innerText = "未接続 (通信なし)";
+                        statusEl.style.color = "gray";
+                    }
+                    return false; // 接続自体はしていないのでfalseを返す
                 }
             }
 
@@ -285,8 +290,9 @@ if (actionBtn) {
 
         // ステップ4(blockly_safe) と ステップ5(blockly_free) の場合、マイコン接続を確認する[cite: 18]
         if (currentMode === 'blockly_safe' || currentMode === 'blockly_free') {
-            const connected = await connectHID(); 
-            if (!connected) return; // 接続をキャンセルした場合は処理を中断
+            // ★修正: 接続結果（true/false）は受け取りますが、
+            // false（キャンセル）だった場合でも処理を中断(return)せず、そのまま下へ進みます
+            await connectHID();
         }
 
         statusText.innerText = "処理中...";
