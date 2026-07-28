@@ -257,3 +257,49 @@ dialog::backdrop {
     line-height: 1.8;      /* 1行ごとの高さを広げる (数字を大きくするとさらに広がります) */
     margin-bottom: 12px;   /* 段落や箇条書きの「下」の隙間を広げる */
 }
+
+/* =========================================
+   ヘルプダイアログのスタイル
+========================================= */
+
+/* ダイアログ本体（背景と枠） */
+#help-dialog {
+  width: 70%;       /* ★ここで横幅を変更できます（例：80%、600px など） */
+  max-width: 800px; /* 最大幅の制限 */
+  height: 80%;      /* 縦幅 */
+  border-radius: 8px;
+  border: 1px solid #ccc;
+  padding: 0;       /* デフォルトの余白をなくす */
+  box-shadow: 0 4px 10px rgba(0,0,0,0.2);
+}
+
+/* ダイアログのヘッダー部分 */
+#help-dialog .dialog-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  border-bottom: 1px solid #eee;
+  padding: 10px 15px;
+  background-color: #f4f4f4; /* 少し色を付ける */
+}
+
+/* 「ヘルプ」というタイトルの文字サイズ */
+#help-dialog .dialog-header h3 {
+  margin: 0;
+  font-size: 22px;  /* ★ここでタイトルの文字の大きさを変更できます */
+}
+
+/* 閉じるボタン */
+#help-dialog .close-btn {
+  font-size: 16px;  /* ★ボタンの文字の大きさを変更できます */
+  padding: 5px 15px;
+  cursor: pointer;
+}
+
+/* ヘルプ内容を表示する枠 (iframe) */
+#help-frame {
+  width: 100%;
+  height: calc(100% - 50px); /* ヘッダーの分だけ高さを引く */
+  border: none;
+  display: block;
+}
