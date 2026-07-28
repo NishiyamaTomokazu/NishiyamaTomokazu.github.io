@@ -3,13 +3,22 @@
 <head>
   <meta charset="UTF-8">
   <title>顔認証アプリ</title>
+  
+  <!-- style.css を読み込む -->
+  <link rel="stylesheet" href="./css/style.css">
+  
+  <!-- ★消えてしまっていたタブや画面レイアウトのスタイルを復活させます -->
+  <!-- （style.cssにあるbodyの設定とぶつからないように調整しています） -->
   <style>
     body {
       margin: 0;
+      padding: 0; /* style.cssの余白を打ち消す */
       font-family: sans-serif;
       height: 100vh;
       display: flex;
       flex-direction: column;
+      align-items: stretch; /* style.cssの中央揃えを打ち消す */
+      background-color: #ffffff;
     }
     .tabs {
       display: flex;
@@ -25,6 +34,9 @@
       border: 1px solid #ccc;
       background: #f9f9f9;
       font-size: 16px;
+      color: #333; /* ★追加: 文字を黒くして見えるようにする */
+      border-radius: 5px 5px 0 0; /* ★お好みで追加: 上の角だけ丸くするとタブっぽくなります */
+      margin: 0; /* ★追加: style.cssのボタン設定(margin:5px)を打ち消す */
     }
     .tab-btn.active {
       background: #007bff;
@@ -36,6 +48,18 @@
       width: 100%;
       border: none;
     }
+    /* ★追加: ヘルプボタン専用のスタイル */
+    #help-btn {
+      background-color: #93fa33; /* 背景色（例としてオレンジ色） */
+      color: #333;               /* 文字の色（黒） */
+      border-color: #67a130;     /* 枠線の色（少し濃いオレンジ） */
+      margin-left: auto;         /* これを入れると、ヘルプボタンだけ右端に寄ります（お好みで） */
+    }
+
+    /* ヘルプボタンにマウスを乗せたときの色 */
+    #help-btn:hover {
+      background-color: #a3e763; 
+    }
   </style>
 </head>
 <body>
@@ -46,6 +70,8 @@
     <button class="tab-btn" onclick="loadTab('step3.html', this)">ステップ3 (金庫)</button>
     <button class="tab-btn" onclick="loadTab('step4.html', this)">ステップ4 (プログラム)</button>
     <button class="tab-btn" onclick="loadTab('step5.html', this)">ステップ5 (自由製作)</button>
+    <!-- ヘルプボタン -->
+    <button class="tab-btn" id="help-btn" onclick="openHelp()">❓ ヘルプを開く</button>
   </div>
 
   <!-- カメラのストリームデータを保持するためのグローバル変数 -->
@@ -55,10 +81,23 @@
 
   <iframe id="content-frame" src="step1.html" allow="camera"></iframe>
 
-  <!-- index.html の変更部分（scriptタグ内のみ） -->
+  <!-- ★修正: style="..." をすべて削除し、style.css の設定が反映されるようにしました -->
+  <dialog id="help-dialog">
+      <div class="dialog-header">
+          <h3>ヘルプ</h3>
+          <button class="close-btn" onclick="closeHelp()">閉じる</button>
+      </div>
+      <!-- ヘルプ用のHTMLを読み込むiframe -->
+      <iframe id="help-frame"></iframe>
+  </dialog>
+
+  <!-- scriptタグ内 -->
   <script>
     // カメラのストリームデータを保持する変数
     window.sharedCameraStream = null;
+
+    // 現在開いているタブに対応するヘルプのファイル名（初期値はステップ1）
+    let currentHelpUrl = 'help/step1_help.html';
 
     // 親画面がカメラの権限を取得・管理する関数を追加
     window.getSharedCamera = async function() {
@@ -75,11 +114,37 @@
     function loadTab(url, btnElement) {
       const frame = document.getElementById('content-frame');
       
+      // 読み込むページに合わせてヘルプファイルのURLを作る
+      currentHelpUrl = 'help/' + url.replace('.html', '_help.html');
+      
       frame.src = url;
 
       document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
       btnElement.classList.add('active');
     }
+
+    // ヘルプを開閉する関数
+    function openHelp() {
+        const dialog = document.getElementById('help-dialog');
+        const helpFrame = document.getElementById('help-frame');
+        // 表示する直前にiframeにヘルプのURLをセットする
+        helpFrame.src = currentHelpUrl;
+        dialog.showModal();
+    }
+
+    function closeHelp() {
+        const dialog = document.getElementById('help-dialog');
+        dialog.close();
+    }
+
+    // ダイアログの外枠（背景）をクリックしたら閉じる処理
+    const dialogElement = document.getElementById('help-dialog');
+    dialogElement.addEventListener('click', function(event) {
+        // クリックされたターゲットがダイアログ自体（背景部分）だった場合に閉じる
+        if (event.target === dialogElement) {
+            closeHelp();
+        }
+    });
   </script>
 </body>
 </html>
